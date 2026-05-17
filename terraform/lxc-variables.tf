@@ -416,6 +416,37 @@ variable "pwnagotchi_ip" {
   default     = "192.168.86.38"
 }
 
+# --- Ollama LXC ---
+variable "ollama_vmid" {
+  description = "VM ID for the Ollama LXC"
+  type        = number
+  default     = 217
+}
+
+variable "ollama_ip" {
+  description = "Static IP for the Ollama LXC"
+  type        = string
+  default     = "192.168.86.42"
+}
+
+variable "ollama_cores" {
+  description = "CPU cores for Ollama (handles inference if GPU is unavailable)"
+  type        = number
+  default     = 4
+}
+
+variable "ollama_memory" {
+  description = "Memory in MB for Ollama (8GB+ recommended for Llama 3)"
+  type        = number
+  default     = 8192
+}
+
+variable "ollama_disk_size" {
+  description = "Disk size in GB for Ollama (models are large; 40GB+ recommended)"
+  type        = number
+  default     = 40
+}
+
 # --- Domain ---
 variable "domain" {
   description = "Base domain name for services"
