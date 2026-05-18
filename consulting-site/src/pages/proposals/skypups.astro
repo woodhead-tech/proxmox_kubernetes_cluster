@@ -1,0 +1,257 @@
+---
+// Proposal for Sky Pups Treats — not linked from nav, shared directly with client
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A Website Proposal for Sky Pups Treats — Brandon Woodward</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:  #2D6A4F;
+      --salmon: #E07A5F;
+      --text:   #1A1A1A;
+      --dim:    #4A4A4A;
+      --muted:  #6B6B6B;
+      --border: rgba(0,0,0,0.1);
+      --bg:     #FAFAF7;
+      --surface:#F0EDE8;
+      --font-body: 'Inter', system-ui, sans-serif;
+      --font-hand: 'Caveat', cursive;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      background: #fff;
+      color: var(--text);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 3rem 2.5rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .letter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 2rem;
+      border-bottom: 2px solid var(--green);
+      margin-bottom: 2.5rem;
+    }
+
+    .sender-name  { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.02em; }
+    .sender-title { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+    .sender-contact { font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; line-height: 1.6; }
+    .sender-contact a { color: var(--green); text-decoration: none; }
+    .letter-date { font-size: 0.82rem; color: var(--muted); text-align: right; }
+
+    .addressee { margin-bottom: 2rem; font-size: 0.9rem; color: var(--dim); line-height: 1.7; }
+
+    .greeting { font-size: 1rem; font-weight: 600; margin-bottom: 1.25rem; }
+
+    p { font-size: 0.915rem; color: var(--dim); line-height: 1.8; margin-bottom: 1.1rem; }
+    p strong { color: var(--text); font-weight: 600; }
+
+    .demo-box {
+      background: var(--surface);
+      border: 1px solid rgba(45, 106, 79, 0.25);
+      border-left: 4px solid var(--green);
+      border-radius: 8px;
+      padding: 1.5rem 1.75rem;
+      margin: 2rem 0;
+    }
+
+    .demo-box-label {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--green); margin-bottom: 0.75rem;
+    }
+
+    .demo-box h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+
+    .demo-url { font-size: 0.95rem; font-weight: 600; color: var(--green); }
+    .demo-url a { color: var(--green); text-decoration: none; }
+    .demo-url a:hover { text-decoration: underline; }
+
+    .demo-creds { display: flex; gap: 2rem; margin-top: 0.9rem; }
+    .demo-cred  { font-size: 0.82rem; color: var(--muted); }
+    .demo-cred strong {
+      display: block; font-size: 0.7rem; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--muted); font-weight: 600; margin-bottom: 0.2rem;
+    }
+    .demo-cred span { font-family: 'Courier New', monospace; font-size: 0.9rem; color: var(--text); font-weight: 600; }
+
+    .offer-box {
+      background: var(--green); border-radius: 12px; padding: 2rem;
+      margin: 2rem 0; color: #fff;
+    }
+
+    .offer-box-label {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: rgba(255,255,255,0.6); margin-bottom: 0.75rem;
+    }
+
+    .offer-box h3 { font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem; }
+
+    .offer-price {
+      font-family: var(--font-hand); font-size: 2rem; color: rgba(255,255,255,0.9);
+      font-weight: 700; margin-bottom: 1rem;
+    }
+
+    .offer-box p { color: rgba(255,255,255,0.8); margin-bottom: 0; }
+
+    .includes-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin: 1.25rem 0; }
+
+    .includes-list li {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      font-size: 0.875rem; color: var(--dim); line-height: 1.55;
+    }
+
+    .includes-list li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; margin-top: 0.05rem; }
+
+    .next-steps { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin: 2rem 0; }
+    .next-steps h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .next-step-items { display: flex; flex-direction: column; gap: 0.5rem; }
+    .next-step { display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; color: var(--dim); }
+    .next-step a { color: var(--green); text-decoration: none; font-weight: 500; }
+    .next-step a:hover { text-decoration: underline; }
+
+    .closing { margin-top: 2rem; font-size: 0.9rem; color: var(--dim); }
+    .signature { font-family: var(--font-hand); font-size: 2.5rem; color: var(--green); font-weight: 700; line-height: 1.1; margin-top: 0.75rem; }
+    .sig-name { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+
+  <div class="letter-header">
+    <div>
+      <div class="sender-name">Brandon Woodward</div>
+      <div class="sender-title">Systems Architect &amp; Web Consultant</div>
+      <div class="sender-contact">
+        <a href="mailto:bwoodwar@gmail.com">bwoodwar@gmail.com</a><br />
+        <a href="https://woodhead.tech">woodhead.tech</a><br />
+        <a href="https://cal.com/brandon-woodward-3nlfbd">cal.com/brandon-woodward-3nlfbd</a>
+      </div>
+    </div>
+    <div class="letter-date">May 17, 2026</div>
+  </div>
+
+  <div class="addressee">
+    Michele &amp; Chris<br />
+    Sky Pups Treats<br />
+    1202 NE 98th Street<br />
+    Seattle, WA 98115
+  </div>
+
+  <p class="greeting">Hi Michele and Chris,</p>
+
+  <p>
+    I picked up some salmon treats at your booth a few weeks ago. My dogs Bob Barker and Ollie gave them an
+    enthusiastic two-paws-up review — they were pushing each other out of the way before I could get the
+    bag open. I'm a convert.
+  </p>
+
+  <p>
+    I'm a systems and web consultant based here in Seattle, and I'd love to offer you something: <strong>a
+    redesigned website, hosted reliably on Amazon Web Services, for $100/month</strong> — just enough to
+    cover the AWS infrastructure costs. The design and build work would be on me, in exchange for the
+    opportunity to use the project as a case study.
+  </p>
+
+  <p>
+    Here's why I'm reaching out. The thing that struck me most about your booth wasn't the treats — it
+    was the signed packages. The handwritten thank-you with your names and Sky and Bear's names. That
+    detail tells the whole story of what you're doing: a family that cares, making something real for
+    people who care about their dogs. <strong>Your current website doesn't tell that story the way you do
+    in person.</strong>
+  </p>
+
+  <div class="demo-box">
+    <div class="demo-box-label">I built you a preview</div>
+    <h3>Your new website is already live — take a look:</h3>
+    <div class="demo-url"><a href="https://skypups.woodhead.tech">https://skypups.woodhead.tech</a></div>
+    <div class="demo-creds">
+      <div class="demo-cred">
+        <strong>Username</strong>
+        <span>skypups</span>
+      </div>
+      <div class="demo-cred">
+        <strong>Password</strong>
+        <span>pnwpups2026</span>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    I built it on the same technology stack I use for my own consulting business — Astro,
+    a modern static site framework, hosted on AWS. It loads fast, looks great on mobile, and is
+    designed specifically around your brand: the Pacific Northwest sourcing, the single-ingredient
+    commitment, the family story, and especially that signature.
+  </p>
+
+  <p>
+    The problem I want to help you solve is simple: <strong>slow IT response costs you real money.</strong>
+    Every time you launch a new batch or sell out of something, your website should reflect that same
+    day — not next week when your IT person gets around to it. When a new farmer's market date goes on
+    the calendar, your followers should know immediately. With me managing your site, changes happen
+    within 24 hours. Usually same day.
+  </p>
+
+  <div class="offer-box">
+    <div class="offer-box-label">The offer</div>
+    <h3>Introductory Partnership Rate</h3>
+    <div class="offer-price">$100 / month</div>
+    <p>
+      This covers your AWS hosting costs. The design, build, and my time are free —
+      in exchange for a testimonial and permission to share your story as a case study on my website.
+      You get a professional, fast-loading website with no upfront cost. I get a client I'm proud to work with.
+    </p>
+  </div>
+
+  <p><strong>What's included:</strong></p>
+  <ul class="includes-list">
+    <li>Fully redesigned website (Home, Products, About, Contact) — built on modern, fast technology</li>
+    <li>Hosted on Amazon Web Services — reliable, scales automatically, never goes down on a busy market day</li>
+    <li>Your own domain (skypupstreats.com) pointing to the new site</li>
+    <li>Content updates within 24 hours of your request — new products, pricing, market dates, anything</li>
+    <li>Monthly check-in to make sure everything is working the way you need it</li>
+    <li>No contracts, no lock-in — cancel anytime with 30 days notice</li>
+  </ul>
+
+  <p>
+    I should be honest: this is my first client engagement, and that's exactly why I'm offering my
+    time for free. I want to do great work for someone whose product I genuinely respect, and build
+    a track record I can point to. You'd be doing me a favor by saying yes.
+  </p>
+
+  <div class="next-steps">
+    <h3>Ready to talk?</h3>
+    <div class="next-step-items">
+      <div class="next-step">📞 &nbsp;<span>Call or text: <a href="tel:4253442942">(425) 344-2942</a></span></div>
+      <div class="next-step">📧 &nbsp;<span>Email: <a href="mailto:bwoodwar@gmail.com">bwoodwar@gmail.com</a></span></div>
+      <div class="next-step">📅 &nbsp;<span>Schedule a 20-minute call: <a href="https://cal.com/brandon-woodward-3nlfbd">cal.com/brandon-woodward-3nlfbd</a></span></div>
+    </div>
+  </div>
+
+  <p>
+    Thanks for making treats my dogs love. Bob Barker and Ollie are very much looking forward to
+    a continued relationship.
+  </p>
+
+  <div class="closing">
+    Warmly,
+    <div class="signature">Brandon Woodward</div>
+    <div class="sig-name">Systems Architect &amp; Web Consultant — Seattle, WA</div>
+  </div>
+
+</body>
+</html>

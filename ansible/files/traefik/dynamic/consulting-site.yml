@@ -1,0 +1,25 @@
+# consulting-site.yml - Traefik dynamic route for the Astro consulting site
+#
+# Routes woodhead.tech and www.woodhead.tech to the consulting site container
+# running on the monitoring LXC. Nginx serves pre-built Astro static output on port 8085.
+# Note: apex domain TLS requires explicit SAN since wildcard doesn't cover woodhead.tech.
+http:
+  routers:
+    consulting-site:
+      rule: "Host(`woodhead.tech`) || Host(`www.woodhead.tech`) || Host(`consulting.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: consulting-site
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "woodhead.tech"
+            sans:
+              - "www.woodhead.tech"
+              - "consulting.woodhead.tech"
+
+  services:
+    consulting-site:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.25:8085"
