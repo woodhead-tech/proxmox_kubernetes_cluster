@@ -100,13 +100,19 @@
         port: 11434
         timeout: 30
 
+    - name: Check if model is already present
+      ansible.builtin.command:
+        cmd: "ollama list"
+      register: ollama_list
+      changed_when: false
+
     - name: Pull default model ({{ ollama_model }})
       ansible.builtin.command:
         cmd: ollama pull {{ ollama_model }}
       async: 600  # Models are large, allow up to 10 minutes
       poll: 10
       register: pull_result
-      changed_when: "'pulling' in pull_result.stdout"
+      when: ollama_model not in ollama_list.stdout
 
     - name: Check GPU visibility inside container
       ansible.builtin.stat:

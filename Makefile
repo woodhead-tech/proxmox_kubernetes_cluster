@@ -169,7 +169,6 @@ ollama: ## Deploy Ollama LLM Inference into its LXC (with GPU passthrough)
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-ollama.yml
 
 authentik: ## Deploy Authentik identity provider into its LXC
-
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-authentik.yml
 
 wireguard: ## Deploy WireGuard VPN tunnel into its LXC
