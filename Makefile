@@ -25,7 +25,7 @@
 
 .PHONY: setup prepare prepare-truenas ddns init plan apply \
         apply-truenas apply-homeassistant apply-lxc plan-lxc \
-        traefik recipe-site arr-stack plex jellyfin monitoring openclaw authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi \
+        traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi \
         bootstrap kubeconfig health k8s-base harden \
         patch-proxmox patch-lxc patch-docker patch-pi destroy clean help \
         docs-build docs-dev resume-build consulting-build consulting alertmind \
@@ -97,6 +97,7 @@ plan-lxc: ## Preview LXC container changes only
 		-target=proxmox_virtual_environment_container.pxe \
 		-target=proxmox_virtual_environment_container.zigbee2mqtt \
 		-target=proxmox_virtual_environment_container.claude_os \
+		-target=proxmox_virtual_environment_container.ollama \
 		-target=proxmox_virtual_environment_container.pwnagotchi
 
 apply-lxc: ## Create/update LXC containers only
@@ -116,6 +117,7 @@ apply-lxc: ## Create/update LXC containers only
 		-target=proxmox_virtual_environment_container.pxe \
 		-target=proxmox_virtual_environment_container.zigbee2mqtt \
 		-target=proxmox_virtual_environment_container.claude_os \
+		-target=proxmox_virtual_environment_container.ollama \
 		-target=proxmox_virtual_environment_container.pwnagotchi
 
 # ===== Phase 2-3: LXC Services =====
@@ -160,8 +162,11 @@ monitoring: ## Deploy monitoring stack (Prometheus, Grafana, Alertmanager, Dexco
 		$(if $(HA_GLUCOSE_WEBHOOK),--extra-vars "ha_glucose_webhook=$(HA_GLUCOSE_WEBHOOK)") \
 		$(if $(HA_TOKEN),--extra-vars "ha_token=$(HA_TOKEN)")
 
-openclaw: ## Deploy OpenClaw AI agent framework into its LXC
+openclaw: ## Deploy OpenClaw AI agent into its LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-openclaw.yml
+
+ollama: ## Deploy Ollama LLM Inference into its LXC (with GPU passthrough)
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-ollama.yml
 
 authentik: ## Deploy Authentik identity provider into its LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-authentik.yml

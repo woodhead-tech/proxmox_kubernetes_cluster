@@ -1,0 +1,24 @@
+# ollama.yml - Traefik dynamic route for Ollama LLM Inference
+#
+# Routes ollama.woodhead.tech to the Ollama LXC container.
+# Accessible internally and via WireGuard tunnel.
+http:
+  routers:
+    ollama:
+      rule: "Host(`ollama.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: ollama
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+      # Require Authentik SSO for public access (optional)
+      middlewares:
+        - authentik@file
+
+  services:
+    ollama:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.42:11434"

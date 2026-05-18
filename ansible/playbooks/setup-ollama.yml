@@ -1,0 +1,130 @@
+# setup-ollama.yml - Install Ollama in its LXC container
+#
+# This playbook:
+#   1. Configures GPU passthrough on the Proxmox host (Intel iGPU / NVIDIA)
+#   2. Installs Ollama via the official install script
+#   3. Configures Ollama to bind to 0.0.0.0 for network access
+#   4. Pulls a default model (llama3)
+#
+# Usage:
+#   ansible-playbook playbooks/setup-ollama.yml
+---
+# --- Play 1: Configure GPU passthrough on the Proxmox host ---
+- name: Configure GPU passthrough for Ollama LXC
+  hosts: proxmox
+  vars:
+    ollama_vmid: 217
+    gpu_passthrough: true
+  tasks:
+    - name: Check if this node hosts the Ollama LXC
+      ansible.builtin.stat:
+        path: "/etc/pve/lxc/{{ ollama_vmid }}.conf"
+      register: lxc_conf
+
+    - name: Check for GPU devices (/dev/dri)
+      ansible.builtin.stat:
+        path: /dev/dri
+      register: dri_device
+      when: lxc_conf.stat.exists and gpu_passthrough | bool
+
+    - name: Add GPU passthrough to LXC config
+      ansible.builtin.blockinfile:
+        path: "/etc/pve/lxc/{{ ollama_vmid }}.conf"
+        marker: "# {mark} GPU PASSTHROUGH - MANAGED BY ANSIBLE"
+        block: |
+          lxc.cgroup2.devices.allow: c 226:* rwm
+          lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
+      when: lxc_conf.stat.exists and gpu_passthrough | bool and dri_device.stat.exists
+      notify: Restart Ollama LXC
+
+  handlers:
+    - name: Restart Ollama LXC
+      ansible.builtin.command:
+        cmd: "bash -c 'pct stop {{ ollama_vmid }} && sleep 3 && pct start {{ ollama_vmid }}'"
+      changed_when: true
+
+# --- Play 2: Install Ollama inside the LXC ---
+- name: Install Ollama
+  hosts: lxc_services:&ollama
+  vars:
+    ollama_model: "llama3"
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name:
+          - curl
+          - pciutils
+        state: present
+
+    - name: Check if Ollama is installed
+      ansible.builtin.command:
+        cmd: ollama --version
+      register: ollama_check
+      failed_when: false
+      changed_when: false
+
+    - name: Install Ollama via official script
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://ollama.com/install.sh | sh
+      when: ollama_check.rc != 0
+
+    - name: Create systemd override directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/ollama.service.d
+        state: directory
+        mode: "0755"
+
+    - name: Configure Ollama to listen on all interfaces
+      ansible.builtin.copy:
+        content: |
+          [Service]
+          Environment="OLLAMA_HOST=0.0.0.0"
+        dest: /etc/systemd/system/ollama.service.d/override.conf
+        mode: "0644"
+      notify: Restart Ollama Service
+
+    - name: Reload systemd and start Ollama
+      ansible.builtin.systemd:
+        name: ollama
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    - name: Wait for Ollama to be ready
+      ansible.builtin.wait_for:
+        port: 11434
+        timeout: 30
+
+    - name: Check if model is already present
+      ansible.builtin.command:
+        cmd: "ollama list"
+      register: ollama_list
+      changed_when: false
+
+    - name: Pull default model ({{ ollama_model }})
+      ansible.builtin.command:
+        cmd: ollama pull {{ ollama_model }}
+      async: 600  # Models are large, allow up to 10 minutes
+      poll: 10
+      register: pull_result
+      when: ollama_model not in ollama_list.stdout
+
+    - name: Check GPU visibility inside container
+      ansible.builtin.stat:
+        path: /dev/dri/renderD128
+      register: gpu_device
+
+    - name: GPU status
+      ansible.builtin.debug:
+        msg: "{{ 'iGPU detected -- Ollama will use hardware acceleration' if gpu_device.stat.exists else 'No GPU detected -- Ollama will use CPU only' }}"
+
+  handlers:
+    - name: Restart Ollama Service
+      ansible.builtin.systemd:
+        name: ollama
+        state: restarted
