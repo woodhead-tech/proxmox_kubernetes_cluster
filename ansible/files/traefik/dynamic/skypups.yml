@@ -1,0 +1,32 @@
+# skypups.yml - Traefik route for Sky Pups Treats proposal demo
+#
+# Routes skypups.woodhead.tech to the consulting site proposal page.
+# Protected by Authentik SSO — credentials shared directly with the client.
+# After login, redirects to /proposals/skypups on the consulting site.
+http:
+  middlewares:
+    skypups-redirect:
+      redirectRegex:
+        regex: "^https://skypups\\.woodhead\\.tech/?$"
+        replacement: "https://skypups.woodhead.tech/proposals/skypups"
+        permanent: false
+
+  routers:
+    skypups:
+      rule: "Host(`skypups.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: skypups
+      middlewares:
+        - authentik@file
+        - skypups-redirect
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
+  services:
+    skypups:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.25:8085"
