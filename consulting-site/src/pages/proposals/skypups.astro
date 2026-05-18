@@ -132,6 +132,56 @@
     .closing { margin-top: 2rem; font-size: 0.9rem; color: var(--dim); }
     .signature { font-family: var(--font-hand); font-size: 2.5rem; color: var(--green); font-weight: 700; line-height: 1.1; margin-top: 0.75rem; }
     .sig-name { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
+
+    .ps-section {
+      margin-top: 3rem;
+      padding-top: 2.5rem;
+      border-top: 1px dashed rgba(0,0,0,0.15);
+    }
+
+    .ps-label {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.5rem;
+    }
+
+    .ps-intro {
+      font-size: 0.88rem; color: var(--dim); margin-bottom: 1.75rem; font-style: italic;
+    }
+
+    .dog-testimonials { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .dog-review {
+      display: flex; gap: 1.25rem; align-items: flex-start;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 1.25rem 1.4rem;
+    }
+
+    .dog-photo {
+      width: 72px; height: 72px; border-radius: 50%;
+      object-fit: cover; flex-shrink: 0;
+      border: 3px solid rgba(45,106,79,0.2);
+    }
+
+    .dog-review-body { flex: 1; }
+
+    .dog-stars { color: #D4960A; font-size: 0.9rem; margin-bottom: 0.35rem; letter-spacing: 0.05em; }
+
+    .dog-quote {
+      font-size: 0.84rem; color: var(--dim); line-height: 1.7;
+      font-style: italic; margin-bottom: 0.6rem;
+    }
+
+    .dog-name {
+      font-size: 0.75rem; font-weight: 700; color: var(--green);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+
+    .dog-title { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
+
+    @media (max-width: 500px) {
+      .dog-review { flex-direction: column; }
+      .dog-photo { width: 56px; height: 56px; }
+    }
   </style>
 </head>
 <body>
@@ -255,6 +305,59 @@
     Warmly,
     <div class="signature">Brandon Woodward</div>
     <div class="sig-name">Systems Architect &amp; Web Consultant — Seattle, WA</div>
+  </div>
+
+  <div class="ps-section">
+    <div class="ps-label">P.S. — Independent Expert Opinion</div>
+    <p class="ps-intro">
+      I mentioned my dogs gave your treats a two-paws-up review. I felt you deserved the full, unedited testimony.
+    </p>
+
+    <div class="dog-testimonials">
+
+      <div class="dog-review">
+        <img src="/proposals/bob-barker.jpg" alt="Bob Barker" class="dog-photo" />
+        <div class="dog-review-body">
+          <div class="dog-stars">★★★★★</div>
+          <p class="dog-quote">
+            "I rate this treat 5 out of 5 paws. When my human opened the bag, I became so excited that I knocked him
+            directly into the kitchen cabinet. He said something under his breath. I did not hear it. I was focused
+            on the salmon. The salmon was worth it. I would do it again. I will do it again."
+          </p>
+          <div class="dog-name">Bob Barker</div>
+          <div class="dog-title">Professional Good Boy · Curly Coat Retriever Mix · Seattle, WA</div>
+        </div>
+      </div>
+
+      <div class="dog-review">
+        <img src="/proposals/ollie.jpg" alt="Ollie" class="dog-photo" />
+        <div class="dog-review-body">
+          <div class="dog-stars">★★★★★</div>
+          <p class="dog-quote">
+            "It was my birthday. My human gave me a Sky Pups treat. I closed my eyes. I let the salmon wash over me.
+            In that moment, I understood something about myself. Something about life. I am changed. I am better.
+            I am Ollie. My only feedback: more of them."
+          </p>
+          <div class="dog-name">Ollie</div>
+          <div class="dog-title">Snack Enthusiast · Birthday Boy · Golden Mix · Seattle, WA</div>
+        </div>
+      </div>
+
+      <div class="dog-review">
+        <img src="/proposals/critic.jpg" alt="Independent critic" class="dog-photo" />
+        <div class="dog-review-body">
+          <div class="dog-stars">★★★★★</div>
+          <p class="dog-quote">
+            "I was skeptical. I am always skeptical. That is my job. I inspected the packaging. I inspected the
+            ingredients. I took a single careful bite. I considered the bite. I took six more bites. I am still
+            skeptical in general. About these treats, however, I have no notes. They passed."
+          </p>
+          <div class="dog-name">Mortimer J. Wrinklepaws III</div>
+          <div class="dog-title">Independent Snack Inspector · Certified Skeptic · Terrier, presumably</div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
 </body>
