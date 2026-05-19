@@ -51,6 +51,39 @@ import Layout from '../layouts/Layout.astro';
           </div>
         </article>
 
+        <article class="work-card work-card-featured">
+          <div class="work-card-header">
+            <div class="status-badge product">Open Source · Product</div>
+            <div class="work-tags">
+              <span class="tag">Ansible</span>
+              <span class="tag">Terraform</span>
+              <span class="tag">AWS</span>
+              <span class="tag">GCP</span>
+              <span class="tag">Docker</span>
+              <span class="tag">Self-Hosted</span>
+            </div>
+          </div>
+          <h2 class="work-title">ShopStack</h2>
+          <div class="work-body">
+            <div class="work-section">
+              <div class="work-section-label">Problem</div>
+              <p>Small businesses pay $300–600/year in SaaS subscriptions — Google Workspace, Squarespace, Dropbox — for tools that charge per user, go up every renewal, and route a support ticket when something breaks. They're renting infrastructure they'll never own.</p>
+            </div>
+            <div class="work-section">
+              <div class="work-section-label">Solution</div>
+              <p>A curated open-source stack — website, business email, file storage, database, invoicing, and uptime monitoring — deployable on a $200 mini PC, AWS/GCP, or as a fully managed hosted service. The Ansible playbooks and Terraform configs are MIT-licensed on GitHub. The premium service is: I set it up, keep it running, and you message me when something needs to change.</p>
+            </div>
+            <div class="work-section">
+              <div class="work-section-label">Tiers</div>
+              <p>On-Premises ($200/mo), Plug &amp; Play ($200/mo, hardware included), Cloud ($250/mo), Premium Hosted ($350/mo, live in 24 hours). No per-user fees at any tier. ShopStack Online variant for e-commerce sellers at $99/mo flat.</p>
+            </div>
+          </div>
+          <div class="work-links">
+            <a href="/shopstack" class="btn btn-primary">See ShopStack →</a>
+            <a href="https://github.com/woodhead-tech/shopstack" class="btn btn-outline" target="_blank" rel="noopener">GitHub →</a>
+          </div>
+        </article>
+
         <article class="work-card">
           <div class="work-card-header">
             <div class="status-badge live">Live · Self-Hosted</div>
@@ -217,6 +250,10 @@ import Layout from '../layouts/Layout.astro';
     gap: 1.25rem;
   }
 
+  .work-card-featured {
+    grid-column: 1 / -1;
+  }
+
   .work-card {
     background: var(--bg);
     border: 1px solid var(--border);
@@ -267,6 +304,17 @@ import Layout from '../layouts/Layout.astro';
     background: rgba(0,0,0,0.04);
     color: var(--muted);
     border: 1px solid var(--border);
+  }
+
+  .status-badge.product {
+    background: rgba(232, 88, 12, 0.08);
+    color: var(--accent);
+    border: 1px solid rgba(232, 88, 12, 0.25);
+  }
+
+  .work-card-featured {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(232, 88, 12, 0.07);
   }
 
   .work-tags {
