@@ -1,0 +1,382 @@
+---
+// Proposal for Claire Morrow Fine Art — not linked from nav, shared directly with client
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A Website Proposal for Claire Morrow Fine Art — Brandon Woodward</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet" />
+  <style is:global>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:     #1C1C1E;
+      --rust:    #A0522D;
+      --text:    #1A1A1A;
+      --dim:     #4A4A4A;
+      --muted:   #6B6B6B;
+      --border:  rgba(0,0,0,0.1);
+      --bg:      #FAF8F5;
+      --surface: #F0EDE9;
+      --font-body: 'Inter', system-ui, sans-serif;
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-hand: 'Caveat', cursive;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      background: #fff;
+      color: var(--text);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 3rem 5rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    @media (max-width: 680px) {
+      body { padding: 2rem 1.5rem; }
+    }
+
+    .letter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 2rem;
+      border-bottom: 2px solid var(--rust);
+      margin-bottom: 2.5rem;
+    }
+
+    .sender-name  { font-weight: 800; font-size: 1.1rem; letter-spacing: -0.02em; }
+    .sender-title { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+    .sender-contact { font-size: 0.8rem; color: var(--muted); margin-top: 0.4rem; line-height: 1.6; }
+    .sender-contact a { color: var(--rust); text-decoration: none; }
+    .letter-date { font-size: 0.82rem; color: var(--muted); text-align: right; }
+
+    .addressee { margin-bottom: 2rem; font-size: 0.9rem; color: var(--dim); line-height: 1.7; }
+
+    .greeting { font-size: 1rem; font-weight: 600; margin-bottom: 1.25rem; }
+
+    p { font-size: 0.915rem; color: var(--dim); line-height: 1.8; margin-bottom: 1.1rem; }
+    p strong { color: var(--text); font-weight: 600; }
+
+    .demo-box {
+      background: var(--surface);
+      border: 1px solid rgba(160, 82, 45, 0.25);
+      border-left: 4px solid var(--rust);
+      border-radius: 8px;
+      padding: 1.5rem 1.75rem;
+      margin: 2rem 0;
+    }
+
+    .demo-box-label {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--rust); margin-bottom: 0.75rem;
+    }
+
+    .demo-box h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+
+    .demo-url { font-size: 0.95rem; font-weight: 600; color: var(--rust); }
+    .demo-url a { color: var(--rust); text-decoration: none; }
+    .demo-url a:hover { text-decoration: underline; }
+
+    .demo-creds { display: flex; gap: 2rem; margin-top: 0.9rem; }
+    .demo-cred  { font-size: 0.82rem; color: var(--muted); }
+    .demo-cred strong {
+      display: block; font-size: 0.7rem; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--muted); font-weight: 600; margin-bottom: 0.2rem;
+    }
+    .demo-cred span { font-family: 'Courier New', monospace; font-size: 0.9rem; color: var(--text); font-weight: 600; }
+
+    .offer-box {
+      background: var(--ink); border-radius: 12px; padding: 2rem;
+      margin: 2rem 0; color: #fff;
+    }
+
+    .offer-box-label {
+      font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: rgba(255,255,255,0.5); margin-bottom: 0.75rem;
+    }
+
+    .offer-box h3 { font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem; }
+
+    .offer-price {
+      font-family: var(--font-hand); font-size: 2rem; color: rgba(255,255,255,0.85);
+      font-weight: 700; margin-bottom: 1rem;
+    }
+
+    .offer-box p { color: rgba(255,255,255,0.75); margin-bottom: 0; }
+
+    .includes-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin: 1.25rem 0; }
+
+    .includes-list li {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      font-size: 0.875rem; color: var(--dim); line-height: 1.55;
+    }
+
+    .includes-list li::before { content: '✓'; color: var(--rust); font-weight: 700; flex-shrink: 0; margin-top: 0.05rem; }
+
+    .next-steps { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin: 2rem 0; }
+    .next-steps h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .next-step-items { display: flex; flex-direction: column; gap: 0.5rem; }
+    .next-step { display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; color: var(--dim); }
+    .next-step a { color: var(--rust); text-decoration: none; font-weight: 500; }
+    .next-step a:hover { text-decoration: underline; }
+
+    .closing { margin-top: 2rem; font-size: 0.9rem; color: var(--dim); }
+    .signature { font-family: var(--font-hand); font-size: 2.5rem; color: var(--rust); font-weight: 700; line-height: 1.1; margin-top: 0.75rem; }
+    .sig-name { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
+
+    .ps-section {
+      margin-top: 3rem;
+      padding-top: 2.5rem;
+      border-top: 1px dashed rgba(0,0,0,0.15);
+    }
+
+    .ps-label {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.5rem;
+    }
+
+    .ps-intro {
+      font-size: 0.88rem; color: var(--dim); margin-bottom: 1.75rem; font-style: italic;
+    }
+
+    .collector-reviews { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .collector-review {
+      display: flex; gap: 1.25rem; align-items: flex-start;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 1.25rem 1.4rem;
+    }
+
+    .print-thumb {
+      width: 72px; height: 72px; border-radius: 6px;
+      object-fit: cover; flex-shrink: 0;
+      border: 1px solid rgba(160, 82, 45, 0.2);
+      background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.75rem;
+    }
+
+    .collector-review-body { flex: 1; }
+
+    .collector-stars { color: #D4960A; font-size: 0.9rem; margin-bottom: 0.35rem; letter-spacing: 0.05em; }
+
+    .collector-quote {
+      font-size: 0.84rem; color: var(--dim); line-height: 1.7;
+      font-style: italic; margin-bottom: 0.6rem;
+    }
+
+    .collector-name {
+      font-size: 0.75rem; font-weight: 700; color: var(--rust);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+
+    .collector-title { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
+
+    .print-title {
+      font-family: var(--font-serif);
+      font-size: 0.78rem;
+      font-style: italic;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+
+    @media (max-width: 500px) {
+      .collector-review { flex-direction: column; }
+      .print-thumb { width: 56px; height: 56px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="letter-header">
+    <div>
+      <div class="sender-name">Brandon Woodward</div>
+      <div class="sender-title">Systems Architect &amp; Web Consultant</div>
+      <div class="sender-contact">
+        <a href="mailto:bwoodwar@gmail.com">bwoodwar@gmail.com</a><br />
+        <a href="https://woodhead.tech">woodhead.tech</a><br />
+        <a href="https://cal.com/brandon-woodward-3nlfbd">cal.com/brandon-woodward-3nlfbd</a>
+      </div>
+    </div>
+    <div class="letter-date">May 19, 2026</div>
+  </div>
+
+  <div class="addressee">
+    Claire Morrow<br />
+    Claire Morrow Fine Art<br />
+    Seattle, WA
+  </div>
+
+  <p class="greeting">Hi Claire,</p>
+
+  <p>
+    A mutual friend passed along your name — she mentioned you've been selling prints of your watercolors
+    at local markets and through a group chat, and that you've been thinking about getting a proper website
+    set up. I looked at a few of your pieces online. The way you handle Pacific Northwest light — that fog
+    over the sound, the way the mountains go blue in the distance — it stopped me for a minute. That's not
+    easy to do.
+  </p>
+
+  <p>
+    I'm a systems and web consultant based in Seattle. I'd like to offer you something: <strong>a gallery-quality
+    website, hosted reliably on Amazon Web Services, for $100/month</strong> — just enough to cover the infrastructure
+    costs. The design and build work would be on me, in exchange for the opportunity to use the project as a
+    case study.
+  </p>
+
+  <p>
+    Here's the problem I keep seeing with artists selling prints online. Etsy puts your work next to a thousand
+    other listings, takes a cut of every sale, and gives you almost no room to tell your story. A group chat
+    is personal and wonderful, but it doesn't scale, and it doesn't help someone who just discovered you find
+    their way back. <strong>Your work deserves a place that's entirely yours</strong> — where the first thing
+    someone sees is a full-bleed photograph of a painting, not a marketplace interface.
+  </p>
+
+  <div class="demo-box">
+    <div class="demo-box-label">I built you a preview</div>
+    <h3>Your new gallery is already live — take a look:</h3>
+    <div class="demo-url"><a href="https://clairemorrow.woodhead.tech">https://clairemorrow.woodhead.tech</a></div>
+    <div class="demo-creds">
+      <div class="demo-cred">
+        <strong>Username</strong>
+        <span>claire</span>
+      </div>
+      <div class="demo-cred">
+        <strong>Password</strong>
+        <span>pnwart2026</span>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    The site is built around how someone actually discovers an artist they want to collect. A gallery page
+    where the paintings lead. An about page that gives your story room to breathe. A prints page with clear
+    sizing, pricing, and a contact form so a buyer can reach you directly — no marketplace in the middle.
+    And it loads fast and looks right on a phone, which is where most people will see it first.
+  </p>
+
+  <p>
+    The problem I want to help you solve is simple: <strong>sales you're losing because there's nowhere to
+    send people.</strong> When someone sees your work at a market and wants to show a friend later, where do
+    they go? When a collector wants to buy a print as a gift but you're not there in person, what happens?
+    A site fixes both of those. Permanently.
+  </p>
+
+  <div class="offer-box">
+    <div class="offer-box-label">The offer</div>
+    <h3>Introductory Partnership Rate</h3>
+    <div class="offer-price">$100 / month</div>
+    <p>
+      This covers your AWS hosting costs. The design, build, and my time are free —
+      in exchange for a testimonial and permission to share your story as a case study on my website.
+      You get a professional gallery site with no upfront cost. I get a client whose work I'm proud to show.
+    </p>
+  </div>
+
+  <p><strong>What's included:</strong></p>
+  <ul class="includes-list">
+    <li>Fully designed gallery website (Home, Gallery, Prints &amp; Pricing, About, Contact) — built to show your work at its best</li>
+    <li>Hosted on Amazon Web Services — reliable, fast-loading, never down when you share a link</li>
+    <li>Your own domain (clairemorrow.com or whatever you prefer) pointing to the site</li>
+    <li>Content updates within 24 hours — new paintings added, prints sold out, prices updated, anything</li>
+    <li>A contact form that goes directly to your inbox — no marketplace, no middleman</li>
+    <li>Monthly check-in to make sure everything is working the way you need it</li>
+    <li>No contracts, no lock-in — cancel anytime with 30 days notice</li>
+  </ul>
+
+  <p>
+    I'll be honest: I'm building my consulting practice and I want a portfolio I believe in.
+    I'd rather do excellent work for an artist whose work I respect than take on a project I don't care about.
+    You'd be doing me a favor by saying yes.
+  </p>
+
+  <div class="next-steps">
+    <h3>Ready to talk?</h3>
+    <div class="next-step-items">
+      <div class="next-step">📅 &nbsp;<span>Schedule a 20-minute Google Meet: <a href="https://cal.com/brandon-woodward-3nlfbd">cal.com/brandon-woodward-3nlfbd</a></span></div>
+      <div class="next-step">📧 &nbsp;<span>Email: <a href="mailto:bwoodwar@gmail.com">bwoodwar@gmail.com</a></span></div>
+      <div class="next-step">📞 &nbsp;<span>Call or text: <a href="tel:4253442942">(425) 344-2942</a></span></div>
+    </div>
+  </div>
+
+  <p>
+    Thanks for making work worth looking at. I hope we get to talk.
+  </p>
+
+  <div class="closing">
+    Warmly,
+    <div class="signature">Brandon Woodward</div>
+    <div class="sig-name">Systems Architect &amp; Web Consultant — Seattle, WA</div>
+  </div>
+
+  <div class="ps-section">
+    <div class="ps-label">P.S. — Independent Collector Reviews</div>
+    <p class="ps-intro">
+      Three collectors weigh in on the prints. Opinions are their own. No commissions were exchanged.
+    </p>
+
+    <div class="collector-reviews">
+
+      <div class="collector-review">
+        <div class="print-thumb">🌊</div>
+        <div class="collector-review-body">
+          <div class="print-title">"Hood Canal, November" — 11×14 print</div>
+          <div class="collector-stars">★★★★★</div>
+          <p class="collector-quote">
+            "I bought this for my office because I thought it would be calming. It is not calming. It is
+            enormous in feeling for its size. Every person who comes into my office asks about it. I have
+            explained three times that it is a watercolor print and not a window. I don't correct them anymore.
+            I just let them look."
+          </p>
+          <div class="collector-name">Margaret T.</div>
+          <div class="collector-title">Attorney · Longtime Collector · Bellingham, WA</div>
+        </div>
+      </div>
+
+      <div class="collector-review">
+        <div class="print-thumb">🏔️</div>
+        <div class="collector-review-body">
+          <div class="print-title">"Rainier from Enumclaw, Morning" — 8×10 print</div>
+          <div class="collector-stars">★★★★★</div>
+          <p class="collector-quote">
+            "I grew up looking at that mountain. I have seen a thousand photographs of it. This is the first
+            time I've seen a painting that got the color right — the blue-gray you only see before the clouds
+            burn off. I bought two. One for my mother. She cried. I told her it was just a print. She said
+            I was missing the point. She was right."
+          </p>
+          <div class="collector-name">David K.</div>
+          <div class="collector-title">Retired Educator · First-Time Art Buyer · Tacoma, WA</div>
+        </div>
+      </div>
+
+      <div class="collector-review">
+        <div class="print-thumb">🌲</div>
+        <div class="collector-review-body">
+          <div class="print-title">"Hoh Rainforest, After Rain" — 16×20 print</div>
+          <div class="collector-stars">★★★★★</div>
+          <p class="collector-quote">
+            "I am an extremely skeptical person. I do not buy things at markets. I bought this at a market.
+            I have thought about why. I think it is because the painting looked the way the forest actually
+            smells, which should not be possible and yet. I have no further notes. The print arrived well-packaged.
+            It is on my wall. It passes."
+          </p>
+          <div class="collector-name">Priya S.</div>
+          <div class="collector-title">Software Engineer · Reluctant Art Enthusiast · Seattle, WA</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
