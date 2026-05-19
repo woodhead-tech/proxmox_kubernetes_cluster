@@ -28,7 +28,7 @@ make wireguard-shopstack
 This generates the hub's private key and fetches the public key to `ansible/files/wireguard/shopstack-hub.pubkey`.
 
 ### 2. Local Operator Setup
-To reach the management subnet from your local machine via the primary VPN:
+To reach the management subnet from your local machine via the primary VPN (ensure you are connected to `wg0` first):
 ```bash
 sudo ip route add 10.99.0.0/24 via 192.168.86.39
 ```
