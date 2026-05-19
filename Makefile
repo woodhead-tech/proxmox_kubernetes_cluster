@@ -351,6 +351,9 @@ clean: ## Remove generated Talos configs (does not destroy VMs)
 
 # ===== Service Group Management =====
 
+shopstack-status: ## Show connected peers on the ShopStack management hub (wg1)
+	ssh -i ~/.ssh/id_ansible root@192.168.86.39 "wg show wg1"
+
 group-status: ## Show running status of all service groups
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/group-status.yml
 
