@@ -6,17 +6,14 @@
 http:
   routers:
     consulting-site:
-      rule: "Host(`woodhead.tech`) || Host(`www.woodhead.tech`) || Host(`consulting.woodhead.tech`)"
+      rule: "Host(`consulting.woodhead.tech`)"
       entryPoints:
         - websecure
       service: consulting-site
       tls:
         certResolver: cloudflare
         domains:
-          - main: "woodhead.tech"
-            sans:
-              - "www.woodhead.tech"
-              - "consulting.woodhead.tech"
+          - main: "*.woodhead.tech"
 
   services:
     consulting-site:
