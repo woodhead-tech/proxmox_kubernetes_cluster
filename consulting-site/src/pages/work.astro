@@ -1,0 +1,354 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Work" description="Case studies and proof-of-work projects from Woodhead Tech — real systems built and deployed, plus client engagements.">
+
+  <section class="page-hero">
+    <div class="container">
+      <div class="eyebrow">Portfolio</div>
+      <h1>Built, not talked about.</h1>
+      <p class="hero-sub">
+        Real systems running in production, client engagements, and proof-of-concept work.
+        No mockups — every project here has shipped code behind it.
+      </p>
+    </div>
+  </section>
+
+  <!-- Infrastructure & Automation -->
+  <section class="section">
+    <div class="container">
+      <div class="group-label">Infrastructure &amp; Automation</div>
+      <div class="work-grid">
+
+        <article class="work-card">
+          <div class="work-card-header">
+            <div class="status-badge live">Live · Open Source</div>
+            <div class="work-tags">
+              <span class="tag">Go</span>
+              <span class="tag">Claude API</span>
+              <span class="tag">Alertmanager</span>
+              <span class="tag">Discord</span>
+            </div>
+          </div>
+          <h2 class="work-title">AlertMind</h2>
+          <div class="work-body">
+            <div class="work-section">
+              <div class="work-section-label">Problem</div>
+              <p>On-call engineers were arriving at incidents cold — alert fires, PagerDuty wakes someone up, and the first five minutes are spent reading logs to understand what even happened.</p>
+            </div>
+            <div class="work-section">
+              <div class="work-section-label">Solution</div>
+              <p>Built an HTTP webhook receiver in Go that sits between Alertmanager and your notification channel. It enriches each alert with runbook context, calls the Claude API for structured triage analysis, and posts a first-pass diagnosis to Discord — all before the engineer opens their laptop.</p>
+            </div>
+            <div class="work-section">
+              <div class="work-section-label">Outcome</div>
+              <p>Running in production on my homelab. All severity warnings and criticals route through it. Every on-call page now includes a structured diagnosis: probable cause, severity assessment, and recommended first steps.</p>
+            </div>
+          </div>
+          <div class="work-links">
+            <a href="https://github.com/woodhead-tech/alertmind" class="btn btn-outline" target="_blank" rel="noopener">View on GitHub →</a>
+            <a href="https://alertmind.woodhead.tech" class="btn btn-outline" target="_blank" rel="noopener">Live Demo →</a>
+          </div>
+        </article>
+
+        <article class="work-card">
+          <div class="work-card-header">
+            <div class="status-badge live">Live · Self-Hosted</div>
+            <div class="work-tags">
+              <span class="tag">Proxmox</span>
+              <span class="tag">Talos</span>
+              <span class="tag">Terraform</span>
+              <span class="tag">Ansible</span>
+              <span class="tag">Kubernetes</span>
+              <span class="tag">Ceph</span>
+            </div>
+          </div>
+          <h2 class="work-title">Homelab Infrastructure</h2>
+          <div class="work-body">
+            <div class="work-section">
+              <div class="work-section-label">Problem</div>
+              <p>Consulting work on infrastructure and AI automation requires a real environment to build and validate in — not a sandbox that doesn't reflect production constraints.</p>
+            </div>
+            <div class="work-section">
+              <div class="work-section-label">Solution</div>
+              <p>5-node Proxmox VE cluster with shared Ceph storage, a Talos Linux Kubernetes cluster, and 20+ services managed entirely through Terraform and Ansible. Everything is code — no ClickOps. Traefik handles ingress with automatic TLS via Cloudflare DNS-01. SSO via Authentik across all admin surfaces.</p>
+            </div>
+            <div class="work-section">
+              <div class="work-section-label">Outcome</div>
+              <p>Runs in production daily. Serves as the development and validation environment for every automation project — if it works here under real load, it works for a client.</p>
+            </div>
+          </div>
+          <div class="work-links">
+            <a href="https://github.com/woodhead-tech/proxmox_kubernetes_cluster" class="btn btn-outline" target="_blank" rel="noopener">View on GitHub →</a>
+            <a href="/homelab" class="btn btn-outline">Architecture overview →</a>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- Web & Client Work -->
+  <section class="section">
+    <div class="container">
+      <div class="group-label">Web &amp; Client Work</div>
+      <div class="work-grid">
+
+        <article class="work-card">
+          <div class="work-card-header">
+            <div class="status-badge proposal">Proposal Sent</div>
+            <div class="work-tags">
+              <span class="tag">Astro</span>
+              <span class="tag">AWS</span>
+              <span class="tag">CloudFront</span>
+              <span class="tag">S3</span>
+            </div>
+          </div>
+          <h2 class="work-title">Sky Pups Treats</h2>
+          <div class="work-body">
+            <div class="work-section">
+              <div class="work-section-label">Client</div>
+              <p>Small-batch, single-ingredient dog treats made by a family in Seattle. Sold at farmers markets and through social media. Strong in-person brand — signed packaging, handwritten notes — that their website didn't reflect.</p>
+            </div>
+            <div class="work-section">
+              <div class="work-section-label">Solution</div>
+              <p>Redesigned site built with Astro, deployed on AWS CloudFront and S3. Centered entirely on the family story, sourcing transparency, and the product photography that makes the treats look like what they are: something made by people who care.</p>
+            </div>
+            <div class="work-section">
+              <div class="work-section-label">Offer</div>
+              <p>$100/month covering AWS infrastructure costs. Design and build provided in exchange for a testimonial and case study rights. Content updates within 24 hours of request.</p>
+            </div>
+          </div>
+          <div class="work-links">
+            <a href="https://skypups.woodhead.tech" class="btn btn-outline" target="_blank" rel="noopener">View Demo →</a>
+          </div>
+        </article>
+
+        <article class="work-card">
+          <div class="work-card-header">
+            <div class="status-badge theoretical">Case Study</div>
+            <div class="work-tags">
+              <span class="tag">Astro</span>
+              <span class="tag">AWS</span>
+              <span class="tag">Gallery</span>
+              <span class="tag">Print Shop</span>
+            </div>
+          </div>
+          <h2 class="work-title">Claire Morrow Fine Art</h2>
+          <div class="work-body">
+            <div class="work-section">
+              <div class="work-section-label">Client</div>
+              <p>Watercolor artist selling prints of Pacific Northwest landscapes — through Etsy, at local markets, and via group chats. No branded web presence. Sales limited to people who happened to encounter her work in person.</p>
+            </div>
+            <div class="work-section">
+              <div class="work-section-label">Solution</div>
+              <p>Gallery-first site with a print shop, artist statement, and a direct contact form — no marketplace in the middle. Built to make the paintings lead: full-bleed imagery, clean typography, nothing competing with the work itself.</p>
+            </div>
+            <div class="work-section">
+              <div class="work-section-label">Offer</div>
+              <p>Same model as Sky Pups: $100/month for AWS hosting, design and build in exchange for a testimonial and case study rights. A domain pointed at a site that's entirely hers.</p>
+            </div>
+          </div>
+          <div class="work-links">
+            <a href="https://clairemorrow.woodhead.tech" class="btn btn-outline" target="_blank" rel="noopener">View Demo →</a>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <h2>Want to be the next one on this page?</h2>
+        <p>Every project starts with a conversation. No pitch — just an honest look at what you're trying to build and whether I'm the right person to help.</p>
+        <a href="/contact" class="btn btn-primary">Schedule a Free Intro Call →</a>
+      </div>
+    </div>
+  </section>
+
+</Layout>
+
+<style>
+  .page-hero {
+    padding: 5rem 0 3.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .eyebrow {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+  }
+
+  .page-hero h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin-bottom: 1rem;
+  }
+
+  .hero-sub {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.7;
+  }
+
+  .group-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .work-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .work-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .work-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+    border-color: rgba(0,0,0,0.12);
+  }
+
+  .work-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .status-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+
+  .status-badge.live {
+    background: rgba(22, 163, 74, 0.08);
+    color: #15803d;
+    border: 1px solid rgba(22, 163, 74, 0.2);
+  }
+
+  .status-badge.proposal {
+    background: rgba(232, 88, 12, 0.08);
+    color: var(--accent);
+    border: 1px solid rgba(232, 88, 12, 0.2);
+  }
+
+  .status-badge.theoretical {
+    background: rgba(0,0,0,0.04);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .work-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .tag {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--dim);
+    padding: 0.15rem 0.5rem;
+    border-radius: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+  }
+
+  .work-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .work-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+  }
+
+  .work-section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin-bottom: 0.3rem;
+  }
+
+  .work-section p {
+    font-size: 0.875rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .work-links {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .work-links .btn {
+    font-size: 0.82rem;
+    padding: 0.45rem 0.9rem;
+  }
+
+  .section-divider {
+    border-top: 1px solid var(--border);
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .cta-section {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .cta-box {
+    text-align: center;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 2rem 0;
+  }
+
+  .cta-box h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin-bottom: 0.75rem; }
+  .cta-box p { font-size: 0.95rem; color: var(--muted); line-height: 1.7; margin-bottom: 1.75rem; }
+
+  @media (max-width: 768px) {
+    .work-grid { grid-template-columns: 1fr; }
+  }
+</style>
