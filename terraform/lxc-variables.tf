@@ -447,6 +447,26 @@ variable "ollama_disk_size" {
   default     = 40
 }
 
+# --- UniFi Network Application LXC ---
+variable "unifi_vmid" {
+  description = "VM ID for the UniFi Network Application LXC"
+  type        = number
+  default     = 218
+}
+
+variable "unifi_ip" {
+  description = "Static IP for the UniFi LXC"
+  type        = string
+  default     = "192.168.86.43"
+}
+
+variable "unifi_root_password" {
+  description = "Root password for the UniFi LXC"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 # --- Domain ---
 variable "domain" {
   description = "Base domain name for services"

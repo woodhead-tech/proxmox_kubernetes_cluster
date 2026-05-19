@@ -25,7 +25,7 @@
 
 .PHONY: setup prepare prepare-truenas ddns init plan apply \
         apply-truenas apply-homeassistant apply-lxc plan-lxc \
-        traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi \
+        traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi unifi \
         bootstrap kubeconfig health k8s-base harden \
         patch-proxmox patch-lxc patch-docker patch-pi destroy clean help \
         docs-build docs-dev resume-build consulting-build consulting alertmind \
@@ -98,7 +98,8 @@ plan-lxc: ## Preview LXC container changes only
 		-target=proxmox_virtual_environment_container.zigbee2mqtt \
 		-target=proxmox_virtual_environment_container.claude_os \
 		-target=proxmox_virtual_environment_container.ollama \
-		-target=proxmox_virtual_environment_container.pwnagotchi
+		-target=proxmox_virtual_environment_container.pwnagotchi \
+		-target=proxmox_virtual_environment_container.unifi
 
 apply-lxc: ## Create/update LXC containers only
 	cd $(TERRAFORM_DIR) && terraform apply \
@@ -118,7 +119,8 @@ apply-lxc: ## Create/update LXC containers only
 		-target=proxmox_virtual_environment_container.zigbee2mqtt \
 		-target=proxmox_virtual_environment_container.claude_os \
 		-target=proxmox_virtual_environment_container.ollama \
-		-target=proxmox_virtual_environment_container.pwnagotchi
+		-target=proxmox_virtual_environment_container.pwnagotchi \
+		-target=proxmox_virtual_environment_container.unifi
 
 # ===== Phase 2-3: LXC Services =====
 
@@ -227,6 +229,9 @@ step-ca: ## Deploy Smallstep step-ca SSH Certificate Authority into its LXC
 
 kanboard: ## Deploy Kanboard project management into its LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-kanboard.yml
+
+unifi: ## Deploy UniFi Network Application (WiFi controller) into its LXC
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-unifi.yml
 
 sdr: ## Deploy SDR scanner stack (Trunk Recorder + rdio-scanner) for SNO911 fire/EMS
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-sdr.yml

@@ -1,0 +1,219 @@
+# setup-unifi.yml - Deploy UniFi Network Application
+#
+# Deploys the UniFi Network Application (Java) and MongoDB via Docker Compose.
+# On first run, generates random MongoDB passwords and stores them in
+# /opt/unifi/.env — subsequent runs are idempotent and preserve the passwords.
+#
+# Prerequisites:
+#   - unifi LXC created via Terraform (make apply-lxc)
+#   - SSH access to the LXC
+#
+# Usage:
+#   make unifi
+#   ansible-playbook playbooks/setup-unifi.yml
+#
+# After deploy:
+#   1. Visit https://unifi.woodhead.tech and complete the setup wizard
+#   2. System Settings → Controller → Controller Hostname/IP → set to 192.168.86.43
+#   3. When adopting APs: set inform URL to http://192.168.86.43:8080
+
+---
+- name: Deploy UniFi Network Application
+  hosts: lxc_services:&unifi
+  vars:
+    app_dir: /opt/unifi
+
+  tasks:
+    # --- SSH Socket Activation Fix ---
+    - name: Disable SSH socket activation
+      ansible.builtin.systemd:
+        name: ssh.socket
+        enabled: false
+        state: stopped
+      failed_when: false
+
+    - name: Ensure SSH listens on IPv4
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?ListenAddress "
+        line: "ListenAddress 0.0.0.0"
+        create: false
+
+    # --- System Setup ---
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+
+    # --- Docker Installation ---
+    - name: Create Docker keyring directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Add Docker GPG key
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        creates: /etc/apt/keyrings/docker.gpg
+
+    - name: Set permissions on Docker GPG key
+      ansible.builtin.file:
+        path: /etc/apt/keyrings/docker.gpg
+        mode: "0644"
+
+    - name: Add Docker repository
+      ansible.builtin.copy:
+        content: |
+          deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable
+        dest: /etc/apt/sources.list.d/docker.list
+        mode: "0644"
+
+    - name: Install Docker CE and Compose plugin
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Enable and start Docker
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    # --- Directory Structure ---
+    - name: Create app directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - "{{ app_dir }}"
+        - "{{ app_dir }}/data"
+        - "{{ app_dir }}/db"
+        - "{{ app_dir }}/db-init"
+
+    # --- Password Generation ---
+    # Passwords are generated once and stored in .env; idempotent on re-runs.
+    - name: Check if .env exists
+      ansible.builtin.stat:
+        path: "{{ app_dir }}/.env"
+      register: env_stat
+
+    - name: Generate MongoDB root password
+      ansible.builtin.command: openssl rand -hex 20
+      register: mongo_root_raw
+      changed_when: false
+      when: not env_stat.stat.exists
+
+    - name: Generate MongoDB unifi password
+      ansible.builtin.command: openssl rand -hex 20
+      register: mongo_unifi_raw
+      changed_when: false
+      when: not env_stat.stat.exists
+
+    - name: Write .env file with generated passwords
+      ansible.builtin.copy:
+        content: |
+          MONGO_ROOT_PASS={{ mongo_root_raw.stdout }}
+          MONGO_UNIFI_PASS={{ mongo_unifi_raw.stdout }}
+        dest: "{{ app_dir }}/.env"
+        owner: root
+        group: root
+        mode: "0600"
+      when: not env_stat.stat.exists
+
+    - name: Read .env for use in templating
+      ansible.builtin.slurp:
+        src: "{{ app_dir }}/.env"
+      register: env_content
+
+    - name: Parse passwords from .env
+      ansible.builtin.set_fact:
+        mongo_unifi_pass: "{{ (env_content.content | b64decode).split('\n') | select('match', 'MONGO_UNIFI_PASS=') | first | regex_replace('MONGO_UNIFI_PASS=', '') }}"
+
+    # --- MongoDB Init Script ---
+    - name: Deploy MongoDB init script with unifi user
+      ansible.builtin.copy:
+        content: |
+          db.getSiblingDB("unifi").createUser({
+            user: "unifi",
+            pwd: "{{ mongo_unifi_pass }}",
+            roles: [{ role: "dbOwner", db: "unifi" }]
+          });
+          db.getSiblingDB("unifi_stat").createUser({
+            user: "unifi",
+            pwd: "{{ mongo_unifi_pass }}",
+            roles: [{ role: "dbOwner", db: "unifi_stat" }]
+          });
+        dest: "{{ app_dir }}/db-init/init-mongo.js"
+        owner: root
+        group: root
+        mode: "0644"
+
+    # --- Docker Compose ---
+    - name: Deploy Docker Compose file
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/unifi/docker-compose.yml"
+        dest: "{{ app_dir }}/docker-compose.yml"
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart stack
+
+    # --- Start Stack ---
+    - name: Pull images
+      ansible.builtin.command:
+        cmd: docker compose pull
+        chdir: "{{ app_dir }}"
+      changed_when: false
+
+    - name: Start stack
+      ansible.builtin.command:
+        cmd: docker compose up -d
+        chdir: "{{ app_dir }}"
+      changed_when: true
+
+    # --- Verify ---
+    - name: Wait for UniFi to initialize
+      ansible.builtin.pause:
+        seconds: 30
+
+    - name: Check UniFi web UI is responding
+      ansible.builtin.uri:
+        url: "https://127.0.0.1:8443/manage/account/login"
+        validate_certs: false
+        status_code: 200
+      register: health_check
+      retries: 10
+      delay: 10
+      until: health_check.status == 200
+
+    - name: Deployment summary
+      ansible.builtin.debug:
+        msg:
+          - "UniFi Network Application deployed to {{ app_dir }}"
+          - "Internal URL: https://{{ ansible_host }}:8443"
+          - "External URL: https://unifi.woodhead.tech (after Traefik route is live)"
+          - "AP inform port: http://{{ ansible_host }}:8080 (direct, not through Traefik)"
+          - "Complete setup wizard on first visit, then:"
+          - "  System Settings > Controller > Hostname/IP > set to 192.168.86.43"
+
+  handlers:
+    - name: Restart stack
+      ansible.builtin.command:
+        cmd: docker compose up -d --force-recreate
+        chdir: "{{ app_dir }}"
