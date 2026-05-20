@@ -276,6 +276,15 @@ consulting-build: ## Build the Astro consulting site (static output in consultin
 consulting: ## Deploy consulting site to monitoring LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-consulting-site.yml
 
+watchdog: ## Deploy homelab watchdog (DISCORD_WEBHOOK=)
+	@if [ -z "$(DISCORD_WEBHOOK)" ]; then \
+		echo "Error: DISCORD_WEBHOOK is required"; \
+		echo "Usage: make watchdog DISCORD_WEBHOOK=https://discord.com/api/webhooks/..."; \
+		exit 1; \
+	fi
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-watchdog.yml \
+		--extra-vars "discord_webhook=$(DISCORD_WEBHOOK)"
+
 alertmind: ## Deploy alertmind AI alert triage (ANTHROPIC_API_KEY= DISCORD_WEBHOOK= SLACK_WEBHOOK= TWILIO_ACCOUNT_SID= TWILIO_AUTH_TOKEN= WHATSAPP_FROM= WHATSAPP_TO=)
 	@if [ -z "$(ANTHROPIC_API_KEY)" ]; then \
 		echo "Error: ANTHROPIC_API_KEY is required"; \

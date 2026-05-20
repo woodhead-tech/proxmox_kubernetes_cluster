@@ -1,0 +1,93 @@
+---
+# Deploy homelab watchdog to monitoring LXC (192.168.86.25).
+# Runs all health checks every 5 minutes via cron, notifies Discord on issues.
+#
+# Required vars:
+#   discord_webhook   — Discord webhook URL for watchdog notifications
+#
+# Optional vars:
+#   ceph_slow_op_age_seconds  (default: 1800)
+#   nfs_check_timeout         (default: 15)
+#
+# Usage:
+#   make watchdog DISCORD_WEBHOOK=https://discord.com/api/webhooks/...
+
+- name: Deploy homelab watchdog
+  hosts: monitoring-stack
+  vars:
+    watchdog_dest: /opt/watchdog
+    log_dir: /var/log/watchdog
+    maintenance_dir: /opt/watchdog/maintenance
+
+  tasks:
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name: [curl, coreutils]
+        state: present
+        update_cache: false
+
+    - name: Create watchdog directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0750"
+        owner: root
+        group: root
+      loop:
+        - "{{ watchdog_dest }}"
+        - "{{ watchdog_dest }}/checks"
+        - "{{ watchdog_dest }}/lib"
+        - "{{ maintenance_dir }}"
+        - "{{ log_dir }}"
+
+    - name: Copy watchdog scripts
+      ansible.builtin.copy:
+        src: "../../watchdog/{{ item }}"
+        dest: "{{ watchdog_dest }}/{{ item }}"
+        mode: "0750"
+        owner: root
+        group: root
+      loop:
+        - watchdog.sh
+        - lib/notify.sh
+        - checks/check-ceph.sh
+        - checks/check-arp.sh
+        - checks/check-nfs.sh
+        - checks/check-klipper.sh
+        - checks/check-etcd.sh
+
+    - name: Write config.env
+      ansible.builtin.template:
+        src: "../files/watchdog/config.env.j2"
+        dest: "{{ watchdog_dest }}/config.env"
+        mode: "0640"
+        owner: root
+        group: root
+
+    - name: Set up logrotate
+      ansible.builtin.copy:
+        dest: /etc/logrotate.d/watchdog
+        content: |
+          /var/log/watchdog/watchdog.log {
+              daily
+              rotate 14
+              compress
+              missingok
+              notifempty
+              create 0640 root root
+          }
+        mode: "0644"
+
+    - name: Install cron job (every 5 minutes)
+      ansible.builtin.cron:
+        name: homelab-watchdog
+        minute: "*/5"
+        job: "{{ watchdog_dest }}/watchdog.sh >> {{ log_dir }}/watchdog.log 2>&1"
+        user: root
+        state: present
+
+    - name: Run watchdog once to verify
+      ansible.builtin.command: "{{ watchdog_dest }}/watchdog.sh"
+      register: watchdog_test
+      changed_when: false
+      failed_when: watchdog_test.rc == 2

@@ -33,3 +33,4 @@ ansible/files/wireguard/clients/
 .vscode/
 *.swp
 *.swo
+watchdog/config.env
