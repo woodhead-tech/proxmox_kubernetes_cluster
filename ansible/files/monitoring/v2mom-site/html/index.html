@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V2MOM Dashboard — Woodhead Tech</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0A0A0A;
+            --surface: #161616;
+            --surface2: #242424;
+            --accent: #E8580C;
+            --text: #EDEDED;
+            --dim: #A0A0A0;
+            --muted: #666666;
+            --border: rgba(255, 255, 255, 0.08);
+            --font-body: 'Inter', system-ui, sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            padding: 2rem;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1.5rem;
+        }
+
+        .brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+            color: var(--accent);
+        }
+
+        .period {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--muted);
+            text-transform: uppercase;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .span-12 { grid-column: span 12; }
+        .span-8 { grid-column: span 8; }
+        .span-4 { grid-column: span 4; }
+
+        h2 {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        .vision-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.4;
+            color: var(--text);
+        }
+
+        .values-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            list-style: none;
+        }
+
+        .value-item {
+            font-size: 0.9rem;
+            padding: 0.75rem;
+            background: var(--surface2);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .value-item strong { display: block; margin-bottom: 0.25rem; color: var(--accent); }
+
+        /* Progress Components */
+        .metric-group { margin-bottom: 1.5rem; }
+        .metric-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+        .metric-label .target { color: var(--muted); font-family: var(--font-mono); font-size: 0.75rem; }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--surface2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%; /* Inject via data attributes or JS */
+            transition: width 1s ease-in-out;
+        }
+
+        .metric-status {
+            font-family: var(--font-mono);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* Roadmap visualization */
+        .roadmap {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .phase {
+            flex: 1;
+            padding: 1rem;
+            background: var(--surface2);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .phase.active { border: 1px solid var(--accent); background: rgba(232, 88, 12, 0.05); }
+        .phase-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.25rem; }
+        .phase-meta { font-size: 0.75rem; color: var(--muted); font-family: var(--font-mono); }
+
+        @media (max-width: 900px) {
+            .span-8, .span-4 { grid-column: span 12; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="brand">WOODHEAD TECH / V2MOM</div>
+            <div class="period">May 2026 – May 2027</div>
+        </header>
+
+        <main class="dashboard-grid">
+            <!-- Vision -->
+            <section class="card span-8">
+                <h2>Vision</h2>
+                <p class="vision-text">
+                    Establish woodhead.tech as a credible, revenue-generating consulting practice in year one — 
+                    building the client base, track record, and recurring revenue that supports a 3-year path 
+                    to full independence.
+                </p>
+            </section>
+
+            <!-- 3-Year Roadmap -->
+            <section class="card span-4">
+                <h2>The 3-Year Arc</h2>
+                <div class="roadmap">
+                    <div class="phase active">
+                        <div class="phase-title">Foundation</div>
+                        <div class="phase-meta">$5k/mo</div>
+                    </div>
+                    <div class="phase">
+                        <div class="phase-title">Scale</div>
+                        <div class="phase-meta">$12k/mo</div>
+                    </div>
+                    <div class="phase">
+                        <div class="phase-title">Independence</div>
+                        <div class="phase-meta">$18k+/mo</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Revenue Measures -->
+            <section class="card span-4">
+                <h2>Revenue Measures</h2>
+                <div class="metric-group">
+                    <div class="metric-label">
+                        <span>First Paid Dollar</span>
+                        <span class="target">Aug 2026</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 0%;"></div></div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-label">
+                        <span>$2,000 / mo</span>
+                        <span class="target">Nov 2026</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 0%;"></div></div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-label">
+                        <span>$5,000 / mo</span>
+                        <span class="target">May 2027</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 0%;"></div></div>
+                </div>
+            </section>
+
+            <!-- Activity Measures -->
+            <section class="card span-4">
+                <h2>Activity Measures</h2>
+                <div class="metric-group">
+                    <div class="metric-label">
+                        <span>Warm Conversations</span>
+                        <span class="target">20 by Jun 1</span>
+                    </div>
+                    <div class="metric-status">0 / 20</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 0%;"></div></div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-label">
+                        <span>ICP Connections</span>
+                        <span class="target">500+ by Jul</span>
+                    </div>
+                    <div class="metric-status">0 / 500</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 0%;"></div></div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-label">
+                        <span>ShopStack Clients</span>
+                        <span class="target">5 by Q4 2026</span>
+                    </div>
+                    <div class="metric-status">0 / 5</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 0%;"></div></div>
+                </div>
+            </section>
+
+            <!-- Values -->
+            <section class="card span-4">
+                <h2>Operating Values</h2>
+                <div class="values-list">
+                    <div class="value-item"><strong>Proof before pitch</strong> Show work.</div>
+                    <div class="value-item"><strong>Depth over volume</strong> High value.</div>
+                    <div class="value-item"><strong>No bloat</strong> Lean & ship fast.</div>
+                    <div class="value-item"><strong>Directness</strong> Clear outcomes.</div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+</body>
+</html>

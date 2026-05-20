@@ -1,0 +1,23 @@
+# v2mom.yml - Traefik dynamic route for the internal V2MOM dashboard
+#
+# Routes v2mom.woodhead.tech to the v2mom-site container running on the
+# monitoring LXC. Nginx serves static HTML on port 8087.
+http:
+  routers:
+    v2mom:
+      rule: "Host(`v2mom.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: v2mom
+      middlewares:
+        - authentik@file
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
+  services:
+    v2mom:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.25:8087"
