@@ -19,8 +19,9 @@ User=pi
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=/home/pi/.Xauthority
 ExecStartPre=/bin/sh -c 'until curl -sf http://localhost:8080/api/health; do sleep 2; done'
-ExecStart=/usr/bin/chromium-browser \
+ExecStart=/usr/bin/chromium \
     --kiosk \
+    --touch-events=enabled \
     --noerrdialogs \
     --disable-infobars \
     --disable-translate \
