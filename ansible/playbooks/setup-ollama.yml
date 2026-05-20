@@ -59,6 +59,7 @@
         name:
           - curl
           - pciutils
+          - zstd
         state: present
 
     - name: Check if Ollama is installed
