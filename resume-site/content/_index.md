@@ -200,6 +200,33 @@ in a high-velocity environment.
 </section>
 
 <section>
+<h2>Writing</h2>
+<div class="projects">
+
+<div class="project-card">
+<h4><a href="https://woodhead.tech/blog/credential-audit-solo-operator">Credential audit: things I didn't expect to find</a></h4>
+<p>Scanning a homelab GitOps setup for exposed secrets — gitignore gaps, credentials baked into AI tool allowlists, cross-repo token reuse, and a rotation checklist.</p>
+</div>
+
+<div class="project-card">
+<h4><a href="https://woodhead.tech/blog/alertmind-automating-oncall-triage">Automating the first 10 minutes of on-call</a></h4>
+<p>How I built alertmind — a Go webhook service that enriches Alertmanager alerts with Claude AI triage summaries before the engineer opens their laptop.</p>
+</div>
+
+<div class="project-card">
+<h4><a href="https://woodhead.tech/blog/why-ai-integrations-fail">Why AI integrations fail in production</a></h4>
+<p>The patterns I've seen kill AI integration projects — not the model, not the data, but the operational assumptions made before the first line of code.</p>
+</div>
+
+<div class="project-card">
+<h4><a href="https://woodhead.tech/blog/homelab-to-business">Homelab to business: a white paper</a></h4>
+<p>The full architecture of a 5-node Proxmox homelab running 20+ services — network design, IaC lifecycle, Kubernetes on Talos, and how it maps to enterprise patterns.</p>
+</div>
+
+</div>
+</section>
+
+<section>
 <h2>Education &amp; Certifications</h2>
 
 <div class="entry">
