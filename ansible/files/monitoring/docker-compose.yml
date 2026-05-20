@@ -235,6 +235,16 @@ services:
       - "8085:80"
     restart: unless-stopped
 
+  # --- V2MOM Dashboard: Internal Strategic Dashboard ---
+  # Static HTML dashboard served by nginx. Accessible at v2mom.woodhead.tech.
+  v2mom-site:
+    build:
+      context: /opt/monitoring/v2mom-site/build
+    container_name: v2mom-site
+    ports:
+      - "8087:80"
+    restart: unless-stopped
+
   # --- NUT Exporter: UPS Metrics ---
   # Queries NUT server on thinkcentre3 (192.168.86.31:3493) and exposes
   # UPS metrics (battery charge, load, runtime, voltage) for Prometheus.

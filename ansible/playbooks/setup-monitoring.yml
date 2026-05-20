@@ -43,6 +43,7 @@
     dexcom_src: "{{ playbook_dir }}/../files/monitoring/dexcom-exporter"
     resume_src: "{{ playbook_dir }}/../files/monitoring/resume-site"
     landing_src: "{{ playbook_dir }}/../files/monitoring/landing-site"
+    v2mom_src: "{{ playbook_dir }}/../files/monitoring/v2mom-site"
     # Optional: set via --extra-vars
     grafana_password: "admin"
     discord_webhook: ""
@@ -174,6 +175,9 @@
         - landing-site/build
         - homelab-site
         - homelab-site/build
+        - v2mom-site
+        - v2mom-site/build
+        - v2mom-site/build/html
 
     # --- Deploy Config Files ---
     - name: Copy Docker Compose file
@@ -560,6 +564,36 @@
         owner: "{{ mon_user }}"
         group: "{{ mon_user }}"
         mode: "0644"
+      notify: Restart monitoring stack
+
+    # --- V2MOM Dashboard ---
+    - name: Copy V2MOM dashboard Dockerfile
+      ansible.builtin.copy:
+        src: "{{ v2mom_src }}/Dockerfile"
+        dest: "{{ mon_base_dir }}/v2mom-site/build/Dockerfile"
+        owner: "{{ mon_user }}"
+        group: "{{ mon_user }}"
+        mode: "0644"
+      notify: Restart monitoring stack
+
+    - name: Copy V2MOM dashboard nginx config
+      ansible.builtin.copy:
+        src: "{{ v2mom_src }}/nginx.conf"
+        dest: "{{ mon_base_dir }}/v2mom-site/build/nginx.conf"
+        owner: "{{ mon_user }}"
+        group: "{{ mon_user }}"
+        mode: "0644"
+      notify: Restart monitoring stack
+
+    - name: Copy V2MOM dashboard HTML content
+      ansible.builtin.synchronize:
+        src: "{{ v2mom_src }}/html/"
+        dest: "{{ mon_base_dir }}/v2mom-site/build/html/"
+        delete: true
+        use_ssh_args: true
+        rsync_opts:
+          - "--no-perms"
+      become: false
       notify: Restart monitoring stack
 
     # --- Start Stack ---

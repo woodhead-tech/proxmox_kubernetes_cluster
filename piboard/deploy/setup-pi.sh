@@ -24,12 +24,20 @@ PI_USER="${PI_USER:-pi}"
 
 echo "=== Installing display and kiosk packages ==="
 apt-get update
+# Use chromium or chromium-browser depending on availability
+CHROMIUM_PKG="chromium"
+if ! apt-cache show chromium >/dev/null 2>&1; then
+    CHROMIUM_PKG="chromium-browser"
+fi
+
 apt-get install -y --no-install-recommends \
     xserver-xorg \
     x11-xserver-utils \
     xinit \
+    xinput \
+    xinput-calibrator \
     openbox \
-    chromium-browser \
+    "${CHROMIUM_PKG}" \
     unclutter \
     curl
 
@@ -51,6 +59,11 @@ fi
 if ! grep -q "^dtparam=spi=on" /boot/firmware/config.txt 2>/dev/null; then
     echo "dtparam=spi=on" >> /boot/firmware/config.txt
     echo "SPI enabled for touch controller"
+fi
+
+if ! grep -q "dtoverlay=ads7846" /boot/firmware/config.txt 2>/dev/null; then
+    echo "dtoverlay=ads7846,cs=1,penirq=25,penirq_pull=2,speed=50000,keep_vref_on=0,swapxy=0,pmax=255,xohms=150,xmin=200,xmax=3900,ymin=200,ymax=3900" >> /boot/firmware/config.txt
+    echo "ads7846 overlay added to /boot/firmware/config.txt"
 fi
 
 echo "=== Configuring auto-login and X11 startup ==="
