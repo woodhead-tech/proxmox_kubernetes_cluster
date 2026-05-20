@@ -65,11 +65,12 @@ service_groups:
       - { vmid: 206, name: openclaw, type: lxc }
 
   apps:
-    description: "Lightweight application services"
+    description: "Lightweight application services + local AI inference"
     members:
       - { vmid: 201, name: recipe-site, type: lxc }
       - { vmid: 211, name: kanboard, type: lxc }
       - { vmid: 215, name: claude-os, type: lxc }
+      - { vmid: 217, name: ollama, type: lxc }
 
   network:
     description: "Network infrastructure (WiFi controller)"
@@ -99,3 +100,4 @@ service_groups:
       - { vmid: 400, name: talos-cp-0, type: vm, role: control_plane }
       - { vmid: 410, name: talos-worker-0, type: vm, role: worker }
       - { vmid: 411, name: talos-worker-1, type: vm, role: worker }
+      - { vmid: 412, name: talos-worker-2, type: vm, role: worker }

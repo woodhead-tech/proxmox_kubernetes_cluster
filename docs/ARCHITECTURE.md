@@ -179,15 +179,21 @@ and resource allocation.
 | 192.168.86.32      | sdr              | LXC    | 210   | SDR scanner (Trunk Recorder + rdio-scanner)|
 | 192.168.86.33      | kanboard         | LXC    | 211   | Kanboard task queue (ClawBot)       |
 | 192.168.86.34      | mailserver       | LXC    | 212   | Mailcow email (woodhead.tech)       |
+| 192.168.86.35      | pxe              | LXC    | 213   | PXE boot server                     |
+| 192.168.86.36      | zigbee2mqtt      | LXC    | 214   | Zigbee2MQTT bridge (on zotac)       |
+| 192.168.86.37      | claude-os        | LXC    | 215   | Claude OS AI memory system          |
+| 192.168.86.38      | pwnagotchi       | LXC    | 216   | Pwnagotchi WiFi (on pve3)           |
+| 192.168.86.42      | ollama           | LXC    | 217   | Ollama local LLM inference (iGPU)   |
 | 192.168.86.131     | piboard          | Pi     | --    | Raspberry Pi 3B monitoring dashboard|
 | 192.168.86.136     | klipper-ender5pro| Pi     | --    | Klipper 3D printer (Ender 5 Pro)    |
 | 192.168.86.137     | ubuntu-laptop    | Client | --    | Ubuntu laptop (workstation)         |
 | 192.168.86.138     | klipper-ender3   | Pi     | --    | Klipper 3D printer (Ender 3)        |
-| 192.168.86.152     | lenovo-go (wifi) | Client | --    | Lenovo Legion Go (CachyOS, wireless)|
-| 192.168.86.154     | lenovo-go (eth)  | Client | --    | Lenovo Legion Go (CachyOS, wired)   |
+| 192.168.86.173     | cachy            | Client | --    | Lenovo Legion Go (CachyOS/KDE, primary dev machine) |
 | 192.168.86.100     | k8s-vip          | VIP    | --    | Kubernetes API endpoint             |
-| 192.168.86.101     | talos-cp-0       | VM     | 400   | K8s control plane (Talos Linux)     |
-| 192.168.86.111-112 | talos-worker-*   | VM     | 410+  | K8s workers (Talos Linux)           |
+| 192.168.86.101     | talos-cp-0       | VM     | 400   | K8s control plane (tower1)          |
+| 192.168.86.111     | talos-worker-0   | VM     | 410   | K8s worker (tower1)                 |
+| 192.168.86.112     | talos-worker-1   | VM     | 411   | K8s worker (thinkcentre3)           |
+| 192.168.86.113     | talos-worker-2   | VM     | 412   | K8s worker (zotac)                  |
 | 192.168.86.150-199 | metallb-pool     | K8s    | --    | MetalLB LoadBalancer IPs            |
 | 192.168.86.200-254 | dhcp-pool        | DHCP   | --    | Dynamic client addresses            |
 
@@ -449,6 +455,11 @@ in parallel after the host is ready.
 | auto  | SDR Scanner LXC      | 210   | --     | Starts on boot, privileged, RTL-SDR USB     |
 | auto  | Kanboard LXC         | 211   | --     | Starts on boot, task queue for ClawBot      |
 | auto  | Mailserver LXC       | 212   | --     | Starts on boot, Mailcow email stack         |
+| auto  | PXE LXC              | 213   | --     | Starts on boot, PXE boot server             |
+| auto  | Zigbee2MQTT LXC      | 214   | --     | Starts on boot, Zigbee bridge (on zotac)    |
+| auto  | Claude OS LXC        | 215   | --     | Starts on boot, AI memory system            |
+| auto  | Pwnagotchi LXC       | 216   | --     | Starts on boot, USB WiFi dongle (on pve3)   |
+| auto  | Ollama LXC           | 217   | --     | Starts on boot, local LLM inference (iGPU)  |
 | manual| K8s Cluster          | 400+  | --     | Bootstrapped via `make bootstrap`           |
 
 ---
@@ -528,6 +539,7 @@ in parallel after the host is ready.
 | Kanboard LXC      | 1     | 512      | --       | PHP + SQLite (lightweight)      |
 | Mailserver LXC    | 2     | 3072     | --       | Mailcow stack (Postfix, Dovecot, Rspamd, MariaDB) |
 | ARR Stack LXC     | 2     | 4096     | --       | 7 Docker containers             |
+| Ollama LXC        | 4     | 8192     | --       | Local LLM inference, iGPU passthrough (thinkcentre1) |
 
 ### Disk
 
@@ -551,6 +563,7 @@ in parallel after the host is ready.
 | Kanboard LXC      | 5 GB   | local-lvm   | --        | Docker + SQLite DB + attachments |
 | Mailserver LXC    | 20 GB  | local-lvm   | --        | Docker + Mailcow + mailbox storage |
 | ARR Stack LXC     | 20 GB  | local-lvm   | --        | Docker + configs (media on NAS) |
+| Ollama LXC        | 40 GB  | local-lvm   | --        | Ollama binary + model storage (llama3 ~5GB) |
 
 ### Standalone Devices (not Proxmox-managed)
 
@@ -637,6 +650,7 @@ consume no CPU regardless of weight.
 | `proxmox_virtual_environment_container.sdr`       | lxc-sdr.tf                  | LXC  | 210 |
 | `proxmox_virtual_environment_container.kanboard`  | lxc-kanboard.tf             | LXC  | 211 |
 | `proxmox_virtual_environment_container.mailserver` | lxc-mailserver.tf          | LXC  | 212 |
+| `proxmox_virtual_environment_container.ollama`    | lxc-ollama.tf               | LXC  | 217 |
 | `proxmox_virtual_environment_file.lxc_ssh_fix`    | lxc-ssh-hook.tf             | File | --  |
 | `proxmox_virtual_environment_vm.truenas`          | vm-truenas.tf               | VM   | 300 |
 | `proxmox_virtual_environment_vm.homeassistant`    | vm-homeassistant.tf         | VM   | 301 |
@@ -653,9 +667,9 @@ consume no CPU regardless of weight.
 - `vm-homeassistant-variables.tf` -- HAOS image URL, sizing
 
 **Terraform state notes:**
-- Terraform state (`terraform.tfstate`) is gitignored. In state: traefik, recipe_site, authelia (authentik), wireguard, libby_alert, lxc_ssh_fix.
-- Not in state: truenas (300), homeassistant (301), controlplane (400) — imports hang due to Proxmox API timeout reading complex VM disk configs. Use `-target` for all applies until resolved.
-- Not in state (don't exist yet): arr (202), plex (203), jellyfin (204), monitoring (205), openclaw (206), K8s workers (410, 411).
+- Terraform state (`terraform.tfstate`) is gitignored. In state: traefik, recipe_site, authelia, wireguard, libby_alert, sdr, zigbee2mqtt, claude_os, pwnagotchi, ollama, lxc_ssh_fix.
+- Not in state (VM disk import hangs): truenas (300), homeassistant (301), controlplane (400), K8s workers (410–412). Use `-target` for LXC-only applies.
+- Not in state (deployed manually or pre-terraform): arr (202), plex (203), jellyfin (204), monitoring (205), openclaw (206), kanboard (211), mailserver (212), pxe (213).
 
 **Hookscript restriction:**
 The `lxc-ssh-hook.tf` snippet uploads to Proxmox as a file resource. Wiring it as a hookscript on an LXC (`hook_script_file_id`) requires `root@pam` authentication — the Terraform API token (non-root) gets a 403. Set hookscripts manually via SSH: `pct set <vmid> --hookscript local:snippets/lxc-ssh-fix.sh`.
@@ -781,12 +795,16 @@ all management is through `talosctl` and `kubectl`.
 |                                          |
 |  +-- Worker 0 (192.168.86.111) -------+ |
 |  |   Talos Linux v1.9.0               | |
-|  |   kubelet, kube-proxy              | |
+|  |   kubelet, kube-proxy (tower1)     | |
 |  |   4 cores, 8GB RAM, 100GB (Ceph)   | |
 |  +------------------------------------+ |
 |                                          |
 |  +-- Worker 1 (192.168.86.112) -------+ |
-|  |   (same as Worker 0)               | |
+|  |   (same as Worker 0, pve3)         | |
+|  +------------------------------------+ |
+|                                          |
+|  +-- Worker 2 (192.168.86.113) -------+ |
+|  |   (same as Worker 0, zotac)        | |
 |  +------------------------------------+ |
 |                                          |
 |  Namespaces: ingress-system, apps,       |
@@ -920,11 +938,11 @@ Services are organized into logical groups that can be started and stopped as a 
 | `home` | 301 (homeassistant), 214 (zigbee2mqtt), 209 (libby-alert) | ~2.7GB | No | |
 | `media` | 202 (arr-stack), 203 (plex), 204 (jellyfin) | ~8GB | No | Depends on `core`, `storage` |
 | `observability` | 205 (monitoring), 206 (openclaw) | ~4GB | No | |
-| `apps` | 201 (recipe-site), 211 (kanboard), 215 (claude-os) | ~6.5GB | No | |
+| `apps` | 201 (recipe-site), 211 (kanboard), 215 (claude-os), 217 (ollama) | ~14.5GB | No | |
 | `infra` | 212 (mailserver), 213 (pxe) | ~3.5GB | No | |
 | `sdr` | 210 (sdr) | ~2GB | No | RTL-SDR USB passthrough |
 | `special` | 216 (pwnagotchi) | ~1GB | No | Hardware-bound; excluded from bulk ops |
-| `k8s` | 400 (talos-cp-0), 410 (worker-0), 411 (worker-1) | ~20GB | No | Drain workers before stop |
+| `k8s` | 400 (talos-cp-0), 410 (worker-0), 411 (worker-1), 412 (worker-2) | ~28GB | No | Drain workers before stop |
 
 **Max potential savings:** ~42GB RAM when all non-`core`, non-`storage` groups are stopped.
 
