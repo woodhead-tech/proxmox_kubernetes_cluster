@@ -121,6 +121,43 @@ talosctl kubeconfig "${OUTPUT_DIR}/kubeconfig" \
 log "======================================"
 log "Cluster bootstrap complete!"
 log "======================================"
+
+# --- Verify all nodes joined the cluster ---
+EXPECTED_NODE_COUNT=$(( ${#CP_NODES[@]} + ${#WORKER_NODES[@]} ))
+log "Waiting for all ${EXPECTED_NODE_COUNT} nodes to become Ready..."
+
+VERIFY_TIMEOUT=300
+VERIFY_INTERVAL=15
+elapsed=0
+READY_COUNT=0
+
+export KUBECONFIG="${OUTPUT_DIR}/kubeconfig"
+while [[ "$elapsed" -lt "$VERIFY_TIMEOUT" ]]; do
+  READY_COUNT=$(kubectl get nodes --no-headers 2>/dev/null | grep -c " Ready " || true)
+  if [[ "$READY_COUNT" -ge "$EXPECTED_NODE_COUNT" ]]; then
+    break
+  fi
+  log "  ${READY_COUNT}/${EXPECTED_NODE_COUNT} nodes Ready — waiting ${VERIFY_INTERVAL}s..."
+  sleep "${VERIFY_INTERVAL}"
+  elapsed=$(( elapsed + VERIFY_INTERVAL ))
+done
+
+if [[ "$READY_COUNT" -lt "$EXPECTED_NODE_COUNT" ]]; then
+  log "ERROR: Only ${READY_COUNT}/${EXPECTED_NODE_COUNT} nodes joined within ${VERIFY_TIMEOUT}s."
+  log ""
+  log "Expected IPs:"
+  for ip in "${CP_NODES[@]}" "${WORKER_NODES[@]}"; do
+    log "  ${ip}"
+  done
+  log ""
+  log "Actual nodes:"
+  kubectl get nodes -o wide 2>/dev/null || true
+  log ""
+  log "Check that all CONTROLPLANE_IPS and WORKER_IPS were reachable and booted from ISO."
+  exit 1
+fi
+
+log "All ${READY_COUNT}/${EXPECTED_NODE_COUNT} nodes Ready."
 log ""
 log "Talos config:  ${OUTPUT_DIR}/talosconfig"
 log "Kubeconfig:    ${OUTPUT_DIR}/kubeconfig"

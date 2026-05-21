@@ -1196,6 +1196,70 @@ sudo ip neigh replace <ip> dev <interface> lladdr <correct-mac>
 The LXC's correct MAC is shown in the Proxmox web UI under the network interface settings,
 or via `pct config <vmid> | grep hwaddr`.
 
+### Talos worker missing from cluster / port 50000 RST
+
+**Symptom:** `kubectl get nodes` shows fewer workers than expected. The missing node's
+VM is running in Proxmox but `nc -z <ip> 50000` returns RST (connection refused) or
+the node got a random DHCP address instead of its configured static IP.
+
+**Cause:** A previous Talos installation on the Ceph RBD disk confuses the boot sequence.
+The disk may have stale configs or a partial install. The ISO boots but the node either:
+- Loads the old config from disk, tries to use a static IP that DHCP doesn't assign
+- Boots from disk instead of ISO, with apid not starting cleanly
+
+**Key diagnostic: Talos maintenance mode is slow.** Even on a clean ISO boot, port 50000
+takes 10–13 minutes to open due to Ceph I/O during kernel module loading.
+
+**Fix — automated:**
+```bash
+make check-iso                              # confirm ISO version matches talconfig.yaml
+make rejoin-worker NODE_IP=192.168.86.113   # wipe, restart, wait, apply-config
+```
+
+**Fix — manual steps the automation performs:**
+```bash
+# 1. Stop the VM
+ssh -i ~/.ssh/id_ansible root@192.168.86.147 'qm stop 412'
+
+# 2. Wipe the first 10 MiB of the Ceph disk (clears partition table / bootloader)
+ssh -i ~/.ssh/id_ansible root@192.168.86.147 '
+  DEV=$(rbd --conf /etc/pve/ceph.conf --keyring /etc/pve/priv/ceph.client.admin.keyring \
+        --id admin device map thinkCentreCeph/vm-412-disk-0)
+  dd if=/dev/zero of=$DEV bs=1M count=10 status=progress
+  rbd --conf /etc/pve/ceph.conf --keyring /etc/pve/priv/ceph.client.admin.keyring \
+      --id admin device unmap $DEV
+'
+
+# 3. Start the VM and find its DHCP IP (it won't be .113 yet)
+ssh -i ~/.ssh/id_ansible root@192.168.86.147 'qm start 412'
+# Watch the ARP table until IPv4 appears:
+ssh -i ~/.ssh/id_ansible root@192.168.86.147 \
+  'watch -n5 "ip neigh show dev vmbr0 | grep bc:24:11:d8:4b:15"'
+
+# 4. Wait for port 50000 to open (can take ~10 min), then apply config
+until nc -z -w 3 <DHCP_IP> 50000; do sleep 10; done
+talosctl apply-config --insecure --nodes <DHCP_IP> \
+  --file talos/_out/worker-2.yaml
+
+# 5. Node installs Talos v1.9.0 to disk, reboots, comes up at .113
+watch -n5 kubectl --kubeconfig talos/_out/kubeconfig get nodes -o wide
+```
+
+**After rejoin, verify:**
+```bash
+kubectl --kubeconfig talos/_out/kubeconfig get nodes -o wide
+# Expect: all 4 nodes (1 control-plane + 3 workers) showing Ready
+
+talosctl --talosconfig talos/_out/talosconfig health
+```
+
+**ISO mismatch note:** The node may boot a newer Talos ISO (e.g. v1.12.5) than the
+cluster (v1.9.0). This is harmless — the machine config contains
+`installer: ghcr.io/siderolabs/installer:v1.9.0`, so the node self-installs the correct
+version on first apply-config. `make check-iso` will warn you about the mismatch upfront.
+
+---
+
 ### Authelia showing Bad Gateway
 Authelia v4.38 removed the `authelia healthcheck` CLI and deprecated the `AUTHELIA_JWT_SECRET_FILE`
 environment variable.

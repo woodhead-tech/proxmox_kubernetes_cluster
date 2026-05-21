@@ -26,7 +26,7 @@
 .PHONY: setup prepare prepare-truenas ddns init plan apply \
         apply-truenas apply-homeassistant apply-lxc plan-lxc \
         traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi unifi \
-        bootstrap kubeconfig health k8s-base harden \
+        bootstrap kubeconfig health k8s-base check-iso rejoin-worker harden \
         patch-proxmox patch-lxc patch-docker patch-pi destroy clean help \
         docs-build docs-dev resume-build consulting-build consulting alertmind \
         group-status group-start group-stop
@@ -302,8 +302,21 @@ alertmind: ## Deploy alertmind AI alert triage (ANTHROPIC_API_KEY= DISCORD_WEBHO
 
 # ===== Phase 4: Talos K8s Cluster =====
 
-bootstrap: ## Generate Talos configs and bootstrap the cluster
-	chmod +x $(SCRIPTS_DIR)/bootstrap.sh
+check-iso: ## Verify Talos ISO on all Proxmox nodes matches talconfig.yaml version
+	chmod +x $(SCRIPTS_DIR)/check-iso.sh
+	./$(SCRIPTS_DIR)/check-iso.sh
+
+rejoin-worker: ## Re-join a worker with a stale Ceph disk — NODE_IP=192.168.86.113
+	@if [ -z "$(NODE_IP)" ]; then echo "Error: set NODE_IP=<target-static-ip>  e.g. make rejoin-worker NODE_IP=192.168.86.113"; exit 1; fi
+	chmod +x $(SCRIPTS_DIR)/rejoin-worker.sh
+	NODE_IP=$(NODE_IP) \
+	  $(if $(WORKER_IPS),WORKER_IPS=$(WORKER_IPS)) \
+	  TALOS_OUT=$(TALOS_OUT) \
+	  ./$(SCRIPTS_DIR)/rejoin-worker.sh
+
+bootstrap: ## Generate Talos configs and bootstrap the cluster (runs check-iso first)
+	chmod +x $(SCRIPTS_DIR)/bootstrap.sh $(SCRIPTS_DIR)/check-iso.sh
+	./$(SCRIPTS_DIR)/check-iso.sh
 	./$(SCRIPTS_DIR)/bootstrap.sh
 
 kubeconfig: ## Fetch kubeconfig from the running cluster

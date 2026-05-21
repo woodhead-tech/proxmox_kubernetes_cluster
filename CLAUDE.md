@@ -37,7 +37,7 @@ make ddns       # Deploy Cloudflare DDNS updater
 # Set env vars before bootstrapping:
 export CLUSTER_VIP="192.168.86.100"
 export CONTROLPLANE_IPS="192.168.86.101"
-export WORKER_IPS="192.168.86.111,192.168.86.112"
+export WORKER_IPS="192.168.86.111,192.168.86.112,192.168.86.113"
 
 make bootstrap      # Generate Talos configs + init cluster (destructive, one-time)
 make kubeconfig     # Fetch kubeconfig to talos/_out/kubeconfig
