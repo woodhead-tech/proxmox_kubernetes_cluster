@@ -1,0 +1,12 @@
+---
+# handlers/main.yml for shopstack-rotator
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Enable and start rotator timer
+  ansible.builtin.systemd:
+    name: shopstack-rotator.timer
+    enabled: true
+    state: started

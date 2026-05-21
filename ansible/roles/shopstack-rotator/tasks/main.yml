@@ -1,0 +1,83 @@
+---
+# tasks/main.yml for shopstack-rotator
+
+- name: 1. Install prerequisites on monitoring LXC
+  ansible.builtin.apt:
+    name: [ansible, age, git, jq, python3-pip]
+    state: present
+    update_cache: true
+
+- name: 2. Create rotator directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - /opt/shopstack-rotator
+    - /opt/shopstack-rotator/scripts
+    - /opt/shopstack-rotator/secrets
+
+- name: 3. Synchronize ShopStack project code
+  ansible.builtin.synchronize:
+    src: "{{ lookup('env', 'HOME') }}/Projects/woodhead-tech/shopstack/"
+    dest: /opt/shopstack-rotator/shopstack/
+    delete: true
+    recursive: true
+    rsync_opts:
+      - "--exclude=.git"
+      - "--exclude=secrets/*"
+
+- name: 4. Copy Hub age keys
+  ansible.builtin.copy:
+    src: "{{ lookup('env', 'HOME') }}/.ssh/{{ item }}"
+    dest: "/root/.ssh/{{ item }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop:
+    - shopstack_hub.age
+    - shopstack_hub.pub
+
+- name: 5. Ensure SSH key for customer access is present
+  ansible.builtin.copy:
+    src: "{{ lookup('env', 'HOME') }}/.ssh/id_ansible"
+    dest: /root/.ssh/id_ansible
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: 6. Deploy rotation master script
+  ansible.builtin.template:
+    src: shopstack-rotate-all.sh.j2
+    dest: /opt/shopstack-rotator/scripts/rotate-all.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: 7. Deploy systemd service unit
+  ansible.builtin.template:
+    src: shopstack-rotator.service.j2
+    dest: /etc/systemd/system/shopstack-rotator.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd
+
+- name: 8. Deploy systemd timer unit
+  ansible.builtin.template:
+    src: shopstack-rotator.timer.j2
+    dest: /etc/systemd/system/shopstack-rotator.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Enable and start rotator timer
+
+- name: 9. Ensure timer is started
+  ansible.builtin.systemd:
+    name: shopstack-rotator.timer
+    enabled: true
+    state: started
