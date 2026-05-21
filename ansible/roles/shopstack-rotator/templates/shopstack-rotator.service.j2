@@ -1,0 +1,14 @@
+[Unit]
+Description=ShopStack Credential Rotator
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/shopstack-rotator/scripts/rotate-all.sh
+WorkingDirectory=/opt/shopstack-rotator
+User=root
+# Ensure ANSIBLE_CONFIG or other env vars if needed
+Environment="ANSIBLE_HOST_KEY_CHECKING=False"
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=Quarterly ShopStack Credential Rotation Timer
+
+[Timer]
+# Run every 3 months (Jan, Apr, Jul, Oct) on the 1st at 02:00
+OnCalendar=*-01,04,07,10-01 02:00:00
+RandomizedDelaySec=6h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

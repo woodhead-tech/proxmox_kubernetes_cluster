@@ -1,0 +1,11 @@
+---
+# setup-shopstack-rotator.yml - Deploy automated credential rotation to monitoring LXC
+#
+# Usage:
+#   ansible-playbook playbooks/setup-shopstack-rotator.yml
+
+- name: Deploy ShopStack Credential Rotator
+  hosts: lxc_services:&monitoring
+  
+  roles:
+    - shopstack-rotator
