@@ -186,35 +186,48 @@ groups:
           summary: "Dexcom reading stale ({{ $value | printf \"%.0f\" }}s old)"
           description: "No new glucose reading in over 15 minutes. Sensor may be disconnected."
 
-  # --- Kubernetes (uncomment after deploying kube-state-metrics) ---
-  # - name: kubernetes
-  #   rules:
-  #     # K8s node not ready for 5+ minutes
-  #     - alert: KubeNodeNotReady
-  #       expr: kube_node_status_condition{condition="Ready",status="true"} == 0
-  #       for: 5m
-  #       labels:
-  #         severity: critical
-  #       annotations:
-  #         summary: "K8s node not ready: {{ $labels.node }}"
-  #
-  #     # Pod in CrashLoopBackOff
-  #     - alert: KubePodCrashLooping
-  #       expr: rate(kube_pod_container_status_restarts_total[15m]) * 60 * 5 > 0
-  #       for: 5m
-  #       labels:
-  #         severity: warning
-  #       annotations:
-  #         summary: "Pod crash looping: {{ $labels.namespace }}/{{ $labels.pod }}"
-  #
-  #     # Pod stuck in pending for 15+ minutes
-  #     - alert: KubePodPending
-  #       expr: kube_pod_status_phase{phase="Pending"} > 0
-  #       for: 15m
-  #       labels:
-  #         severity: warning
-  #       annotations:
-  #         summary: "Pod stuck pending: {{ $labels.namespace }}/{{ $labels.pod }}"
+  # --- Kubernetes ---
+  - name: kubernetes
+    rules:
+      # Individual node not Ready for 5+ minutes
+      - alert: KubeNodeNotReady
+        expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "K8s node not ready: {{ $labels.node }}"
+          description: "Node {{ $labels.node }} has been NotReady for over 5 minutes. Check talosctl health and VM status on Proxmox."
+
+      # Total ready node count below expected (1 CP + 3 workers = 4)
+      - alert: KubeNodeCountLow
+        expr: count(kube_node_status_condition{condition="Ready",status="true"} == 1) < 4
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "K8s cluster has {{ $value | printf \"%.0f\" }}/4 nodes Ready"
+          description: "Expected 4 Ready nodes (1 control-plane + 3 workers). A node may have silently dropped from the cluster."
+
+      # Pod in CrashLoopBackOff
+      - alert: KubePodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total[15m]) * 60 * 5 > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pod crash looping: {{ $labels.namespace }}/{{ $labels.pod }}"
+          description: "Container {{ $labels.container }} in {{ $labels.namespace }}/{{ $labels.pod }} is crash-looping."
+
+      # Pod stuck in Pending for 15+ minutes
+      - alert: KubePodPending
+        expr: kube_pod_status_phase{phase="Pending"} > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pod stuck pending: {{ $labels.namespace }}/{{ $labels.pod }}"
+          description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been Pending for over 15 minutes. Check for resource pressure or scheduling issues."
 
   # --- UPS (NUT) ---
   - name: ups

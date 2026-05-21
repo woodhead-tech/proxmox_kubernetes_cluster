@@ -93,12 +93,12 @@ scrape_configs:
   # Uncomment after deploying kube-state-metrics and node-exporter DaemonSet
   # (see k8s/base/monitoring/)
 
-  # kube-state-metrics: pod status, deployment health, resource usage
-  # - job_name: "kube-state-metrics"
-  #   static_configs:
-  #     - targets: ["192.168.86.100:30080"]
-  #       labels:
-  #         cluster: "talos-proxmox"
+  # kube-state-metrics: pod status, deployment health, node conditions
+  - job_name: "kube-state-metrics"
+    static_configs:
+      - targets: ["192.168.86.101:30080"]
+        labels:
+          cluster: "talos-proxmox"
 
   # K8s node exporters (DaemonSet, hostNetwork mode)
   # - job_name: "k8s-nodes"
@@ -107,6 +107,7 @@ scrape_configs:
   #         - 192.168.86.101:9100    # control plane
   #         - 192.168.86.111:9100    # worker 0
   #         - 192.168.86.112:9100    # worker 1
+  #         - 192.168.86.112:9100    # worker 2
   #       labels:
   #         cluster: "talos-proxmox"
 
