@@ -169,6 +169,25 @@
             color: #484f58;
         }
 
+        .svc-group-header {
+            grid-column: 1 / -1;
+            font-size: 0.68em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #484f58;
+            padding: 10px 4px 4px;
+            border-bottom: 1px solid #21262d;
+            margin-top: 2px;
+        }
+
+        .svc-group-header:first-child { margin-top: 0; padding-top: 2px; }
+
+        .svc-group-header.demos {
+            color: #d29922;
+            border-bottom-color: #d2992233;
+        }
+
         .metric-row {
             display: flex;
             align-items: center;
@@ -353,40 +372,96 @@
 </div>
 
 <script>
-    var SERVICES = [
-        { name: 'Prometheus', job: 'prometheus', url: 'https://prometheus.woodhead.tech', sub: ':9090' },
-        { name: 'Grafana', job: 'grafana', url: 'https://grafana.woodhead.tech', sub: ':3000' },
-        { name: 'Alertmanager', job: 'alertmanager', url: 'https://alertmanager.woodhead.tech', sub: ':9093' },
-        { name: 'Traefik', job: 'traefik', url: 'https://traefik.woodhead.tech', sub: ':20' },
-        { name: 'Node Exporter', job: 'node-exporter', url: null, sub: ':9100' },
-        { name: 'cAdvisor', job: 'cadvisor', url: null, sub: ':8080' },
-        { name: 'Blackbox', job: 'blackbox', url: null, sub: ':9115' },
-        { name: 'PVE Exporter', job: 'pve-exporter', url: null, sub: ':9221' },
-        { name: 'Plex', job: null, url: 'https://plex.woodhead.tech', sub: 'media' },
-        { name: 'Jellyfin', job: null, url: 'https://jellyfin.woodhead.tech', sub: 'media' },
-        { name: 'Overseerr', job: null, url: 'https://requests.woodhead.tech', sub: 'requests' },
-        { name: 'Sonarr', job: null, url: 'https://sonarr.woodhead.tech', sub: 'tv' },
-        { name: 'Radarr', job: null, url: 'https://radarr.woodhead.tech', sub: 'movies' },
-        { name: 'Bazarr', job: null, url: 'https://bazarr.woodhead.tech', sub: 'subtitles' },
-        { name: 'Prowlarr', job: null, url: 'https://prowlarr.woodhead.tech', sub: 'indexers' },
-        { name: 'SABnzbd', job: null, url: 'https://sabnzbd.woodhead.tech', sub: 'usenet' },
-        { name: 'TrueNAS', job: null, url: 'https://nas.woodhead.tech', sub: 'storage' },
-        { name: 'Home Assistant', job: null, url: 'https://home.woodhead.tech', sub: 'automation' },
-        { name: 'Authentik', job: null, url: 'https://auth.woodhead.tech', sub: 'identity' },
-        { name: 'SDR Scanner', job: null, url: 'https://scanner.woodhead.tech', sub: 'radio' },
-        { name: 'Gourmand', job: null, url: 'https://recipes.woodhead.tech', sub: 'recipes' },
-        { name: 'OpenClaw', job: null, url: 'https://claw.woodhead.tech', sub: 'ai' },
-        { name: 'Libby Alert', job: null, url: 'https://alert.woodhead.tech', sub: 'safety' },
-        { name: 'Docs', job: null, url: 'https://docs.woodhead.tech', sub: 'docs' },
-        { name: 'Resume', job: null, url: 'https://resume.woodhead.tech', sub: 'portfolio' },
-        { name: 'Ender 5 Pro', job: null, url: 'https://ender5.woodhead.tech', sub: '3d printer' },
-        { name: 'Dexcom', job: 'dexcom-exporter', url: null, sub: ':9666' },
-        { name: 'AdGuard', job: null, url: 'https://adguard.woodhead.tech', sub: 'dns' },
-        { name: 'Proxmox', job: null, url: 'https://proxmox.woodhead.tech', sub: 'hypervisor' },
-        { name: 'Kanboard', job: null, url: 'https://tasks.woodhead.tech', sub: 'tasks' },
-        { name: 'Mail', job: null, url: 'https://mail.woodhead.tech', sub: 'email' },
-        { name: 'Minecraft', job: null, url: null, sub: 'woodhead.tech:25565' },
+    var SERVICE_GROUPS = [
+        {
+            label: 'Monitoring',
+            items: [
+                { name: 'Prometheus',    job: 'prometheus',       url: 'https://prometheus.woodhead.tech',   sub: ':9090' },
+                { name: 'Grafana',       job: 'grafana',          url: 'https://grafana.woodhead.tech',      sub: ':3000' },
+                { name: 'Alertmanager', job: 'alertmanager',      url: 'https://alertmanager.woodhead.tech', sub: ':9093' },
+                { name: 'AlertMind',     job: null,               url: 'https://alertmind.woodhead.tech',    sub: 'ai triage' },
+                { name: 'Node Exporter', job: 'node-exporter',    url: null,                                 sub: ':9100' },
+                { name: 'cAdvisor',      job: 'cadvisor',         url: null,                                 sub: ':8080' },
+                { name: 'Blackbox',      job: 'blackbox',         url: null,                                 sub: ':9115' },
+                { name: 'PVE Exporter',  job: 'pve-exporter',     url: null,                                 sub: ':9221' },
+                { name: 'Dexcom',        job: 'dexcom-exporter',  url: null,                                 sub: ':9666' },
+            ]
+        },
+        {
+            label: 'Infrastructure',
+            items: [
+                { name: 'Proxmox',      job: null, url: 'https://proxmox.woodhead.tech',  sub: 'hypervisor' },
+                { name: 'TrueNAS',      job: null, url: 'https://nas.woodhead.tech',       sub: 'storage' },
+                { name: 'Traefik',      job: 'traefik', url: 'https://traefik.woodhead.tech', sub: ':20' },
+                { name: 'Authentik',    job: null, url: 'https://auth.woodhead.tech',      sub: 'identity' },
+                { name: 'AdGuard',      job: null, url: 'https://adguard.woodhead.tech',   sub: 'dns' },
+                { name: 'Step CA',      job: null, url: 'https://step-ca.woodhead.tech',   sub: 'pki' },
+                { name: 'UniFi',        job: null, url: 'https://unifi.woodhead.tech',     sub: 'network' },
+                { name: 'Mail',         job: null, url: 'https://mail.woodhead.tech',      sub: 'email' },
+                { name: 'Kanboard',     job: null, url: 'https://tasks.woodhead.tech',     sub: 'tasks' },
+            ]
+        },
+        {
+            label: 'AI',
+            items: [
+                { name: 'OpenClaw',  job: null, url: 'https://claw.woodhead.tech',      sub: 'ai agent' },
+                { name: 'Claude OS', job: null, url: 'https://claude-os.woodhead.tech', sub: 'ai memory' },
+                { name: 'Ollama',    job: null, url: 'https://ollama.woodhead.tech',    sub: 'llm' },
+            ]
+        },
+        {
+            label: 'Media',
+            items: [
+                { name: 'Plex',      job: null, url: 'https://plex.woodhead.tech',      sub: 'media' },
+                { name: 'Jellyfin',  job: null, url: 'https://jellyfin.woodhead.tech',  sub: 'media' },
+                { name: 'Overseerr', job: null, url: 'https://requests.woodhead.tech',  sub: 'requests' },
+                { name: 'Sonarr',    job: null, url: 'https://sonarr.woodhead.tech',    sub: 'tv' },
+                { name: 'Radarr',    job: null, url: 'https://radarr.woodhead.tech',    sub: 'movies' },
+                { name: 'Bazarr',    job: null, url: 'https://bazarr.woodhead.tech',    sub: 'subtitles' },
+                { name: 'Prowlarr',  job: null, url: 'https://prowlarr.woodhead.tech',  sub: 'indexers' },
+                { name: 'SABnzbd',   job: null, url: 'https://sabnzbd.woodhead.tech',   sub: 'usenet' },
+            ]
+        },
+        {
+            label: 'Apps',
+            items: [
+                { name: 'Home Assistant', job: null, url: 'https://home.woodhead.tech',    sub: 'automation' },
+                { name: 'Gourmand',       job: null, url: 'https://recipes.woodhead.tech', sub: 'recipes' },
+                { name: 'Libby Alert',    job: null, url: 'https://alert.woodhead.tech',   sub: 'safety' },
+                { name: 'SDR Scanner',    job: null, url: 'https://scanner.woodhead.tech', sub: 'radio' },
+                { name: 'Pwnagotchi',     job: null, url: 'https://pwnagotchi.woodhead.tech', sub: 'wifi audit' },
+                { name: 'Minecraft',      job: null, url: null,                             sub: 'woodhead.tech:25565' },
+            ]
+        },
+        {
+            label: '3D Printing',
+            items: [
+                { name: 'Ender 5 Pro', job: null, url: 'https://ender5.woodhead.tech', sub: '3d printer' },
+                { name: 'Ender 3',     job: null, url: 'https://ender3.woodhead.tech', sub: '3d printer' },
+            ]
+        },
+        {
+            label: 'Web & Content',
+            items: [
+                { name: 'Woodhead.tech', job: null, url: 'https://woodhead.tech',              sub: 'consulting' },
+                { name: 'Homelab',       job: null, url: 'https://homelab.woodhead.tech',      sub: 'docs' },
+                { name: 'Docs',          job: null, url: 'https://docs.woodhead.tech',         sub: 'docs' },
+                { name: 'Resume',        job: null, url: 'https://resume.woodhead.tech',       sub: 'portfolio' },
+                { name: 'V2MOM',         job: null, url: 'https://v2mom.woodhead.tech',        sub: 'planning' },
+            ]
+        },
+        {
+            label: 'Customer Demos',
+            demo: true,
+            items: [
+                { name: 'Sky Pups Treats', job: null, url: 'https://skypups.woodhead.tech',      sub: 'proposal' },
+                { name: 'T-Shirts Demo',   job: null, url: 'https://tshirts-demo.woodhead.tech', sub: 'shopstack' },
+            ]
+        },
     ];
+
+    var SERVICES = [];
+    SERVICE_GROUPS.forEach(function (g) { SERVICES = SERVICES.concat(g.items); });
 
     var serviceStatus = {};
 
@@ -401,18 +476,23 @@
         var grid = document.getElementById('services-grid');
         while (grid.firstChild) grid.removeChild(grid.firstChild);
 
-        SERVICES.forEach(function (svc) {
-            var card = document.createElement(svc.url ? 'a' : 'div');
-            card.className = 'svc';
-            if (svc.url) card.href = svc.url;
+        SERVICE_GROUPS.forEach(function (group) {
+            var hdr = el('div', 'svc-group-header' + (group.demo ? ' demos' : ''), group.label);
+            grid.appendChild(hdr);
 
-            var dot = el('div', 'svc-dot ' + (serviceStatus[svc.name] || 'unknown'));
-            var info = el('div', 'svc-info');
-            info.appendChild(el('div', 'svc-name', svc.name));
-            info.appendChild(el('div', 'svc-sub', svc.sub));
-            card.appendChild(dot);
-            card.appendChild(info);
-            grid.appendChild(card);
+            group.items.forEach(function (svc) {
+                var card = document.createElement(svc.url ? 'a' : 'div');
+                card.className = 'svc';
+                if (svc.url) card.href = svc.url;
+
+                var dot = el('div', 'svc-dot ' + (serviceStatus[svc.name] || 'unknown'));
+                var info = el('div', 'svc-info');
+                info.appendChild(el('div', 'svc-name', svc.name));
+                info.appendChild(el('div', 'svc-sub', svc.sub));
+                card.appendChild(dot);
+                card.appendChild(info);
+                grid.appendChild(card);
+            });
         });
     }
 
