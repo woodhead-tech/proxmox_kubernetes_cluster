@@ -184,6 +184,8 @@ and resource allocation.
 | 192.168.86.37      | claude-os        | LXC    | 215   | Claude OS AI memory system          |
 | 192.168.86.38      | pwnagotchi       | LXC    | 216   | Pwnagotchi WiFi (on pve3)           |
 | 192.168.86.42      | ollama           | LXC    | 217   | Ollama local LLM inference (iGPU)   |
+| 192.168.86.47      | guacamole        | LXC    | 219   | Apache Guacamole browser-based RDP gateway |
+| 192.168.86.48      | dev-desktop      | LXC    | 220   | Arch Linux dev desktop (XFCE4 + xRDP, tower1) |
 | 192.168.86.131     | piboard          | Pi     | --    | Raspberry Pi 3B monitoring dashboard|
 | 192.168.86.136     | klipper-ender5pro| Pi     | --    | Klipper 3D printer (Ender 5 Pro)    |
 | 192.168.86.137     | ubuntu-laptop    | Client | --    | Ubuntu laptop (workstation)         |
@@ -460,6 +462,8 @@ in parallel after the host is ready.
 | auto  | Claude OS LXC        | 215   | --     | Starts on boot, AI memory system            |
 | auto  | Pwnagotchi LXC       | 216   | --     | Starts on boot, USB WiFi dongle (on pve3)   |
 | auto  | Ollama LXC           | 217   | --     | Starts on boot, local LLM inference (iGPU)  |
+| auto  | Guacamole LXC        | 219   | --     | Starts on boot, browser-based RDP gateway   |
+| auto  | Dev Desktop LXC      | 220   | --     | Starts on boot, Arch Linux XFCE4 + xRDP     |
 | manual| K8s Cluster          | 400+  | --     | Bootstrapped via `make bootstrap`           |
 
 ---
@@ -651,6 +655,8 @@ consume no CPU regardless of weight.
 | `proxmox_virtual_environment_container.kanboard`  | lxc-kanboard.tf             | LXC  | 211 |
 | `proxmox_virtual_environment_container.mailserver` | lxc-mailserver.tf          | LXC  | 212 |
 | `proxmox_virtual_environment_container.ollama`    | lxc-ollama.tf               | LXC  | 217 |
+| `proxmox_virtual_environment_container.guacamole` | lxc-guacamole.tf            | LXC  | 219 |
+| `proxmox_virtual_environment_container.dev_desktop`| lxc-dev-desktop.tf         | LXC  | 220 |
 | `proxmox_virtual_environment_file.lxc_ssh_fix`    | lxc-ssh-hook.tf             | File | --  |
 | `proxmox_virtual_environment_vm.truenas`          | vm-truenas.tf               | VM   | 300 |
 | `proxmox_virtual_environment_vm.homeassistant`    | vm-homeassistant.tf         | VM   | 301 |
@@ -712,6 +718,7 @@ Certificates are wildcard (`*.woodhead.tech`) via Let's Encrypt DNS-01.
 | adguard.woodhead.tech  | 192.168.86.35        | 80    | adguard.yml           | Active (Authentik SSO) |
 | proxmox.woodhead.tech  | 192.168.86.29        | 8006  | proxmox.yml           | Active (Authentik SSO) |
 | traefik.woodhead.tech  | localhost (dashboard) | --    | dashboard.yml         | Active (Authentik SSO) |
+| guac.woodhead.tech     | 192.168.86.47        | 8080  | guacamole.yml         | Active (Authentik SSO) |
 | *.woodhead.tech        | K8s VIP (192.168.86.100) | 80 | k8s-ingress.yml      | Commented |
 
 Routes are in `ansible/files/traefik/dynamic/`. Uncomment as you deploy each service.

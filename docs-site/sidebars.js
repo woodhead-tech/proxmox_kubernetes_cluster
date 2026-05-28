@@ -26,6 +26,7 @@ const sidebars = {
         'services/authentik',
         'services/kanboard',
         'services/mailserver',
+        'services/remote-desktop',
       ],
     },
     {
