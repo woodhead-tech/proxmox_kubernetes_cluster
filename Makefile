@@ -50,6 +50,9 @@ help: ## Show this help
 setup: ## Verify and configure Proxmox hosts (run once after fresh install)
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-proxmox-base.yml
 
+nut-client: ## Configure NUT upsmon client on pve1+pve2 (same rack UPS as pve3)
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-nut-client.yml
+
 prepare: ## Download Talos ISO to Proxmox host
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/prepare-proxmox.yml
 
@@ -99,7 +102,9 @@ plan-lxc: ## Preview LXC container changes only
 		-target=proxmox_virtual_environment_container.claude_os \
 		-target=proxmox_virtual_environment_container.ollama \
 		-target=proxmox_virtual_environment_container.pwnagotchi \
-		-target=proxmox_virtual_environment_container.unifi
+		-target=proxmox_virtual_environment_container.unifi \
+		-target=proxmox_virtual_environment_container.guacamole \
+		-target=proxmox_virtual_environment_container.dev_desktop
 
 apply-lxc: ## Create/update LXC containers only
 	cd $(TERRAFORM_DIR) && terraform apply \
@@ -120,7 +125,9 @@ apply-lxc: ## Create/update LXC containers only
 		-target=proxmox_virtual_environment_container.claude_os \
 		-target=proxmox_virtual_environment_container.ollama \
 		-target=proxmox_virtual_environment_container.pwnagotchi \
-		-target=proxmox_virtual_environment_container.unifi
+		-target=proxmox_virtual_environment_container.unifi \
+		-target=proxmox_virtual_environment_container.guacamole \
+		-target=proxmox_virtual_environment_container.dev_desktop
 
 # ===== Phase 2-3: LXC Services =====
 
@@ -232,6 +239,22 @@ kanboard: ## Deploy Kanboard project management into its LXC
 
 unifi: ## Deploy UniFi Network Application (WiFi controller) into its LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-unifi.yml
+
+guacamole: ## Deploy Apache Guacamole browser-based remote desktop gateway (GUAC_POSTGRES_PASSWORD required)
+	@if [ -z "$(GUAC_POSTGRES_PASSWORD)" ]; then \
+		echo "Usage: make guacamole GUAC_POSTGRES_PASSWORD=<password>"; \
+		exit 1; \
+	fi
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-guacamole.yml \
+		-e guac_postgres_password=$(GUAC_POSTGRES_PASSWORD)
+
+dev-desktop: ## Deploy Arch Linux dev desktop with XFCE + xRDP (DEV_USER_PASSWORD required)
+	@if [ -z "$(DEV_USER_PASSWORD)" ]; then \
+		echo "Usage: make dev-desktop DEV_USER_PASSWORD=<password>"; \
+		exit 1; \
+	fi
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-dev-desktop.yml \
+		-e dev_user_password=$(DEV_USER_PASSWORD)
 
 sdr: ## Deploy SDR scanner stack (Trunk Recorder + rdio-scanner) for SNO911 fire/EMS
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-sdr.yml

@@ -1,0 +1,210 @@
+# setup-dev-desktop.yml - Deploy Arch Linux dev desktop with XFCE + xRDP
+#
+# Configures the dev-desktop LXC (Arch Linux) with:
+#   - XFCE4 desktop environment
+#   - xRDP for RDP access (port 3389)
+#   - Dev tools: go, python, docker, git, zsh, neovim, yay (AUR helper)
+#   - User bwoodwar with sudo + docker group
+#
+# Prerequisites:
+#   - dev-desktop LXC created via Terraform (make apply-lxc)
+#   - Arch Linux template (archlinux-base_20260420-1_amd64.tar.zst) on tower1
+#
+# Usage:
+#   make dev-desktop DEV_USER_PASSWORD=<password>
+#
+# Access after deploy:
+#   - Via Guacamole: https://guac.woodhead.tech → add RDP connection to 192.168.86.48:3389
+#   - Direct RDP on LAN: 192.168.86.48:3389 (username: bwoodwar)
+---
+- name: Deploy Arch Linux dev desktop
+  hosts: lxc_services:&dev_desktop
+  vars:
+    dev_user: bwoodwar
+    dev_user_password: "{{ dev_user_password | mandatory }}"
+    go_version: "1.23.4"
+
+  tasks:
+    # --- System Init ---
+    - name: Initialize pacman keyring
+      ansible.builtin.command:
+        cmd: pacman-key --init
+      changed_when: true
+
+    - name: Populate pacman keyring
+      ansible.builtin.command:
+        cmd: pacman-key --populate archlinux
+      changed_when: true
+
+    - name: Update pacman mirrors and system
+      ansible.builtin.command:
+        cmd: pacman -Syu --noconfirm
+      changed_when: true
+
+    # --- Base packages ---
+    - name: Install base packages
+      community.general.pacman:
+        name:
+          - base-devel
+          - git
+          - curl
+          - wget
+          - sudo
+          - openssh
+          - zsh
+          - vim
+          - neovim
+          - tmux
+          - htop
+          - python
+          - python-pip
+          - docker
+          - docker-compose
+          - xfce4
+          - xfce4-goodies
+          - xfce4-terminal
+          - xorg-server
+          - xorg-xinit
+          - dbus
+          - noto-fonts
+        state: present
+        update_cache: true
+
+    # --- SSH config ---
+    - name: Enable and start sshd
+      ansible.builtin.systemd:
+        name: sshd
+        enabled: true
+        state: started
+
+    # --- Docker ---
+    - name: Enable and start Docker
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    # --- User setup ---
+    - name: Create dev user group
+      ansible.builtin.group:
+        name: "{{ dev_user }}"
+
+    - name: Create dev user
+      ansible.builtin.user:
+        name: "{{ dev_user }}"
+        group: "{{ dev_user }}"
+        groups:
+          - wheel
+          - docker
+        shell: /usr/bin/zsh
+        create_home: true
+        password: "{{ dev_user_password | password_hash('sha512') }}"
+
+    - name: Allow wheel group sudo without password
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        regexp: "^# %wheel ALL=(ALL:ALL) NOPASSWD"
+        line: "%wheel ALL=(ALL:ALL) NOPASSWD: ALL"
+        validate: "visudo -cf %s"
+
+    - name: Inject SSH key for bwoodwar
+      ansible.posix.authorized_key:
+        user: "{{ dev_user }}"
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_ansible.pub') }}"
+
+    # --- Go ---
+    - name: Download Go
+      ansible.builtin.get_url:
+        url: "https://go.dev/dl/go{{ go_version }}.linux-amd64.tar.gz"
+        dest: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
+        mode: "0644"
+
+    - name: Install Go
+      ansible.builtin.unarchive:
+        src: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
+        dest: /usr/local
+        remote_src: true
+        creates: /usr/local/go/bin/go
+
+    - name: Add Go to PATH for all users
+      ansible.builtin.copy:
+        content: |
+          export PATH=$PATH:/usr/local/go/bin
+          export GOPATH=$HOME/go
+          export PATH=$PATH:$GOPATH/bin
+        dest: /etc/profile.d/golang.sh
+        mode: "0644"
+
+    # --- yay (AUR helper) ---
+    - name: Clone yay from AUR
+      ansible.builtin.git:
+        repo: https://aur.archlinux.org/yay.git
+        dest: /tmp/yay
+        version: HEAD
+      become: true
+      become_user: "{{ dev_user }}"
+
+    - name: Build and install yay
+      ansible.builtin.command:
+        cmd: makepkg -si --noconfirm
+        chdir: /tmp/yay
+        creates: /usr/bin/yay
+      become: true
+      become_user: "{{ dev_user }}"
+
+    # --- xRDP (AUR) ---
+    - name: Install xrdp and xorgxrdp from AUR
+      ansible.builtin.command:
+        cmd: yay -S --noconfirm xrdp xorgxrdp
+        creates: /usr/sbin/xrdp
+      become: true
+      become_user: "{{ dev_user }}"
+
+    - name: Enable and start xrdp
+      ansible.builtin.systemd:
+        name: xrdp
+        enabled: true
+        state: started
+
+    - name: Enable xrdp-sesman
+      ansible.builtin.systemd:
+        name: xrdp-sesman
+        enabled: true
+        state: started
+
+    # --- XFCE xsession ---
+    - name: Set XFCE as default session for bwoodwar
+      ansible.builtin.copy:
+        content: |
+          export DESKTOP_SESSION=xfce
+          exec startxfce4
+        dest: "/home/{{ dev_user }}/.xsession"
+        owner: "{{ dev_user }}"
+        group: "{{ dev_user }}"
+        mode: "0755"
+
+    - name: Set XFCE as xRDP session
+      ansible.builtin.lineinfile:
+        path: /etc/xrdp/startwm.sh
+        regexp: "^exec"
+        line: "exec startxfce4"
+        insertafter: EOF
+
+    # --- dbus (required for XFCE) ---
+    - name: Enable dbus
+      ansible.builtin.systemd:
+        name: dbus
+        enabled: true
+        state: started
+
+    - name: Deployment summary
+      ansible.builtin.debug:
+        msg:
+          - "Dev desktop deployed at 192.168.86.48"
+          - "RDP: 192.168.86.48:3389 — username: {{ dev_user }}"
+          - "Via Guacamole: add RDP connection in guac.woodhead.tech"
+          - "  Protocol: RDP, Hostname: 192.168.86.48, Port: 3389"
+          - "SSH: ssh -i ~/.ssh/id_ansible bwoodwar@192.168.86.48"
+          - "Go: {{ go_version }} at /usr/local/go"
+          - "AUR helper: yay"

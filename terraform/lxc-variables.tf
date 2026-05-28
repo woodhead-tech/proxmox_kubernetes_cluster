@@ -1,5 +1,12 @@
 # lxc-variables.tf - Variables for LXC container provisioning
 
+# --- Arch Linux Template ---
+variable "arch_template" {
+  description = "Arch Linux LXC template file ID"
+  type        = string
+  default     = "local:vztmpl/archlinux-base_20260420-1_amd64.tar.zst"
+}
+
 # --- LXC Storage ---
 # LXC containers use local storage (faster, no Ceph overhead for lightweight services)
 variable "lxc_storage" {
@@ -462,6 +469,46 @@ variable "unifi_ip" {
 
 variable "unifi_root_password" {
   description = "Root password for the UniFi LXC"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+# --- Guacamole LXC ---
+variable "guacamole_vmid" {
+  description = "VM ID for the Guacamole remote desktop gateway LXC"
+  type        = number
+  default     = 219
+}
+
+variable "guacamole_ip" {
+  description = "IP address for the Guacamole LXC"
+  type        = string
+  default     = "192.168.86.47"
+}
+
+variable "guacamole_root_password" {
+  description = "Root password for the Guacamole LXC"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+# --- Dev Desktop LXC ---
+variable "dev_desktop_vmid" {
+  description = "VM ID for the dev desktop LXC (Arch + XFCE + xRDP)"
+  type        = number
+  default     = 220
+}
+
+variable "dev_desktop_ip" {
+  description = "IP address for the dev desktop LXC"
+  type        = string
+  default     = "192.168.86.48"
+}
+
+variable "dev_desktop_root_password" {
+  description = "Root password for the dev desktop LXC"
   type        = string
   default     = ""
   sensitive   = true

@@ -1,0 +1,26 @@
+http:
+  routers:
+    guacamole:
+      rule: "Host(`guac.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: guacamole
+      middlewares:
+        - authentik@file
+        - guac-strip-prefix
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
+  middlewares:
+    guac-strip-prefix:
+      stripPrefix:
+        prefixes:
+          - "/guacamole"
+
+  services:
+    guacamole:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.47:8080"
