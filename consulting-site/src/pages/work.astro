@@ -48,6 +48,7 @@ import Layout from '../layouts/Layout.astro';
           <div class="work-links">
             <a href="https://github.com/woodhead-tech/alertmind" class="btn btn-outline" target="_blank" rel="noopener">View on GitHub →</a>
             <a href="https://alertmind.woodhead.tech" class="btn btn-outline" target="_blank" rel="noopener">Live Demo →</a>
+            <a href="/blog/alertmind-automating-oncall-triage" class="btn btn-outline">Read the write-up →</a>
           </div>
         </article>
 
@@ -114,6 +115,65 @@ import Layout from '../layouts/Layout.astro';
           <div class="work-links">
             <a href="https://github.com/woodhead-tech/proxmox_kubernetes_cluster" class="btn btn-outline" target="_blank" rel="noopener">View on GitHub →</a>
             <a href="/homelab" class="btn btn-outline">Architecture overview →</a>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <!-- ShopStack Deployments -->
+  <section class="section">
+    <div class="container">
+      <div class="group-label">ShopStack Deployments</div>
+      <div class="work-grid">
+
+        <article class="work-card work-card-featured">
+          <div class="work-card-header">
+            <div class="status-badge live">Deployed · AWS</div>
+            <div class="work-tags">
+              <span class="tag">Ansible</span>
+              <span class="tag">Terraform</span>
+              <span class="tag">Mailcow</span>
+              <span class="tag">Nextcloud</span>
+              <span class="tag">Invoice Ninja</span>
+              <span class="tag">AWS</span>
+            </div>
+          </div>
+          <h2 class="work-title">T-Shirt Business — Full Business Stack in 57 Minutes</h2>
+          <div class="work-body">
+            <div class="work-section">
+              <div class="work-section-label">Problem</div>
+              <p>A custom T-shirt seller running her business on Instagram DMs, PayPal.me links, personal Gmail, and a shared Google Drive. Orders tracked in a spreadsheet. No paper trail, no separation between personal and business, no way to look professional to bulk buyers.</p>
+            </div>
+            <div class="work-section">
+              <div class="work-section-label">Solution</div>
+              <p>ShopStack deployed on AWS — a single <code>terraform apply</code> provisions the EC2 instance and Elastic IP, then an Ansible playbook deploys Mailcow, Nextcloud, Invoice Ninja, Authentik SSO, Traefik, WireGuard, and Uptime Kuma in one run. No manual steps inside the instance.</p>
+            </div>
+            <div class="work-section">
+              <div class="work-section-label">Outcome</div>
+              <div class="metrics-row">
+                <div class="metric">
+                  <span class="metric-value">57 min</span>
+                  <span class="metric-label">terraform apply → all services live</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-value">$144/mo</span>
+                  <span class="metric-label">infrastructure + managed service</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-value">8</span>
+                  <span class="metric-label">playbook improvements captured</span>
+                </div>
+              </div>
+              <p>Professional email at her domain, Nextcloud for design files and order docs, Invoice Ninja for invoices with Stripe payment links — all behind SSO. Every service HTTPS with a real cert. She went from PayPal screenshots to sending professional invoices in one afternoon.</p>
+            </div>
+          </div>
+          <div class="work-links">
+            <a href="/blog/shopstack-tshirt-case-study" class="btn btn-primary">Read the full case study →</a>
+            <a href="/shopstack" class="btn btn-outline">See ShopStack pricing →</a>
           </div>
         </article>
 
@@ -396,7 +456,37 @@ import Layout from '../layouts/Layout.astro';
   .cta-box h2 { font-size: clamp(1.5rem, 3vw, 2rem); margin-bottom: 0.75rem; }
   .cta-box p { font-size: 0.95rem; color: var(--muted); line-height: 1.7; margin-bottom: 1.75rem; }
 
+  .metrics-row {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+
+  .metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .metric-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
   @media (max-width: 768px) {
     .work-grid { grid-template-columns: 1fr; }
+    .metrics-row { gap: 1rem; }
   }
 </style>
