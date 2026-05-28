@@ -36,7 +36,7 @@ services:
       GUACD_HOSTNAME: guacd
       POSTGRESQL_HOSTNAME: postgres
       POSTGRESQL_DATABASE: guacamole_db
-      POSTGRESQL_USERNAME: guacamole_user
+      POSTGRESQL_USER: guacamole_user
     ports:
       - "8080:8080"
     networks:
