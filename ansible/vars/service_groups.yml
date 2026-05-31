@@ -72,11 +72,6 @@ service_groups:
       - { vmid: 215, name: claude-os, type: lxc }
       - { vmid: 217, name: ollama, type: lxc }
 
-  network:
-    description: "Network infrastructure (WiFi controller)"
-    members:
-      - { vmid: 218, name: unifi, type: lxc }
-
   infra:
     description: "Email + PXE boot"
     members:

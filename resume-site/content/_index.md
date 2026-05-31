@@ -13,7 +13,7 @@ title: "Brandon Woodward"
             <span class="sep">·</span>
             <a href="https://github.com/woodhead-tech">github.com/woodhead-tech</a>
             <span class="sep">·</span>
-            <span>San Antonio, TX</span>
+            <span>Everett, WA 98203</span>
         </div>
     </div>
 </header>

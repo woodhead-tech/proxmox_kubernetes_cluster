@@ -1,0 +1,91 @@
+# setup-nut-client.yml - Configure NUT upsmon client on rack Proxmox nodes
+#
+# pve1 and pve2 share the same CyberPower CST135UC2 UPS as pve3, but have no
+# upsmon configured. Without this, they hard-power-off on a UPS failure instead
+# of shutting down gracefully -- risking Ceph OSD corruption (osd.0 on pve1,
+# osd.1 on pve2).
+#
+# This playbook installs nut-client and configures upsmon to monitor the NUT
+# server already running on pve3 (192.168.86.31:3493).
+#
+# Usage:
+#   ansible-playbook playbooks/setup-nut-client.yml
+#
+# Verify after running:
+#   upsc cyberpower@192.168.86.31    # run from pve1 or pve2
+#   systemctl status nut-monitor     # on pve1 and pve2
+---
+- name: Configure NUT upsmon client on rack Proxmox nodes
+  hosts: pve1,pve2
+  gather_timeout: 30
+  vars:
+    nut_server: "192.168.86.31"   # pve3 runs the NUT server for the rack UPS
+    nut_ups_name: "cyberpower"
+    nut_monitor_user: "monitor"
+    nut_monitor_password: "nutmonitor"
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install nut-client
+      ansible.builtin.apt:
+        name: nut-client
+        state: present
+
+    - name: Configure NUT mode as netclient
+      ansible.builtin.copy:
+        content: |
+          MODE=netclient
+        dest: /etc/nut/nut.conf
+        owner: root
+        group: nut
+        mode: "0640"
+      notify: Restart nut-monitor
+
+    - name: Configure upsmon to monitor pve3 NUT server
+      ansible.builtin.copy:
+        content: |
+          MONITOR {{ nut_ups_name }}@{{ nut_server }} 1 {{ nut_monitor_user }} {{ nut_monitor_password }} secondary
+          SHUTDOWNCMD "/sbin/shutdown -h +0"
+          POLLFREQ 15
+          POLLFREQALERT 5
+          HOSTSYNC 15
+          DEADTIME 25
+          FINALDELAY 5
+          RBWARNTIME 43200
+          NOCOMMWARNTIME 300
+        dest: /etc/nut/upsmon.conf
+        owner: root
+        group: nut
+        mode: "0640"
+      notify: Restart nut-monitor
+
+    - name: Enable and start nut-monitor
+      ansible.builtin.systemd:
+        name: nut-monitor
+        enabled: true
+        state: started
+      ignore_errors: "{{ ansible_check_mode }}"
+
+    - name: Verify upsmon can reach NUT server
+      ansible.builtin.command:
+        cmd: upsc {{ nut_ups_name }}@{{ nut_server }}
+      register: upsc_result
+      changed_when: false
+      failed_when: upsc_result.rc != 0
+      when: not ansible_check_mode
+
+    - name: Show UPS status from this node
+      ansible.builtin.debug:
+        msg: "{{ upsc_result.stdout_lines | select('match', '(ups\\.status|battery\\.charge|battery\\.runtime|ups\\.load)') | list }}"
+      when: not ansible_check_mode
+
+  handlers:
+    - name: Restart nut-monitor
+      ansible.builtin.systemd:
+        name: nut-monitor
+        state: restarted
+      ignore_errors: "{{ ansible_check_mode }}"

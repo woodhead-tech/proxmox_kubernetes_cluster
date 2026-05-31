@@ -252,4 +252,11 @@ scrape_configs:
         replacement: blackbox-exporter:9115
 
   # ===== Klipper 3D Printers =====
-  # Moonraker /machine/metrics requires [prometheus] in moonraker.conf -- skipped for now
+  # Custom exporter polls Moonraker REST API on both printers every 15s.
+  # Metrics: hotend/bed temps, print progress, filament used, printer state.
+  - job_name: "klipper"
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["192.168.86.25:9101"]
+        labels:
+          instance: "klipper-exporter"
