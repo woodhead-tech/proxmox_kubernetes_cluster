@@ -179,11 +179,11 @@ and resource allocation.
 | 192.168.86.32      | sdr              | LXC    | 210   | SDR scanner (Trunk Recorder + rdio-scanner)|
 | 192.168.86.33      | kanboard         | LXC    | 211   | Kanboard task queue (ClawBot)       |
 | 192.168.86.34      | mailserver       | LXC    | 212   | Mailcow email (woodhead.tech)       |
-| 192.168.86.35      | pxe              | LXC    | 213   | PXE boot server                     |
-| 192.168.86.36      | zigbee2mqtt      | LXC    | 214   | Zigbee2MQTT bridge (on zotac)       |
+| 192.168.86.36      | step-ca          | LXC    | --    | Step-CA SSH certificate authority   |
 | 192.168.86.37      | claude-os        | LXC    | 215   | Claude OS AI memory system          |
 | 192.168.86.38      | pwnagotchi       | LXC    | 216   | Pwnagotchi WiFi (on pve3)           |
 | 192.168.86.42      | ollama           | LXC    | 217   | Ollama local LLM inference (iGPU)   |
+| 192.168.86.43      | unifi            | LXC    | --    | UniFi Network Application           |
 | 192.168.86.47      | guacamole        | LXC    | 219   | Apache Guacamole browser-based RDP gateway |
 | 192.168.86.48      | dev-desktop      | LXC    | 220   | Arch Linux dev desktop (XFCE4 + xRDP, tower1) |
 | 192.168.86.131     | piboard          | Pi     | --    | Raspberry Pi 3B monitoring dashboard|
@@ -457,8 +457,10 @@ in parallel after the host is ready.
 | auto  | SDR Scanner LXC      | 210   | --     | Starts on boot, privileged, RTL-SDR USB     |
 | auto  | Kanboard LXC         | 211   | --     | Starts on boot, task queue for ClawBot      |
 | auto  | Mailserver LXC       | 212   | --     | Starts on boot, Mailcow email stack         |
-| auto  | PXE LXC              | 213   | --     | Starts on boot, PXE boot server             |
+| auto  | AdGuard LXC          | 213   | --     | Starts on boot, AdGuard Home DNS + blocking |
 | auto  | Zigbee2MQTT LXC      | 214   | --     | Starts on boot, Zigbee bridge (on zotac)    |
+| auto  | Step-CA LXC          | --    | --     | Starts on boot, SSH certificate authority   |
+| auto  | UniFi LXC            | --    | --     | Starts on boot, UniFi Network Application   |
 | auto  | Claude OS LXC        | 215   | --     | Starts on boot, AI memory system            |
 | auto  | Pwnagotchi LXC       | 216   | --     | Starts on boot, USB WiFi dongle (on pve3)   |
 | auto  | Ollama LXC           | 217   | --     | Starts on boot, local LLM inference (iGPU)  |
@@ -576,8 +578,9 @@ in parallel after the host is ready.
 | Piboard (Pi 3B)   | 4     | 1024     | 32 GB  | Waveshare 5" HDMI, Chromium kiosk  |
 | Klipper Ender 5 Pro (Pi 3B) | 4 | 1024 | 16 GB | MainsailOS, USB to printer MCU  |
 | Klipper Ender 3 (Pi 3B) | 4 | 1024 | 16 GB | MainsailOS, USB to printer MCU    |
-| Lenovo Legion Go  | --    | --       | --     | CachyOS deckify; wired .154, wifi .152 |
-| Ubuntu Laptop     | --    | --       | --     | Ubuntu; .137                       |
+| Lenovo Legion Go  | --    | --       | --     | CachyOS; .173 (primary dev machine) |
+| Ubuntu Laptop     | --    | --       | --     | Ubuntu 24.04; .137                  |
+| UniHiker K10      | 1     | 512      | 8 GB   | House assistant (VAD + STT proxy → Ollama .42 → Claude API) |
 
 ### Total resource budget (all services running)
 
@@ -714,11 +717,20 @@ Certificates are wildcard (`*.woodhead.tech`) via Let's Encrypt DNS-01.
 | docs.woodhead.tech     | 192.168.86.25        | 3080  | docs-site.yml         | Active (Authentik SSO) |
 | resume.woodhead.tech   | 192.168.86.25        | 3081  | resume-site.yml       | Active (Authentik SSO) |
 | consulting.woodhead.tech | 192.168.86.25      | 8085  | consulting-site.yml   | Active    |
-| ender3.woodhead.tech   | 192.168.86.138       | 80    | klipper.yml           | Active    |
 | adguard.woodhead.tech  | 192.168.86.35        | 80    | adguard.yml           | Active (Authentik SSO) |
 | proxmox.woodhead.tech  | 192.168.86.29        | 8006  | proxmox.yml           | Active (Authentik SSO) |
 | traefik.woodhead.tech  | localhost (dashboard) | --    | dashboard.yml         | Active (Authentik SSO) |
 | guac.woodhead.tech     | 192.168.86.47        | 8080  | guacamole.yml         | Active (Authentik SSO) |
+| alertmind.woodhead.tech| 192.168.86.25        | 8086  | alertmind.yml         | Active (Authentik SSO) |
+| step-ca.woodhead.tech  | 192.168.86.36        | 9000  | step-ca.yml           | Active (HTTPS passthrough, no SSO) |
+| ollama.woodhead.tech   | 192.168.86.42        | 11434 | ollama.yml            | Active (Authentik SSO) |
+| claude-os.woodhead.tech| 192.168.86.37        | 5173  | claude-os.yml         | Active    |
+| claude-os-api.woodhead.tech | 192.168.86.37   | 8051  | claude-os.yml         | Active    |
+| unifi.woodhead.tech    | 192.168.86.43        | 8443  | unifi.yml             | Active (Authentik SSO) |
+| lab.woodhead.tech      | 192.168.86.25        | 8083  | landing-site.yml      | Active    |
+| homelab.woodhead.tech  | 192.168.86.25        | 8084  | homelab-site.yml      | Active    |
+| v2mom.woodhead.tech    | 192.168.86.25        | 8087  | v2mom.yml             | Active (Authentik SSO) |
+| skypups.woodhead.tech  | 192.168.86.25        | 8085  | skypups.yml           | Active (Authentik SSO, demo) |
 | *.woodhead.tech        | K8s VIP (192.168.86.100) | 80 | k8s-ingress.yml      | Commented |
 
 Routes are in `ansible/files/traefik/dynamic/`. Uncomment as you deploy each service.
@@ -946,7 +958,7 @@ Services are organized into logical groups that can be started and stopped as a 
 | `media` | 202 (arr-stack), 203 (plex), 204 (jellyfin) | ~8GB | No | Depends on `core`, `storage` |
 | `observability` | 205 (monitoring), 206 (openclaw) | ~4GB | No | |
 | `apps` | 201 (recipe-site), 211 (kanboard), 215 (claude-os), 217 (ollama) | ~14.5GB | No | |
-| `infra` | 212 (mailserver), 213 (pxe) | ~3.5GB | No | |
+| `infra` | 212 (mailserver), 213 (adguard) | ~3.5GB | No | |
 | `sdr` | 210 (sdr) | ~2GB | No | RTL-SDR USB passthrough |
 | `special` | 216 (pwnagotchi) | ~1GB | No | Hardware-bound; excluded from bulk ops |
 | `k8s` | 400 (talos-cp-0), 410 (worker-0), 411 (worker-1), 412 (worker-2) | ~28GB | No | Drain workers before stop |
@@ -979,6 +991,45 @@ make group-stop GROUP=<name>        # Stop a group
 | `ansible/playbooks/group-stop.yml` | Stop group with dependency blocking |
 
 Node discovery queries `pvesh get /cluster/resources --type vm` on `pve1`. The `proxmox_node_map` in `service_groups.yml` translates Proxmox node hostnames (e.g., `thinkcentre2`) to Ansible inventory names (e.g., `pve2`).
+
+---
+
+## Operations Notes
+
+### NAS Migration (in progress — 2026)
+
+TrueNAS VM 300 at `192.168.86.40` is being migrated from a Ceph RBD-backed VM to
+dedicated hardware. New machine: AM4 Ryzen 7 5700 build (arrived 2026-05-22).
+
+**Current state:** TrueNAS still running as VM on tower1 (VMID 300, `.40`). During
+hardware transit the NAS was temporarily reachable at `.149`; final IP stays `.40`
+so no config changes are needed on consumers (arr-stack, Plex, Jellyfin, Proxmox backups).
+
+**Post-migration cleanup:** Remove `osd.0` (Samsung 860 QVO SSD, thinkcentre1 — first to
+go) and `osd.5` (Seagate ST2000DM008 SMR HDD, tower1) from Ceph cluster once NAS
+data is on dedicated hardware and Ceph-backed TrueNAS disk is freed.
+
+### Ceph Phase 0 Stabilization
+
+The Ceph cluster has known instability due to SMR HDDs (osd.3, osd.5) and a QLC SSD
+(osd.0). Phase 0 measures are in place to bridge to the NAS migration:
+
+| Measure | Detail |
+|---------|--------|
+| 3-monitor quorum | thinkcentre1/2/3; no mon on tower1 or zotac |
+| osd.0 suicide timeout | 600s (prevents rapid-restart crash cascade) |
+| osd.2 CRUSH frozen | `osd_crush_update_on_start=false` — prevents auto-move on reboot |
+| ARR stack halted | SABnzbd write storms were the primary cascade trigger; arr-stack stopped until NAS migration |
+
+**OSD status summary:**
+- `osd.0` SSD thinkcentre1 — 5-crash history; first to remove post-migration
+- `osd.1` SSD thinkcentre2 — was nearfull at 86%, recovered after osd.0 rebalance
+- `osd.2` SSD thinkcentre3 — CRUSH placement frozen, stable
+- `osd.3` HDD thinkcentre3 — SMR, D-state cascade trigger
+- `osd.5` HDD tower1 — SMR (Seagate ST2000DM008), second to remove post-migration
+- `osd.4` — REMOVED (repurposed as `backup-hdd` dir storage on tower1)
+
+Full operational runbook: `docs/RUNBOOK.md` and `homelab-admin` skill `references/ceph.md`.
 
 ---
 

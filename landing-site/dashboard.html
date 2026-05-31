@@ -188,6 +188,83 @@
             border-bottom-color: #d2992233;
         }
 
+        .view-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .view-tab {
+            font-size: 0.75em;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            background: transparent;
+            color: #8b949e;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .view-tab.active {
+            background: #21262d;
+            color: #e6edf3;
+            border-color: #484f58;
+        }
+
+        .routes-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78em;
+        }
+
+        .routes-table th {
+            text-align: left;
+            padding: 6px 8px;
+            color: #8b949e;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid #21262d;
+            white-space: nowrap;
+        }
+
+        .routes-table td {
+            padding: 5px 8px;
+            border-bottom: 1px solid #161b22;
+            vertical-align: middle;
+        }
+
+        .routes-table tr:hover td { background: #1c2333; }
+
+        .routes-table td:first-child { font-family: monospace; color: #79c0ff; }
+
+        .routes-table td:nth-child(2) { font-family: monospace; color: #8b949e; }
+
+        .auth-badge {
+            display: inline-block;
+            font-size: 0.85em;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+
+        .auth-badge.sso { background: #3fb95022; color: #3fb950; }
+        .auth-badge.own { background: #79c0ff22; color: #79c0ff; }
+        .auth-badge.none { background: #21262d; color: #484f58; }
+
+        .route-group-row td {
+            padding-top: 12px;
+            padding-bottom: 4px;
+            font-size: 0.68em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #484f58;
+            border-bottom: 1px solid #21262d;
+        }
+
         .metric-row {
             display: flex;
             align-items: center;
@@ -325,10 +402,19 @@
     <div class="panel services-panel">
         <div class="panel-header">
             <span>Services</span>
-            <span id="last-updated" style="font-weight: 400; text-transform: none;">--</span>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span id="last-updated" style="font-weight: 400; text-transform: none;">--</span>
+                <div class="view-tabs">
+                    <button class="view-tab active" id="tab-services" onclick="switchView('services')">Services</button>
+                    <button class="view-tab" id="tab-routes" onclick="switchView('routes')">Routes</button>
+                </div>
+            </div>
         </div>
         <div class="panel-body">
             <div class="services-grid" id="services-grid"></div>
+            <div id="routes-view" style="display:none;">
+                <table class="routes-table" id="routes-table"></table>
+            </div>
         </div>
     </div>
 
@@ -469,6 +555,131 @@
 
     var SERVICES = [];
     SERVICE_GROUPS.forEach(function (g) { SERVICES = SERVICES.concat(g.items); });
+
+    var ROUTE_GROUPS = [
+        { label: 'Infrastructure', routes: [
+            { sub: 'proxmox.woodhead.tech',     backend: '192.168.86.29',   port: '8006',  auth: 'sso',  note: 'Proxmox web UI' },
+            { sub: 'traefik.woodhead.tech',      backend: 'localhost',        port: '--',    auth: 'sso',  note: 'Traefik dashboard' },
+            { sub: 'auth.woodhead.tech',         backend: '192.168.86.28',   port: '9000',  auth: 'own',  note: 'Authentik SSO' },
+            { sub: 'adguard.woodhead.tech',      backend: '192.168.86.35',   port: '80',    auth: 'sso',  note: 'AdGuard DNS' },
+            { sub: 'unifi.woodhead.tech',        backend: '192.168.86.43',   port: '8443',  auth: 'sso',  note: 'UniFi' },
+            { sub: 'step-ca.woodhead.tech',      backend: '192.168.86.36',   port: '9000',  auth: 'none', note: 'SSH CA' },
+            { sub: 'mail.woodhead.tech',         backend: '192.168.86.34',   port: '8080',  auth: 'own',  note: 'Mailcow' },
+            { sub: 'nas.woodhead.tech',          backend: '192.168.86.40',   port: '443',   auth: 'sso',  note: 'TrueNAS' },
+            { sub: 'guac.woodhead.tech',         backend: '192.168.86.47',   port: '8080',  auth: 'sso',  note: 'Guacamole RDP' },
+        ]},
+        { label: 'Monitoring', routes: [
+            { sub: 'grafana.woodhead.tech',      backend: '192.168.86.25',   port: '3000',  auth: 'own',  note: 'Grafana' },
+            { sub: 'prometheus.woodhead.tech',   backend: '192.168.86.25',   port: '9090',  auth: 'sso',  note: 'Prometheus' },
+            { sub: 'alertmanager.woodhead.tech', backend: '192.168.86.25',   port: '9093',  auth: 'sso',  note: 'Alertmanager' },
+            { sub: 'alertmind.woodhead.tech',    backend: '192.168.86.25',   port: '8086',  auth: 'sso',  note: 'AlertMind AI triage' },
+        ]},
+        { label: 'AI', routes: [
+            { sub: 'claw.woodhead.tech',         backend: '192.168.86.26',   port: '18789', auth: 'none', note: 'OpenClaw agent' },
+            { sub: 'claude-os.woodhead.tech',    backend: '192.168.86.37',   port: '5173',  auth: 'none', note: 'Claude OS UI' },
+            { sub: 'claude-os-api.woodhead.tech',backend: '192.168.86.37',   port: '8051',  auth: 'none', note: 'Claude OS API' },
+            { sub: 'ollama.woodhead.tech',       backend: '192.168.86.42',   port: '11434', auth: 'sso',  note: 'Ollama LLM' },
+        ]},
+        { label: 'Media', routes: [
+            { sub: 'plex.woodhead.tech',         backend: '192.168.86.23',   port: '32400', auth: 'own',  note: 'Plex' },
+            { sub: 'jellyfin.woodhead.tech',     backend: '192.168.86.24',   port: '8096',  auth: 'own',  note: 'Jellyfin' },
+            { sub: 'requests.woodhead.tech',     backend: '192.168.86.22',   port: '5055',  auth: 'sso',  note: 'Overseerr' },
+            { sub: 'sonarr.woodhead.tech',       backend: '192.168.86.22',   port: '8989',  auth: 'sso',  note: 'Sonarr' },
+            { sub: 'radarr.woodhead.tech',       backend: '192.168.86.22',   port: '7878',  auth: 'sso',  note: 'Radarr' },
+            { sub: 'bazarr.woodhead.tech',       backend: '192.168.86.22',   port: '6767',  auth: 'sso',  note: 'Bazarr' },
+            { sub: 'prowlarr.woodhead.tech',     backend: '192.168.86.22',   port: '9696',  auth: 'sso',  note: 'Prowlarr' },
+            { sub: 'sabnzbd.woodhead.tech',      backend: '192.168.86.22',   port: '8080',  auth: 'sso',  note: 'SABnzbd (via Gluetun)' },
+        ]},
+        { label: 'Apps', routes: [
+            { sub: 'home.woodhead.tech',         backend: '192.168.86.41',   port: '8123',  auth: 'own',  note: 'Home Assistant' },
+            { sub: 'recipes.woodhead.tech',      backend: '192.168.86.21',   port: '80',    auth: 'none', note: 'Gourmand' },
+            { sub: 'alert.woodhead.tech',        backend: '192.168.86.27',   port: '80',    auth: 'none', note: 'Libby Alert' },
+            { sub: 'scanner.woodhead.tech',      backend: '192.168.86.32',   port: '3000',  auth: 'sso',  note: 'SDR P25' },
+            { sub: 'tasks.woodhead.tech',        backend: '192.168.86.33',   port: '8000',  auth: 'none', note: 'Kanboard' },
+            { sub: 'ender5.woodhead.tech',       backend: '192.168.86.136',  port: '80',    auth: 'none', note: 'Ender 5 Pro' },
+            { sub: 'ender3.woodhead.tech',       backend: '192.168.86.138',  port: '80',    auth: 'none', note: 'Ender 3' },
+        ]},
+        { label: 'Web & Content', routes: [
+            { sub: 'lab.woodhead.tech',          backend: '192.168.86.25',   port: '8083',  auth: 'none', note: 'Ops dashboard' },
+            { sub: 'homelab.woodhead.tech',      backend: '192.168.86.25',   port: '8084',  auth: 'none', note: 'Homelab docs' },
+            { sub: 'docs.woodhead.tech',         backend: '192.168.86.25',   port: '3080',  auth: 'sso',  note: 'Internal docs' },
+            { sub: 'resume.woodhead.tech',       backend: '192.168.86.25',   port: '3081',  auth: 'sso',  note: 'Resume' },
+            { sub: 'v2mom.woodhead.tech',        backend: '192.168.86.25',   port: '8087',  auth: 'sso',  note: 'V2MOM' },
+            { sub: 'consulting.woodhead.tech',   backend: '192.168.86.25',   port: '8085',  auth: 'none', note: 'Consulting (fallback)' },
+        ]},
+    ];
+
+    function switchView(view) {
+        var svcGrid = document.getElementById('services-grid');
+        var routesView = document.getElementById('routes-view');
+        var tabSvc = document.getElementById('tab-services');
+        var tabRoutes = document.getElementById('tab-routes');
+
+        if (view === 'routes') {
+            svcGrid.style.display = 'none';
+            routesView.style.display = 'block';
+            tabSvc.classList.remove('active');
+            tabRoutes.classList.add('active');
+            renderRoutes();
+        } else {
+            svcGrid.style.display = 'grid';
+            routesView.style.display = 'none';
+            tabSvc.classList.add('active');
+            tabRoutes.classList.remove('active');
+        }
+    }
+
+    function renderRoutes() {
+        var tbl = document.getElementById('routes-table');
+        while (tbl.firstChild) tbl.removeChild(tbl.firstChild);
+
+        var thead = document.createElement('thead');
+        var hr = document.createElement('tr');
+        ['Subdomain', 'Backend', 'Port', 'Auth', 'Notes'].forEach(function (h) {
+            var th = document.createElement('th');
+            th.textContent = h;
+            hr.appendChild(th);
+        });
+        thead.appendChild(hr);
+        tbl.appendChild(thead);
+
+        var tbody = document.createElement('tbody');
+
+        ROUTE_GROUPS.forEach(function (group) {
+            var gr = document.createElement('tr');
+            gr.className = 'route-group-row';
+            var gd = document.createElement('td');
+            gd.colSpan = 5;
+            gd.textContent = group.label;
+            gr.appendChild(gd);
+            tbody.appendChild(gr);
+
+            group.routes.forEach(function (r) {
+                var row = document.createElement('tr');
+                [r.sub, r.backend, r.port].forEach(function (v) {
+                    var td = document.createElement('td');
+                    td.textContent = v;
+                    row.appendChild(td);
+                });
+
+                var authTd = document.createElement('td');
+                var badge = document.createElement('span');
+                badge.className = 'auth-badge ' + r.auth;
+                badge.textContent = r.auth === 'sso' ? 'SSO' : r.auth === 'own' ? 'Own' : 'None';
+                authTd.appendChild(badge);
+                row.appendChild(authTd);
+
+                var noteTd = document.createElement('td');
+                noteTd.textContent = r.note;
+                noteTd.style.color = '#8b949e';
+                row.appendChild(noteTd);
+
+                tbody.appendChild(row);
+            });
+        });
+
+        tbl.appendChild(tbody);
+    }
 
     var serviceStatus = {};
 
