@@ -252,21 +252,21 @@ Configure via Google Home app > WiFi > Settings > Advanced Networking > Port Man
 
 ## Traffic Flow: Internal
 
-Internal clients (laptops, phones on the LAN) resolve `*.woodhead.tech` via
-Cloudflare DNS (upstream from Google Nest). The Nest supports hairpin NAT,
-so traffic loops back to Traefik without leaving the network.
+Internal clients resolve `*.woodhead.tech` via AdGuard Home (`192.168.86.35`),
+which has split-horizon DNS rewrites: `*.woodhead.tech` and `woodhead.tech`
+resolve directly to Traefik (`192.168.86.20`) without leaving the LAN.
 
 ```
 1. CLIENT (192.168.86.x)   DNS query: recipes.woodhead.tech
        |
        v
-2. GOOGLE NEST DNS          Forwards to upstream (8.8.8.8 / 1.1.1.1)
-       |                   Returns public IP from Cloudflare
-       v
-3. CLIENT                  Connects to public IP :443
+2. GOOGLE NEST DNS          Forwards to AdGuard (192.168.86.35)
        |
        v
-4. GOOGLE NEST             Hairpin NAT: public IP -> 192.168.86.20:443
+3. ADGUARD HOME             Rewrite: *.woodhead.tech -> 192.168.86.20
+       |                   (split-horizon; no WAN roundtrip)
+       v
+4. CLIENT                  Connects directly to 192.168.86.20:443
        |
        v
 5. TRAEFIK (192.168.86.20) Terminates TLS, routes to backend
@@ -275,9 +275,9 @@ so traffic loops back to Traefik without leaving the network.
 6. RECIPE SITE (192.168.86.21) Responds directly on LAN
 ```
 
-Note: Unlike a dedicated firewall with local DNS overrides, internal
-requests still depend on external DNS resolution. Services are unreachable
-during internet outages unless clients have static hosts file entries.
+Split-horizon rewrites live in `/opt/adguardhome/data/AdGuardHome.yaml`
+under `filtering.rewrites`. Internal services remain reachable during
+internet outages (DNS resolves locally; TLS certs are cached by Traefik).
 
 ---
 
@@ -299,17 +299,15 @@ during internet outages unless clients have static hosts file entries.
                     +--------+----------+
                              |
                     +--------v----------+
-                    | Google Nest DNS   |  Forwards to upstream resolvers
+                    | Google Nest DNS   |  Forwards all queries to AdGuard
                     |  (192.168.86.1:53)|
-                    |                   |
-                    |  1. Cache hit     |
-                    |     (instant)     |
-                    |                   |
-                    |  2. Forward to    |  Google DNS (8.8.8.8) or
-                    |     upstream      |  user-configured upstream
-                    |                   |
-                    |  3. Returns       |  Public IP from Cloudflare
-                    |     public IP     |  Hairpin NAT resolves locally
+                    +--------+----------+
+                             |
+                    +--------v----------+
+                    | AdGuard Home      |  Split-horizon rewrites:
+                    | (192.168.86.35)   |  *.woodhead.tech -> 192.168.86.20
+                    |                   |  Upstream: Cloudflare + Google DoH
+                    |                   |  (for non-rewritten queries)
                     +-------------------+
 ```
 
@@ -317,7 +315,8 @@ during internet outages unless clients have static hosts file entries.
 - **Registrar:** Squarespace (nameservers pointed to Cloudflare)
 - **Authoritative DNS:** Cloudflare (free tier)
 - **DDNS updates:** Cron script on Proxmox node (every 5 min)
-- **Internal resolution:** Google Nest forwards to upstream DNS; hairpin NAT loops traffic back to Traefik
+- **Internal resolution:** AdGuard split-horizon rewrites `*.woodhead.tech` to `192.168.86.20` (Traefik)
+- **AdGuard upstreams:** `https://dns.cloudflare.com/dns-query` + `https://dns.google/dns-query` (DoH)
 
 ---
 
