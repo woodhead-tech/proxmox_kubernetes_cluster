@@ -24,8 +24,8 @@
   hosts: recipe-site
   vars:
     # Path to the install script in the recipes repo
-    # Assumes both repos are cloned in ~/WORKSPACE on the control machine
-    install_script: "{{ lookup('env', 'HOME') }}/WORKSPACE/recipes/site/deploy/install-recipe-site.sh"
+    # Repo lives at ~/recipes/ (not ~/WORKSPACE/recipes/)
+    install_script: "{{ lookup('env', 'HOME') }}/recipes/site/deploy/install-recipe-site.sh"
     # Go version must satisfy go.mod requirement (currently go 1.25.0)
     go_version: "1.25.9"
 

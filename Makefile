@@ -337,6 +337,11 @@ rejoin-worker: ## Re-join a worker with a stale Ceph disk — NODE_IP=192.168.86
 	  TALOS_OUT=$(TALOS_OUT) \
 	  ./$(SCRIPTS_DIR)/rejoin-worker.sh
 
+find-talos-nodes: ## Locate Talos nodes in maintenance mode (handles DHCP IP scenario)
+	chmod +x $(SCRIPTS_DIR)/find-talos-nodes.sh
+	CONTROLPLANE_IPS=$(CONTROLPLANE_IPS) WORKER_IPS=$(WORKER_IPS) \
+	  ./$(SCRIPTS_DIR)/find-talos-nodes.sh
+
 bootstrap: ## Generate Talos configs and bootstrap the cluster (runs check-iso first)
 	chmod +x $(SCRIPTS_DIR)/bootstrap.sh $(SCRIPTS_DIR)/check-iso.sh
 	./$(SCRIPTS_DIR)/check-iso.sh
