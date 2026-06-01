@@ -201,18 +201,18 @@
     # re-run `make traefik`.
     - name: Set permanent ARP entry for Authentik
       ansible.builtin.command:
-        cmd: ip neigh replace 192.168.86.28 lladdr bc:24:11:03:aa:6c dev eth0 nud permanent
+        cmd: ip neigh replace 192.168.86.28 lladdr bc:24:11:c8:bc:66 dev eth0 nud permanent
       changed_when: false
 
     - name: Persist ARP entry for Authentik across reboots
       ansible.builtin.copy:
         content: |
           #!/bin/sh
-          # Permanent ARP entry for Authentik (192.168.86.28 / bc:24:11:03:aa:6c)
+          # Permanent ARP entry for Authentik (192.168.86.28 / bc:24:11:c8:bc:66)
           # Prevents LAN DHCP conflicts from poisoning Traefik's ARP cache and
           # taking down all forwardAuth-protected services simultaneously.
           # Run `make traefik` to update if the Authentik LXC MAC ever changes.
-          [ "$IFACE" = "eth0" ] && ip neigh replace 192.168.86.28 lladdr bc:24:11:03:aa:6c dev eth0 nud permanent
+          [ "$IFACE" = "eth0" ] && ip neigh replace 192.168.86.28 lladdr bc:24:11:c8:bc:66 dev eth0 nud permanent
         dest: /etc/network/if-up.d/static-arp-authentik
         owner: root
         group: root
