@@ -1,0 +1,68 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubelet-csr-approver
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kubelet-csr-approver
+rules:
+  - apiGroups: ["certificates.k8s.io"]
+    resources: ["certificatesigningrequests"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["certificates.k8s.io"]
+    resources: ["certificatesigningrequests/approval"]
+    verbs: ["update"]
+  - apiGroups: ["certificates.k8s.io"]
+    resources: ["signers"]
+    resourceNames: ["kubernetes.io/kubelet-serving"]
+    verbs: ["approve"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubelet-csr-approver
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubelet-csr-approver
+subjects:
+  - kind: ServiceAccount
+    name: kubelet-csr-approver
+    namespace: kube-system
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: kubelet-csr-approver
+  namespace: kube-system
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: kubelet-csr-approver
+          restartPolicy: OnFailure
+          containers:
+            - name: approver
+              image: bitnami/kubectl:latest
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  pending=$(kubectl get csr \
+                    -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.signerName}{"\t"}{range .status.conditions[*]}{.type}{" "}{end}{"\n"}{end}' \
+                    | awk '$2 == "kubernetes.io/kubelet-serving" && $0 !~ /Approved/ {print $1}')
+                  if [ -z "$pending" ]; then
+                    echo "No pending kubelet-serving CSRs"
+                    exit 0
+                  fi
+                  echo "Approving: $pending"
+                  echo "$pending" | xargs kubectl certificate approve
