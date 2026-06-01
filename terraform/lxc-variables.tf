@@ -376,7 +376,7 @@ variable "zigbee2mqtt_vmid" {
 variable "zigbee2mqtt_ip" {
   description = "Static IP for the Zigbee2MQTT LXC"
   type        = string
-  default     = "192.168.86.36"
+  default     = "192.168.86.44"
 }
 
 # --- Claude OS LXC ---
@@ -512,6 +512,32 @@ variable "dev_desktop_root_password" {
   type        = string
   default     = ""
   sensitive   = true
+}
+
+# --- AdGuard Home LXC ---
+variable "adguard_vmid" {
+  description = "VM ID for the AdGuard Home DNS LXC"
+  type        = number
+  default     = 221
+}
+
+variable "adguard_ip" {
+  description = "Static IP for the AdGuard Home LXC"
+  type        = string
+  default     = "192.168.86.35"
+}
+
+# --- Step-CA LXC ---
+variable "step_ca_vmid" {
+  description = "VM ID for the Step-CA SSH certificate authority LXC"
+  type        = number
+  default     = 222
+}
+
+variable "step_ca_ip" {
+  description = "Static IP for the Step-CA LXC"
+  type        = string
+  default     = "192.168.86.36"
 }
 
 # --- Domain ---

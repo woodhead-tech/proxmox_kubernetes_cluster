@@ -82,16 +82,6 @@ output "plex_vmid" {
   value       = proxmox_virtual_environment_container.plex.vm_id
 }
 
-output "jellyfin_ip" {
-  description = "Jellyfin Media Server LXC IP"
-  value       = var.jellyfin_ip
-}
-
-output "jellyfin_vmid" {
-  description = "Jellyfin LXC VM ID"
-  value       = proxmox_virtual_environment_container.jellyfin.vm_id
-}
-
 output "monitoring_ip" {
   description = "Monitoring stack LXC IP"
   value       = var.monitoring_ip
@@ -100,16 +90,6 @@ output "monitoring_ip" {
 output "monitoring_vmid" {
   description = "Monitoring stack LXC VM ID"
   value       = proxmox_virtual_environment_container.monitoring.vm_id
-}
-
-output "openclaw_ip" {
-  description = "OpenClaw AI agent LXC IP"
-  value       = var.openclaw_ip
-}
-
-output "openclaw_vmid" {
-  description = "OpenClaw LXC VM ID"
-  value       = proxmox_virtual_environment_container.openclaw.vm_id
 }
 
 output "authelia_ip" {
@@ -130,6 +110,26 @@ output "wireguard_ip" {
 output "wireguard_vmid" {
   description = "WireGuard LXC VM ID"
   value       = proxmox_virtual_environment_container.wireguard.vm_id
+}
+
+output "adguard_ip" {
+  description = "AdGuard Home DNS LXC IP"
+  value       = var.adguard_ip
+}
+
+output "adguard_vmid" {
+  description = "AdGuard Home LXC VM ID"
+  value       = proxmox_virtual_environment_container.adguard.vm_id
+}
+
+output "step_ca_ip" {
+  description = "Step-CA SSH CA LXC IP"
+  value       = var.step_ca_ip
+}
+
+output "step_ca_vmid" {
+  description = "Step-CA LXC VM ID"
+  value       = proxmox_virtual_environment_container.step_ca.vm_id
 }
 
 output "domain" {

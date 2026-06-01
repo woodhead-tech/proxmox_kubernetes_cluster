@@ -65,12 +65,9 @@ resource "proxmox_virtual_environment_container" "libby_alert" {
     nesting = true
   }
 
-  hook_script_file_id = proxmox_virtual_environment_file.lxc_ssh_fix.id
-
   lifecycle {
     ignore_changes = [
       initialization[0].dns[0].domain,
-      hook_script_file_id,
     ]
   }
 }

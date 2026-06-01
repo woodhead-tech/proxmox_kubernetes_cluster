@@ -123,12 +123,16 @@
       ansible.builtin.set_fact:
         step_ca_password: "{{ step_password.content | b64decode | trim }}"
 
+    - name: Write env file for Step-CA
+      ansible.builtin.copy:
+        content: "DOCKER_STEPCA_INIT_PASSWORD={{ step_ca_password }}\n"
+        dest: "{{ step_base_dir }}/.env"
+        mode: '0600'
+
     - name: Deploy Step-CA container
-      ansible.builtin.community.docker.docker_compose_v2:
+      community.docker.docker_compose_v2:
         project_src: "{{ step_base_dir }}"
         state: present
-        env:
-          DOCKER_STEPCA_INIT_PASSWORD: "{{ step_ca_password }}"
 
     - name: Wait for Step-CA to be ready
       ansible.builtin.wait_for:
