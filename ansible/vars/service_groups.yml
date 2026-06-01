@@ -51,37 +51,32 @@ service_groups:
       - { vmid: 209, name: libby-alert, type: lxc }
 
   media:
-    description: "ARR stack, Plex, Jellyfin"
+    description: "ARR stack, Plex"
     depends_on: [core, storage]
     members:
       - { vmid: 202, name: arr-stack, type: lxc }
       - { vmid: 203, name: plex, type: lxc }
-      - { vmid: 204, name: jellyfin, type: lxc }
 
   observability:
-    description: "Prometheus, Grafana, OpenClaw"
+    description: "Prometheus, Grafana, Alertmanager"
     members:
       - { vmid: 205, name: monitoring, type: lxc }
-      - { vmid: 206, name: openclaw, type: lxc }
 
   apps:
-    description: "Lightweight application services + local AI inference"
+    description: "Lightweight application services + remote access"
     members:
       - { vmid: 201, name: recipe-site, type: lxc }
       - { vmid: 211, name: kanboard, type: lxc }
       - { vmid: 215, name: claude-os, type: lxc }
-      - { vmid: 217, name: ollama, type: lxc }
+      - { vmid: 219, name: guacamole, type: lxc }
 
   infra:
-    description: "Email + PXE boot"
+    description: "Email, DNS, backups, SSH CA"
     members:
       - { vmid: 212, name: mailserver, type: lxc }
-      - { vmid: 213, name: pxe, type: lxc }
-
-  sdr:
-    description: "SDR scanner (Trunk Recorder + rdio-scanner)"
-    members:
-      - { vmid: 210, name: sdr, type: lxc }
+      - { vmid: 221, name: adguard, type: lxc }
+      - { vmid: 222, name: step-ca, type: lxc }
+      - { vmid: 223, name: pbs, type: lxc }
 
   special:
     hardware_bound: true

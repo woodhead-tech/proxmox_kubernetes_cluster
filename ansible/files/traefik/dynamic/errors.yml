@@ -1,0 +1,32 @@
+http:
+  middlewares:
+    custom-errors:
+      errors:
+        status:
+          - "404"
+        service: error-pages
+        query: "/404.html"
+
+    serve-404:
+      replacePath:
+        path: "/404.html"
+
+  routers:
+    catch-all:
+      rule: "HostRegexp(`^[a-z0-9-]+\\.woodhead\\.tech$`)"
+      entryPoints:
+        - websecure
+      priority: 1
+      middlewares:
+        - serve-404
+      service: error-pages
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
+  services:
+    error-pages:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.25:8083"

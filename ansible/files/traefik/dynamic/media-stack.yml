@@ -1,7 +1,7 @@
 # media-stack.yml - Traefik routes for media services
 #
-# Routes for Plex, Jellyfin, and TrueNAS web UIs.
-# All services terminate TLS at Traefik and proxy to internal HTTP.
+# Routes for Plex and Jellyfin web UIs.
+# TrueNAS route is in truenas.yml (requires passHostHeader: false).
 
 http:
   routers:
@@ -27,19 +27,6 @@ http:
         domains:
           - main: "*.woodhead.tech"
 
-    # TrueNAS admin UI -- protected by Authelia 2FA
-    truenas:
-      rule: "Host(`nas.woodhead.tech`)"
-      entryPoints:
-        - websecure
-      service: truenas
-      tls:
-        certResolver: cloudflare
-        domains:
-          - main: "*.woodhead.tech"
-      middlewares:
-        - authentik@file
-
   services:
     plex:
       loadBalancer:
@@ -50,14 +37,3 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.86.24:8096"
-
-    truenas:
-      loadBalancer:
-        servers:
-          - url: "https://192.168.86.40:443"
-        serversTransport: truenas-transport
-
-  serversTransports:
-    # TrueNAS uses self-signed certs internally
-    truenas-transport:
-      insecureSkipVerify: true

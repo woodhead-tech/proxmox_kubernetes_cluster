@@ -153,6 +153,13 @@
         .svc-dot.up { background: #3fb950; box-shadow: 0 0 6px #3fb95066; }
         .svc-dot.down { background: #f85149; box-shadow: 0 0 6px #f8514966; }
         .svc-dot.unknown { background: #484f58; }
+        .svc-dot.paused { background: #30363d; }
+
+        .svc.paused {
+            opacity: 0.4;
+            cursor: default;
+            pointer-events: none;
+        }
 
         .svc-info { min-width: 0; }
 
@@ -489,7 +496,7 @@
         {
             label: 'AI',
             items: [
-                { name: 'Claude OS', job: null, url: 'https://claude-os.woodhead.tech', sub: 'ai memory' },
+                { name: 'Claude OS', job: null, url: 'https://claude-os.woodhead.tech', sub: 'ai memory', paused: true },
             ]
         },
         {
@@ -694,11 +701,12 @@
             grid.appendChild(hdr);
 
             group.items.forEach(function (svc) {
-                var card = document.createElement(svc.url ? 'a' : 'div');
-                card.className = 'svc';
-                if (svc.url) card.href = svc.url;
+                var card = document.createElement(svc.url && !svc.paused ? 'a' : 'div');
+                card.className = 'svc' + (svc.paused ? ' paused' : '');
+                if (svc.url && !svc.paused) card.href = svc.url;
 
-                var dot = el('div', 'svc-dot ' + (serviceStatus[svc.name] || 'unknown'));
+                var dotState = svc.paused ? 'paused' : (serviceStatus[svc.name] || 'unknown');
+                var dot = el('div', 'svc-dot ' + dotState);
                 var info = el('div', 'svc-info');
                 info.appendChild(el('div', 'svc-name', svc.name));
                 info.appendChild(el('div', 'svc-sub', svc.sub));
