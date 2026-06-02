@@ -552,3 +552,15 @@ variable "acme_email" {
   type        = string
   default     = ""
 }
+
+variable "hermes_vmid" {
+  description = "VMID for Hermes agent LXC"
+  type        = number
+  default     = 224
+}
+
+variable "hermes_ip" {
+  description = "IP address for Hermes agent LXC"
+  type        = string
+  default     = "192.168.86.44"
+}
