@@ -1,0 +1,18 @@
+http:
+  routers:
+    graduation-site:
+      rule: "Host(`class2026.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: graduation-site
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
+  services:
+    graduation-site:
+      loadBalancer:
+        servers:
+          - url: "https://ender-graduation.pages.dev"
+        passHostHeader: false
