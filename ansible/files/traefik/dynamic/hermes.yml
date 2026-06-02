@@ -1,0 +1,19 @@
+http:
+  routers:
+    hermes:
+      rule: "Host(`hermes.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: hermes
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+      middlewares:
+        - authentik@file
+
+  services:
+    hermes:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.45:9119"

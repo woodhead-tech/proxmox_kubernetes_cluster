@@ -497,7 +497,8 @@
         {
             label: 'AI',
             items: [
-                { name: 'Claude Code', job: null, url: 'https://claude.woodhead.tech', sub: 'web terminal' },
+                { name: 'Claude Code', job: null, url: 'https://claude.woodhead.tech',  sub: 'web terminal' },
+                { name: 'Hermes',      job: null, url: 'https://hermes.woodhead.tech',  sub: 'agent' },
                 { name: 'Claude OS',   job: null, url: 'https://claude-os.woodhead.tech', sub: 'ai memory', paused: true },
             ]
         },
@@ -578,6 +579,7 @@
         ]},
         { label: 'AI', routes: [
             { sub: 'claude.woodhead.tech',       backend: '192.168.86.48',   port: '7681',  auth: 'sso',  note: 'Claude Code ttyd (LXC 220)' },
+            { sub: 'hermes.woodhead.tech',       backend: '192.168.86.45',   port: '9119',  auth: 'sso',  note: 'Hermes dashboard + TUI (LXC 224)' },
             { sub: 'claude-os.woodhead.tech',    backend: '192.168.86.37',   port: '5173',  auth: 'none', note: 'Claude OS UI (paused)' },
         ]},
         { label: 'Media', routes: [
