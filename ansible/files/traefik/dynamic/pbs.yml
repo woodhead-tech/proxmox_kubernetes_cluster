@@ -1,0 +1,24 @@
+http:
+  routers:
+    pbs:
+      rule: "Host(`pbs.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: pbs
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+      middlewares:
+        - authentik@file
+
+  services:
+    pbs:
+      loadBalancer:
+        servers:
+          - url: "https://192.168.86.49:8007"
+        serversTransport: pbs-transport
+
+  serversTransports:
+    pbs-transport:
+      insecureSkipVerify: true

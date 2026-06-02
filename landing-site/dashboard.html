@@ -484,6 +484,7 @@
             label: 'Infrastructure',
             items: [
                 { name: 'Proxmox',      job: null, url: 'https://proxmox.woodhead.tech',  sub: 'hypervisor' },
+                { name: 'PBS',          job: null, url: 'https://pbs.woodhead.tech',       sub: 'backups' },
                 { name: 'TrueNAS',      job: null, url: 'https://nas.woodhead.tech',       sub: 'storage' },
                 { name: 'Traefik',      job: 'traefik', url: 'https://traefik.woodhead.tech', sub: ':20' },
                 { name: 'Authentik',    job: null, url: 'https://auth.woodhead.tech',      sub: 'identity' },
@@ -525,7 +526,6 @@
                 { name: 'Gourmand',       job: null, url: 'https://recipes.woodhead.tech', sub: 'recipes' },
                 { name: 'Libby Alert',    job: null, url: 'https://alert.woodhead.tech',   sub: 'safety' },
                 { name: 'Pwnagotchi',     job: null, url: 'https://pwnagotchi.woodhead.tech', sub: 'wifi audit' },
-                { name: 'Minecraft',      job: null, url: null,                             sub: 'woodhead.tech:25565' },
             ]
         },
         {
@@ -561,10 +561,10 @@
     var ROUTE_GROUPS = [
         { label: 'Infrastructure', routes: [
             { sub: 'proxmox.woodhead.tech',     backend: '192.168.86.29',   port: '8006',  auth: 'sso',  note: 'Proxmox web UI' },
+            { sub: 'pbs.woodhead.tech',          backend: '192.168.86.49',   port: '8007',  auth: 'own',  note: 'Proxmox Backup Server' },
             { sub: 'traefik.woodhead.tech',      backend: 'localhost',        port: '--',    auth: 'sso',  note: 'Traefik dashboard' },
             { sub: 'auth.woodhead.tech',         backend: '192.168.86.28',   port: '9000',  auth: 'own',  note: 'Authentik SSO' },
-            { sub: 'adguard.woodhead.tech',      backend: '192.168.86.35',   port: '80',    auth: 'sso',  note: 'AdGuard DNS' },
-            { sub: 'unifi.woodhead.tech',        backend: '192.168.86.43',   port: '8443',  auth: 'sso',  note: 'UniFi' },
+            { sub: 'adguard.woodhead.tech',      backend: '192.168.86.35',   port: '3000',  auth: 'sso',  note: 'AdGuard DNS' },
             { sub: 'step-ca.woodhead.tech',      backend: '192.168.86.36',   port: '9000',  auth: 'none', note: 'SSH CA' },
             { sub: 'mail.woodhead.tech',         backend: '192.168.86.34',   port: '8080',  auth: 'own',  note: 'Mailcow' },
             { sub: 'nas.woodhead.tech',          backend: '192.168.86.40',   port: '443',   auth: 'sso',  note: 'TrueNAS' },
@@ -577,14 +577,10 @@
             { sub: 'alertmind.woodhead.tech',    backend: '192.168.86.25',   port: '8086',  auth: 'sso',  note: 'AlertMind AI triage' },
         ]},
         { label: 'AI', routes: [
-            { sub: 'claw.woodhead.tech',         backend: '192.168.86.26',   port: '18789', auth: 'none', note: 'OpenClaw agent' },
-            { sub: 'claude-os.woodhead.tech',    backend: '192.168.86.37',   port: '5173',  auth: 'none', note: 'Claude OS UI' },
-            { sub: 'claude-os-api.woodhead.tech',backend: '192.168.86.37',   port: '8051',  auth: 'none', note: 'Claude OS API' },
-            { sub: 'ollama.woodhead.tech',       backend: '192.168.86.42',   port: '11434', auth: 'sso',  note: 'Ollama LLM' },
+            { sub: 'claude-os.woodhead.tech',    backend: '192.168.86.37',   port: '5173',  auth: 'none', note: 'Claude OS UI (paused)' },
         ]},
         { label: 'Media', routes: [
             { sub: 'plex.woodhead.tech',         backend: '192.168.86.23',   port: '32400', auth: 'own',  note: 'Plex' },
-            { sub: 'jellyfin.woodhead.tech',     backend: '192.168.86.24',   port: '8096',  auth: 'own',  note: 'Jellyfin' },
             { sub: 'requests.woodhead.tech',     backend: '192.168.86.22',   port: '5055',  auth: 'sso',  note: 'Overseerr' },
             { sub: 'sonarr.woodhead.tech',       backend: '192.168.86.22',   port: '8989',  auth: 'sso',  note: 'Sonarr' },
             { sub: 'radarr.woodhead.tech',       backend: '192.168.86.22',   port: '7878',  auth: 'sso',  note: 'Radarr' },
@@ -596,7 +592,6 @@
             { sub: 'home.woodhead.tech',         backend: '192.168.86.41',   port: '8123',  auth: 'own',  note: 'Home Assistant' },
             { sub: 'recipes.woodhead.tech',      backend: '192.168.86.21',   port: '80',    auth: 'none', note: 'Gourmand' },
             { sub: 'alert.woodhead.tech',        backend: '192.168.86.27',   port: '80',    auth: 'none', note: 'Libby Alert' },
-            { sub: 'scanner.woodhead.tech',      backend: '192.168.86.32',   port: '3000',  auth: 'sso',  note: 'SDR P25' },
             { sub: 'tasks.woodhead.tech',        backend: '192.168.86.33',   port: '8000',  auth: 'none', note: 'Kanboard' },
             { sub: 'ender5.woodhead.tech',       backend: '192.168.86.136',  port: '80',    auth: 'none', note: 'Ender 5 Pro' },
             { sub: 'ender3.woodhead.tech',       backend: '192.168.86.138',  port: '80',    auth: 'none', note: 'Ender 3' },
