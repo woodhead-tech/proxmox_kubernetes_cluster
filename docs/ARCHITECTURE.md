@@ -164,28 +164,30 @@ and resource allocation.
 | 192.168.86.130     | tower1           | Host   | --    | Proxmox node 4 (tower)              |
 | 192.168.86.147     | zotac            | Host   | --    | Proxmox node 5 (Zotac mini PC)      |
 | 192.168.86.20      | traefik          | LXC    | 200   | Reverse proxy, TLS termination      |
-| 192.168.86.35      | adguard          | LXC    | 213   | AdGuard Home DNS + ad blocking      |
+| 192.168.86.35      | adguard          | LXC    | 221   | AdGuard Home DNS + ad blocking      |
 | 192.168.86.21      | recipe-site      | LXC    | 201   | Go + SQLite recipe app              |
 | 192.168.86.22      | arr-stack        | LXC    | 202   | Docker: Sonarr, Radarr, etc.        |
 | 192.168.86.23      | plex             | LXC    | 203   | Plex Media Server + iGPU            |
-| 192.168.86.24      | jellyfin         | LXC    | 204   | Jellyfin Media Server + iGPU        |
+| 192.168.86.24      | (free)           | --     | --    | was jellyfin (decommissioned)       |
 | 192.168.86.25      | monitoring       | LXC    | 205   | Prometheus, Grafana, Alertmanager   |
-| 192.168.86.26      | openclaw         | LXC    | 206   | OpenClaw AI agent framework         |
+| 192.168.86.26      | (free)           | --     | --    | was openclaw (decommissioned)       |
 | 192.168.86.27      | libby-alert      | LXC    | 209   | Libby life alert QR site + alerts   |
 | 192.168.86.28      | authentik        | LXC    | 207   | Identity provider (Authentik SSO, OIDC)    |
-| 192.168.86.39      | wireguard        | LXC    | 208   | WireGuard VPN tunnel (UDP 51820)    |
-| 192.168.86.40      | truenas          | VM     | 300   | NAS, ZFS, NFS/SMB shares            |
-| 192.168.86.41      | homeassistant    | VM     | 301   | Home Assistant OS, smart home (Zigbee2MQTT + Matter; beardie enclosure automation) |
-| 192.168.86.32      | sdr              | LXC    | 210   | SDR scanner (Trunk Recorder + rdio-scanner)|
-| 192.168.86.33      | kanboard         | LXC    | 211   | Kanboard task queue (ClawBot)       |
+| 192.168.86.33      | kanboard         | LXC    | 211   | Kanboard task queue                 |
 | 192.168.86.34      | mailserver       | LXC    | 212   | Mailcow email (woodhead.tech)       |
-| 192.168.86.36      | step-ca          | LXC    | --    | Step-CA SSH certificate authority   |
-| 192.168.86.37      | claude-os        | LXC    | 215   | Claude OS AI memory system          |
+| 192.168.86.36      | step-ca          | LXC    | 222   | Step-CA SSH certificate authority   |
+| 192.168.86.37      | claude-os        | LXC    | 215   | Claude OS AI memory system (paused) |
 | 192.168.86.38      | pwnagotchi       | LXC    | 216   | Pwnagotchi WiFi (on pve3)           |
-| 192.168.86.42      | ollama           | LXC    | 217   | Ollama local LLM inference (iGPU)   |
-| 192.168.86.43      | unifi            | LXC    | --    | UniFi Network Application           |
-| 192.168.86.47      | guacamole        | LXC    | 219   | Apache Guacamole browser-based RDP gateway |
-| 192.168.86.48      | dev-desktop      | LXC    | 220   | Arch Linux dev desktop (XFCE4 + xRDP, tower1) |
+| 192.168.86.39      | wireguard        | LXC    | 208   | WireGuard VPN (wg0 remote + wg1 ShopStack) |
+| 192.168.86.40      | truenas          | VM     | 300   | NAS, ZFS, NFS/SMB (direct SATA passthrough on tower1) |
+| 192.168.86.41      | homeassistant    | VM     | 301   | Home Assistant OS + Zigbee2MQTT     |
+| 192.168.86.42      | (free)           | --     | --    | was ollama (decommissioned — iGPU too slow) |
+| 192.168.86.43      | (free)           | --     | --    | was unifi (decommissioned)          |
+| 192.168.86.44      | zigbee2mqtt      | LXC    | 214   | Zigbee2MQTT + Mosquitto (on zotac)  |
+| 192.168.86.45      | hermes           | LXC    | 224   | Hermes AI agent (Discord gateway, claude-opus-4-6) |
+| 192.168.86.47      | guacamole        | LXC    | 219   | Apache Guacamole browser-based RDP  |
+| 192.168.86.48      | claude-code      | LXC    | 220   | Claude Code + ttyd web terminal (claude.woodhead.tech) |
+| 192.168.86.49      | pbs              | LXC    | 223   | Proxmox Backup Server (pbs-tc3 datastore) |
 | 192.168.86.131     | piboard          | Pi     | --    | Raspberry Pi 3B monitoring dashboard|
 | 192.168.86.136     | klipper-ender5pro| Pi     | --    | Klipper 3D printer (Ender 5 Pro)    |
 | 192.168.86.137     | ubuntu-laptop    | Client | --    | Ubuntu laptop (workstation)         |
