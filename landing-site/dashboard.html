@@ -497,14 +497,14 @@
         {
             label: 'AI',
             items: [
-                { name: 'Claude OS', job: null, url: 'https://claude-os.woodhead.tech', sub: 'ai memory', paused: true },
+                { name: 'Claude Code', job: null, url: 'https://claude.woodhead.tech', sub: 'web terminal' },
+                { name: 'Claude OS',   job: null, url: 'https://claude-os.woodhead.tech', sub: 'ai memory', paused: true },
             ]
         },
         {
             label: 'Remote Desktop',
             items: [
-                { name: 'Guacamole',    job: null, url: 'https://guac.woodhead.tech',  sub: 'remote access' },
-                { name: 'Dev Desktop',  job: null, url: null,                           sub: '192.168.86.48:3389' },
+                { name: 'Guacamole', job: null, url: 'https://guac.woodhead.tech', sub: 'remote access' },
             ]
         },
         {
@@ -577,6 +577,7 @@
             { sub: 'alertmind.woodhead.tech',    backend: '192.168.86.25',   port: '8086',  auth: 'sso',  note: 'AlertMind AI triage' },
         ]},
         { label: 'AI', routes: [
+            { sub: 'claude.woodhead.tech',       backend: '192.168.86.48',   port: '7681',  auth: 'sso',  note: 'Claude Code ttyd (LXC 220)' },
             { sub: 'claude-os.woodhead.tech',    backend: '192.168.86.37',   port: '5173',  auth: 'none', note: 'Claude OS UI (paused)' },
         ]},
         { label: 'Media', routes: [

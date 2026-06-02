@@ -1,21 +1,21 @@
-# lxc-dev-desktop.tf - Remote dev desktop LXC (XFCE + xRDP)
+# lxc-dev-desktop.tf - Claude Code LXC with ttyd web terminal
 #
 # Placed on tower1 — most available RAM in the cluster (AMD Ryzen 7, 31GB total).
-# Accessible via xRDP directly on LAN, or via Guacamole at guac.woodhead.tech.
+# Accessible via browser at claude.woodhead.tech (Traefik + Authentik).
 
 resource "proxmox_virtual_environment_container" "dev_desktop" {
   node_name   = lookup(var.node_assignments, "dev-desktop", "tower1")
   vm_id       = var.dev_desktop_vmid
-  description = "Remote dev desktop — XFCE + xRDP, accessible via Guacamole"
-  tags        = ["service", "desktop"]
+  description = "Claude Code LXC — ttyd web terminal at claude.woodhead.tech"
+  tags        = ["service", "claude"]
 
   unprivileged  = true
   started       = true
   start_on_boot = true
 
   operating_system {
-    template_file_id = var.arch_template
-    type             = "archlinux"
+    template_file_id = "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
+    type             = "debian"
   }
 
   cpu {
@@ -24,12 +24,12 @@ resource "proxmox_virtual_environment_container" "dev_desktop" {
   }
 
   memory {
-    dedicated = 4096
+    dedicated = 2048
   }
 
   disk {
     datastore_id = var.lxc_storage
-    size         = 30
+    size         = 20
   }
 
   network_interface {

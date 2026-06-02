@@ -237,6 +237,9 @@ step-ca: ## Deploy Smallstep step-ca SSH Certificate Authority into its LXC
 kanboard: ## Deploy Kanboard project management into its LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-kanboard.yml
 
+claude-code: ## Deploy Claude Code + ttyd web terminal LXC (accessible at claude.woodhead.tech)
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-claude-code.yml
+
 unifi: ## Deploy UniFi Network Application (WiFi controller) into its LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-unifi.yml
 

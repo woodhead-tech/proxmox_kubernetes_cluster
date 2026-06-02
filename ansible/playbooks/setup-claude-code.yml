@@ -1,0 +1,173 @@
+---
+- name: Set up Claude Code LXC with ttyd web terminal
+  hosts: dev_desktop
+  become: true
+
+  vars:
+    claude_user: bwoodwar
+    claude_home: /home/bwoodwar
+    ttyd_port: 7681
+    node_version: "22"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install base packages
+      apt:
+        name:
+          - curl
+          - git
+          - tmux
+          - zsh
+          - wget
+          - ca-certificates
+          - gnupg
+          - unzip
+          - jq
+          - rsync
+        state: present
+
+    - name: Add NodeSource GPG key
+      shell: |
+        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+          | gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
+      args:
+        creates: /usr/share/keyrings/nodesource.gpg
+
+    - name: Add NodeSource apt repo
+      apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_{{ node_version }}.x nodistro main"
+        state: present
+        filename: nodesource
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+        update_cache: true
+
+    - name: Install Claude Code globally
+      npm:
+        name: "@anthropic-ai/claude-code"
+        global: true
+        state: present
+
+    - name: Create bwoodwar user
+      user:
+        name: "{{ claude_user }}"
+        shell: /usr/bin/zsh
+        home: "{{ claude_home }}"
+        create_home: true
+        state: present
+
+    - name: Create .claude config directory
+      file:
+        path: "{{ claude_home }}/.claude"
+        state: directory
+        owner: "{{ claude_user }}"
+        group: "{{ claude_user }}"
+        mode: "0700"
+
+    - name: Copy CLAUDE.md
+      copy:
+        src: "{{ playbook_dir }}/../../CLAUDE.md"
+        dest: "{{ claude_home }}/CLAUDE.md"
+        owner: "{{ claude_user }}"
+        group: "{{ claude_user }}"
+        mode: "0644"
+
+    - name: Copy Claude settings.json
+      copy:
+        src: /home/bwoodwar/.claude/settings.json
+        dest: "{{ claude_home }}/.claude/settings.json"
+        owner: "{{ claude_user }}"
+        group: "{{ claude_user }}"
+        mode: "0600"
+
+    - name: Sync skills directory
+      local_action:
+        module: shell
+        cmd: >
+          rsync -az --delete
+          -e 'ssh -i /home/bwoodwar/.ssh/id_ansible -o StrictHostKeyChecking=accept-new'
+          /home/bwoodwar/.claude/skills/
+          root@{{ ansible_host }}:{{ claude_home }}/.claude/skills/
+
+    - name: Fix skills ownership
+      file:
+        path: "{{ claude_home }}/.claude/skills"
+        state: directory
+        owner: "{{ claude_user }}"
+        group: "{{ claude_user }}"
+        recurse: true
+
+    - name: Sync memory directory
+      local_action:
+        module: shell
+        cmd: >
+          rsync -az --delete
+          -e 'ssh -i /home/bwoodwar/.ssh/id_ansible -o StrictHostKeyChecking=accept-new'
+          /home/bwoodwar/.claude/projects/
+          root@{{ ansible_host }}:{{ claude_home }}/.claude/projects/
+
+    - name: Fix memory ownership
+      file:
+        path: "{{ claude_home }}/.claude/projects"
+        state: directory
+        owner: "{{ claude_user }}"
+        group: "{{ claude_user }}"
+        recurse: true
+
+    - name: Create Workspace directory
+      file:
+        path: "{{ claude_home }}/Workspace"
+        state: directory
+        owner: "{{ claude_user }}"
+        group: "{{ claude_user }}"
+        mode: "0755"
+
+    - name: Download ttyd binary
+      get_url:
+        url: "https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.x86_64"
+        dest: /usr/local/bin/ttyd
+        mode: "0755"
+
+    - name: Create ttyd launcher script
+      copy:
+        dest: /usr/local/bin/claude-session
+        mode: "0755"
+        content: |
+          #!/usr/bin/env bash
+          # Attach to existing tmux session or create new one running Claude Code
+          exec tmux new-session -A -s claude -c /home/bwoodwar/Workspace claude
+
+    - name: Create ttyd systemd service
+      copy:
+        dest: /etc/systemd/system/ttyd-claude.service
+        content: |
+          [Unit]
+          Description=ttyd Claude Code web terminal
+          After=network.target
+
+          [Service]
+          Type=simple
+          User={{ claude_user }}
+          Environment=HOME={{ claude_home }}
+          Environment=XDG_RUNTIME_DIR=/run/user/1000
+          WorkingDirectory={{ claude_home }}/Workspace
+          ExecStart=/usr/local/bin/ttyd -p {{ ttyd_port }} -i 0.0.0.0 -W -w {{ claude_home }}/Workspace /usr/local/bin/claude-session
+          Restart=always
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Enable and start ttyd-claude
+      systemd:
+        name: ttyd-claude
+        enabled: true
+        state: started
+        daemon_reload: true
