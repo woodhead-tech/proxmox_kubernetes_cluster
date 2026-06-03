@@ -55,7 +55,7 @@ across a distributed team (peak: 95.9%).
 </p>
 <ul>
 <li>Scrum Lead for GovSysSec — owned sprint planning, retro, closeout ceremonies, backlog grooming, and cross-team coordination with GovSEO</li>
-<li>Built end-to-end RPM distribution pipeline (BenchPress): RPM packaging, Artifactory upload, SFCI signing, Puppet deployment, PIAC validation — eliminated ~50-85 engineer-hours/week of manual browser extension installs across PRA sessions</li>
+<li>Built end-to-end RPM distribution pipeline (BenchPress): RPM packaging, Artifactory upload, SFCI signing, Puppet deployment, PIAC validation — saving significant engineer-hours per week previously spent on manual browser extension installs across PRA sessions</li>
 <li>Developed AI-powered team automation using Claude Code: duty engineer intake triage, automated standup reports, code review skills, sprint ceremony workflows — reduced manual ops toil by 60%</li>
 <li>Led development of sprint3r — a Go CLI tool for automated sprint tracking, GUS API integration, and Slack webhook reporting</li>
 <li>Managed end-to-end certificate lifecycle across GovCloud: expiration tracking, renewal coordination, compliance documentation for FedRAMP continuous monitoring</li>
