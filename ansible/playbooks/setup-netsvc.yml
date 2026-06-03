@@ -1,0 +1,191 @@
+# setup-netsvc.yml - Provision the standalone network-services box (netsvc1, .207)
+#
+# Roles on this box:
+#   1. Secondary AdGuard Home DNS - a byte-faithful MIRROR of the primary (.35).
+#      A systemd timer pulls the primary's live config via a restricted deploy
+#      key (forced `cat` command on the primary) and restarts AGH only on change,
+#      so both resolvers serve identical filtering/rewrites (no DNS poisoning).
+#   2. chrony - NTP server for the 192.168.86.0/24 LAN.
+#   3. prometheus-node-exporter - scraped by the monitoring stack.
+#
+# This box is also the designated Ansible test target.
+#
+# One-time prep done out-of-band (see network/x1026-style runbook in git log):
+#   - id_ansible key for root + bwoodwar, bwoodwar in sudo (NOPASSWD)
+#   - passwords rotated off the shared temp; sshd hardened to keys-only
+#   - mirror deploy key installed: private at /etc/adguard-mirror/id_mirror on
+#     netsvc1, restricted public key in the primary's /root/.ssh/authorized_keys
+#
+# Usage:
+#   ansible-playbook -i inventory/hosts.yml playbooks/setup-netsvc.yml --check --diff
+#   ansible-playbook -i inventory/hosts.yml playbooks/setup-netsvc.yml
+---
+- name: Configure netsvc1 (secondary DNS mirror + NTP + node-exporter)
+  hosts: netsvc
+  become: true
+  vars:
+    agh_version: "v0.107.57"          # MUST match the primary for config-schema parity
+    agh_dir: /opt/adguardhome
+    agh_data: /opt/adguardhome/data
+    primary_dns: "192.168.86.35"
+    lan_cidr: "192.168.86.0/24"
+
+  tasks:
+    - name: Install base packages
+      ansible.builtin.apt:
+        name: [ca-certificates, curl, chrony, prometheus-node-exporter, libcap2-bin]
+        state: present
+        update_cache: true
+
+    - name: Create adguard system user
+      ansible.builtin.user:
+        name: adguard
+        system: true
+        shell: /usr/sbin/nologin
+        create_home: false
+
+    - name: Create AdGuard directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: adguard
+        group: adguard
+        mode: "0755"
+      loop: ["{{ agh_dir }}", "{{ agh_data }}"]
+
+    - name: Check installed AdGuard version
+      ansible.builtin.command: "{{ agh_dir }}/AdGuardHome --version"
+      register: agh_ver_check
+      changed_when: false
+      failed_when: false
+      check_mode: false   # must run during --check so the install block skips correctly
+
+    - name: Download and install AdGuard Home {{ agh_version }}
+      when: agh_version not in (agh_ver_check.stdout | default(''))
+      block:
+        - name: Download AdGuard Home
+          ansible.builtin.get_url:
+            url: "https://github.com/AdguardTeam/AdGuardHome/releases/download/{{ agh_version }}/AdGuardHome_linux_amd64.tar.gz"
+            dest: /tmp/agh.tgz
+            mode: "0644"
+            timeout: 120
+        - name: Extract
+          ansible.builtin.unarchive:
+            src: /tmp/agh.tgz
+            dest: /tmp/
+            remote_src: true
+        - name: Install binary
+          ansible.builtin.copy:
+            src: /tmp/AdGuardHome/AdGuardHome
+            dest: "{{ agh_dir }}/AdGuardHome"
+            owner: adguard
+            group: adguard
+            mode: "0755"
+            remote_src: true
+        - name: Clean up
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: absent
+          loop: [/tmp/agh.tgz, /tmp/AdGuardHome]
+
+    - name: Allow AdGuard to bind low ports
+      community.general.capabilities:
+        path: "{{ agh_dir }}/AdGuardHome"
+        capability: cap_net_bind_service=+ep
+        state: present
+      failed_when: false
+
+    - name: Deploy AdGuard systemd unit
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/adguardhome.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=AdGuard Home (secondary, mirrored from {{ primary_dns }})
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=simple
+          User=adguard
+          Group=adguard
+          ExecStart={{ agh_dir }}/AdGuardHome --config {{ agh_data }}/AdGuardHome.yaml --work-dir {{ agh_data }} --no-check-update
+          Restart=on-failure
+          RestartSec=5
+          AmbientCapabilities=CAP_NET_BIND_SERVICE
+          CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+          NoNewPrivileges=true
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: reload systemd
+
+    - name: Install AdGuard config mirror script
+      ansible.builtin.copy:
+        src: ../files/netsvc/agh-mirror.sh
+        dest: /usr/local/sbin/agh-mirror
+        mode: "0755"
+
+    - name: Deploy mirror timer + service
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/{{ item.name }}"
+        mode: "0644"
+        content: "{{ item.content }}"
+      loop:
+        - name: agh-mirror.service
+          content: |
+            [Unit]
+            Description=Mirror AdGuard config from primary ({{ primary_dns }})
+            After=network-online.target
+            [Service]
+            Type=oneshot
+            ExecStart=/usr/local/sbin/agh-mirror
+        - name: agh-mirror.timer
+          content: |
+            [Unit]
+            Description=Run AdGuard config mirror every 5 minutes
+            [Timer]
+            OnBootSec=2min
+            OnUnitActiveSec=5min
+            Persistent=true
+            [Install]
+            WantedBy=timers.target
+      notify: reload systemd
+
+    - name: Seed AdGuard config from primary (first run)
+      ansible.builtin.command: /usr/local/sbin/agh-mirror
+      args:
+        creates: "{{ agh_data }}/AdGuardHome.yaml"
+
+    - name: Enable AdGuard + mirror timer
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+        daemon_reload: true
+      loop: [adguardhome, agh-mirror.timer]
+
+    - name: Configure chrony as LAN NTP server
+      ansible.builtin.copy:
+        dest: /etc/chrony/conf.d/lan-server.conf
+        mode: "0644"
+        content: |
+          allow {{ lan_cidr }}
+          local stratum 10
+      notify: restart chrony
+
+    - name: Enable chrony + node-exporter
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+      loop: [chrony, prometheus-node-exporter]
+
+  handlers:
+    - name: reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+    - name: restart chrony
+      ansible.builtin.systemd:
+        name: chrony
+        state: restarted
