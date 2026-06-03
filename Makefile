@@ -25,7 +25,7 @@
 
 .PHONY: setup prepare prepare-truenas ddns init plan apply \
         apply-truenas apply-homeassistant apply-lxc plan-lxc \
-        traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi unifi \
+        traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi \
         bootstrap kubeconfig health k8s-base check-iso rejoin-worker harden \
         patch-proxmox patch-lxc patch-docker patch-pi destroy clean help \
         docs-build docs-dev resume-build consulting-build consulting alertmind \
@@ -102,7 +102,6 @@ plan-lxc: ## Preview LXC container changes only
 		-target=proxmox_virtual_environment_container.claude_os \
 		-target=proxmox_virtual_environment_container.ollama \
 		-target=proxmox_virtual_environment_container.pwnagotchi \
-		-target=proxmox_virtual_environment_container.unifi \
 		-target=proxmox_virtual_environment_container.guacamole \
 		-target=proxmox_virtual_environment_container.dev_desktop
 
@@ -125,7 +124,6 @@ apply-lxc: ## Create/update LXC containers only
 		-target=proxmox_virtual_environment_container.claude_os \
 		-target=proxmox_virtual_environment_container.ollama \
 		-target=proxmox_virtual_environment_container.pwnagotchi \
-		-target=proxmox_virtual_environment_container.unifi \
 		-target=proxmox_virtual_environment_container.guacamole \
 		-target=proxmox_virtual_environment_container.dev_desktop
 
@@ -242,9 +240,6 @@ omada: ## Deploy TP-Link Omada WiFi Controller into its LXC
 
 claude-code: ## Deploy Claude Code + ttyd web terminal LXC (accessible at claude.woodhead.tech)
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-claude-code.yml
-
-unifi: ## Deploy UniFi Network Application (WiFi controller) into its LXC
-	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-unifi.yml
 
 guacamole: ## Deploy Apache Guacamole browser-based remote desktop gateway (GUAC_POSTGRES_PASSWORD required)
 	@if [ -z "$(GUAC_POSTGRES_PASSWORD)" ]; then \
