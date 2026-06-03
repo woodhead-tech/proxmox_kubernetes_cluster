@@ -338,7 +338,7 @@ booth: ## Deploy photo booth server to monitoring LXC at booth.woodhead.tech (GE
 	rsync -az --delete -e 'ssh -i ~/.ssh/id_ansible' \
 		--exclude 'photos' --exclude '.venv' --exclude '__pycache__' \
 		--exclude '*.pyc' --exclude 'Dockerfile.test' --exclude 'docker-compose.test.yml' \
-		graduation-site/booth/ root@192.168.86.25:/opt/booth/
+		$(HOME)/Workspace/graduation-site/booth/ root@192.168.86.25:/opt/booth/
 	scp -i ~/.ssh/id_ansible \
 		ansible/files/booth/docker-compose.yml \
 		root@192.168.86.25:/opt/booth/docker-compose.yml
@@ -350,7 +350,7 @@ booth: ## Deploy photo booth server to monitoring LXC at booth.woodhead.tech (GE
 		ansible/files/traefik/dynamic/booth.yml \
 		root@192.168.86.20:/etc/traefik/dynamic/booth.yml
 	@echo "==> Done. Gallery: https://booth.woodhead.tech/booth.html"
-	@echo "==> Upload:        https://booth.woodhead.tech"
+	@echo "==> Upload:        https://booth.woodhead.tech (port 8088)"
 
 # ===== Phase 4: Talos K8s Cluster =====
 
