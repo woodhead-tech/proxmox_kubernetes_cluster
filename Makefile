@@ -349,8 +349,32 @@ booth: ## Deploy photo booth server to monitoring LXC at booth.woodhead.tech (GE
 	scp -i ~/.ssh/id_ansible \
 		ansible/files/traefik/dynamic/booth.yml \
 		root@192.168.86.20:/etc/traefik/dynamic/booth.yml
-	@echo "==> Done. Gallery: https://booth.woodhead.tech/booth.html"
-	@echo "==> Upload:        https://booth.woodhead.tech (port 8088)"
+	@echo "==> Post-deploy health checks..."
+	@sleep 3
+	@STATUS=$$(ssh -i ~/.ssh/id_ansible root@192.168.86.25 \
+		'docker inspect --format "{{.State.Status}}" booth-booth-1 2>/dev/null'); \
+	if [ "$$STATUS" != "running" ]; then \
+		echo "FAIL: container is $$STATUS (expected running)"; exit 1; \
+	fi; echo "  container: $$STATUS"
+	@HTTP=$$(curl -s -o /dev/null -w "%{http_code}" http://192.168.86.25:8088/upload.html); \
+	if [ "$$HTTP" != "200" ]; then \
+		echo "FAIL: /upload.html returned $$HTTP (expected 200)"; exit 1; \
+	fi; echo "  upload page: $$HTTP"
+	@HTTP=$$(curl -s -o /dev/null -w "%{http_code}" http://192.168.86.25:8088/booth.html); \
+	if [ "$$HTTP" != "200" ]; then \
+		echo "FAIL: /booth.html returned $$HTTP (expected 200)"; exit 1; \
+	fi; echo "  gallery page: $$HTTP"
+	@HTTP=$$(curl -s -o /dev/null -w "%{http_code}" https://booth.woodhead.tech/upload.html); \
+	if [ "$$HTTP" != "200" ]; then \
+		echo "FAIL: https://booth.woodhead.tech/upload.html returned $$HTTP (expected 200)"; exit 1; \
+	fi; echo "  HTTPS upload:  $$HTTP"
+	@HTTP=$$(curl -s -o /dev/null -w "%{http_code}" https://booth.woodhead.tech/booth.html); \
+	if [ "$$HTTP" != "200" ]; then \
+		echo "FAIL: https://booth.woodhead.tech/booth.html returned $$HTTP (expected 200)"; exit 1; \
+	fi; echo "  HTTPS gallery: $$HTTP"
+	@echo "==> All checks passed."
+	@echo "==> Upload:  https://booth.woodhead.tech"
+	@echo "==> Gallery: https://booth.woodhead.tech/booth.html"
 
 # ===== Phase 4: Talos K8s Cluster =====
 
