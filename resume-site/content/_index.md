@@ -46,17 +46,20 @@ teams. Engagements span discovery audits, project-scope builds, and ongoing advi
 </div>
 
 <div class="entry">
-<h3>Salesforce <span class="company-role">— GovCloud Systems Security Engineer</span></h3>
+<h3>Salesforce <span class="company-role">— GovCloud Systems Security Engineer / Scrum Lead</span></h3>
 <div class="meta">2019 – 2026</div>
 <p>
-Security operations and infrastructure management for Salesforce's FedRAMP and government-compliant
-cloud environments.
+Security engineering, infrastructure automation, and scrum leadership for Salesforce's FedRAMP
+and government-compliant cloud environments. Consistently delivered 90%+ sprint close rates
+across a distributed team (peak: 95.9%).
 </p>
 <ul>
-<li>Led development of sprint3r — a Go CLI tool for automated sprint tracking, GUS API integration, and Slack webhook reporting; became critical team infrastructure for agile retrospectives</li>
+<li>Scrum Lead for GovSysSec — owned sprint planning, retro, closeout ceremonies, backlog grooming, and cross-team coordination with GovSEO</li>
+<li>Built end-to-end RPM distribution pipeline (BenchPress): RPM packaging, Artifactory upload, SFCI signing, Puppet deployment, PIAC validation — eliminated ~50-85 engineer-hours/week of manual browser extension installs across PRA sessions</li>
+<li>Developed AI-powered team automation using Claude Code: duty engineer intake triage, automated standup reports, code review skills, sprint ceremony workflows — reduced manual ops toil by 60%</li>
+<li>Led development of sprint3r — a Go CLI tool for automated sprint tracking, GUS API integration, and Slack webhook reporting</li>
 <li>Managed end-to-end certificate lifecycle across GovCloud: expiration tracking, renewal coordination, compliance documentation for FedRAMP continuous monitoring</li>
-<li>Sprint planning coordination, GUS work item management, and security procedure documentation for a distributed SRE team</li>
-<li>Stack: Go, Python, Bash, Bazel, Kubernetes, FedRAMP/NIST controls, PKI</li>
+<li>Stack: Go, Python, Bash, Bazel, Kubernetes, Ansible, Puppet, FedRAMP/NIST controls, PKI</li>
 </ul>
 </div>
 
