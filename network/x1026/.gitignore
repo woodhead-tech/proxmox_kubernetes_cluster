@@ -1,0 +1,3 @@
+# never commit real credentials
+*.env
+!x1026.env.example
