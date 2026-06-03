@@ -54,7 +54,7 @@ SSH_OPTS = [
 ]
 
 PROMPT_RE = re.compile(rb"[\w.()-]+[#>]\s*$")
-MORE_RE = re.compile(rb"More:.*<space>", re.IGNORECASE)
+MORE_RE = re.compile(rb"More:", re.IGNORECASE)
 
 
 def load_password(args):
@@ -136,6 +136,7 @@ def run_command(fd, command, debug=False):
             idle = 0.0
             if MORE_RE.search(out[-80:]):
                 os.write(fd, b" ")  # advance pager
+                time.sleep(1.5)    # switch takes >0.5s to clear prompt and send next page
                 continue
             if PROMPT_RE.search(out.rstrip()[-120:]):
                 break
