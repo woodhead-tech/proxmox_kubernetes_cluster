@@ -5,7 +5,7 @@ title: TV Kiosk (Kodi)
 
 # TV Kiosk
 
-LXC 225 | `192.168.86.46` | Kodi :8080 (HTTP bridge) | Living room TV via HDMI
+LXC 225 | `192.168.86.46` | Kodi + Chromium kiosk | :8080 (HTTP bridge + mode switcher) | Living room TV via HDMI
 
 Privileged Debian 12 LXC on the Zotac node running Kodi 20.1 (Nexus). Drives the
 living room TV via HDMI using `/dev/dri` passthrough from the Zotac's Intel Celeron
@@ -46,7 +46,36 @@ startup: `ln -sf /dev/dri/card1 /dev/dri/card0` so X11 can find it.
 | Service | Managed by | Purpose |
 |---|---|---|
 | `kodi.service` | systemd | Runs xinit → Xorg → openbox → kodi on vt7 |
-| `kodi-bridge.service` | systemd | Python HTTP→TCP bridge, exposes JSON-RPC on :8080 |
+| `chromium-kiosk.service` | systemd | Chromium fullscreen kiosk on vt7 (conflicts with kodi) |
+| `kodi-bridge.service` | systemd | HTTP bridge: JSON-RPC proxy + Chorus2 + mode switcher on :8080 |
+
+## Mode Switching
+
+The bridge exposes a mode API to switch the TV between Kodi and Chromium kiosk from any device on the LAN.
+
+**Check current mode:**
+```bash
+curl http://192.168.86.46:8080/mode
+```
+
+**Switch to Kodi:**
+```bash
+curl -X POST http://192.168.86.46:8080/mode/kodi
+```
+
+**Switch to Chromium kiosk:**
+```bash
+# Built-in targets:
+curl -X POST "http://192.168.86.46:8080/mode/chromium?url=homeassistant"  # 192.168.86.41:8123
+curl -X POST "http://192.168.86.46:8080/mode/chromium?url=grafana"        # 192.168.86.25:3000
+curl -X POST "http://192.168.86.46:8080/mode/chromium?url=dashboard"      # 192.168.86.25:8083
+curl -X POST "http://192.168.86.46:8080/mode/chromium?url=kanboard"       # 192.168.86.33:8000
+
+# Any arbitrary URL:
+curl -X POST "http://192.168.86.46:8080/mode/chromium?url=http://192.168.86.25:3000"
+```
+
+`Conflicts=kodi.service` in the systemd unit ensures only one display manager runs at a time. Switching stops the active service before starting the other.
 
 ### Why a bridge?
 
