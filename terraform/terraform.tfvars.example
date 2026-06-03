@@ -141,6 +141,10 @@ homeassistant_ip        = "192.168.86.41"
 libby_alert_vmid = 209
 libby_alert_ip   = "192.168.86.27"
 
+# Vaultwarden password manager
+vaultwarden_vmid = 226
+vaultwarden_ip   = "192.168.86.43"
+
 # --- Domain ---
 domain     = "woodhead.tech"
 acme_email = "admin@woodhead.tech"

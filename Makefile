@@ -25,7 +25,7 @@
 
 .PHONY: setup prepare prepare-truenas ddns init plan apply \
         apply-truenas apply-homeassistant apply-lxc plan-lxc \
-        traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi \
+        traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi vaultwarden \
         bootstrap kubeconfig health k8s-base check-iso rejoin-worker harden \
         patch-proxmox patch-lxc patch-docker patch-pi destroy clean help \
         docs-build docs-dev resume-build consulting-build consulting alertmind \
@@ -265,6 +265,14 @@ pxe: ## Deploy PXE boot server (proxy-DHCP + TFTP + HTTP for LAN network install
 
 zigbee2mqtt: ## Deploy Zigbee2MQTT + Mosquitto on zotac (Zigbee USB dongle bridge for Home Assistant)
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-zigbee2mqtt.yml
+
+vaultwarden: ## Deploy Vaultwarden password manager (VAULTWARDEN_ADMIN_TOKEN, SMTP_USER, SMTP_PASSWORD required)
+	@if [ -z "$(VAULTWARDEN_ADMIN_TOKEN)" ] || [ -z "$(SMTP_USER)" ] || [ -z "$(SMTP_PASSWORD)" ]; then \
+		echo "Usage: make vaultwarden VAULTWARDEN_ADMIN_TOKEN=<token> SMTP_USER=<user> SMTP_PASSWORD=<pass>"; \
+		exit 1; \
+	fi
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-vaultwarden.yml \
+		--extra-vars "vaultwarden_admin_token=$(VAULTWARDEN_ADMIN_TOKEN) vaultwarden_smtp_user=$(SMTP_USER) vaultwarden_smtp_password=$(SMTP_PASSWORD)"
 
 pwnagotchi: ## Deploy pwnagotchi WiFi learning device (LXC 216 on pve3, RTL8188EUS dongle)
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-pwnagotchi.yml \

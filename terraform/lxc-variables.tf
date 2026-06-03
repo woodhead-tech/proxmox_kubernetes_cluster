@@ -474,6 +474,26 @@ variable "guacamole_root_password" {
   sensitive   = true
 }
 
+# --- Vaultwarden LXC ---
+variable "vaultwarden_vmid" {
+  description = "VM ID for the Vaultwarden password manager LXC"
+  type        = number
+  default     = 226
+}
+
+variable "vaultwarden_ip" {
+  description = "Static IP for the Vaultwarden LXC"
+  type        = string
+  default     = "192.168.86.43"
+}
+
+variable "vaultwarden_root_password" {
+  description = "Root password for the Vaultwarden LXC"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 # --- Dev Desktop LXC ---
 variable "dev_desktop_vmid" {
   description = "VM ID for the dev desktop LXC (Arch + XFCE + xRDP)"

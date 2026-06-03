@@ -1,0 +1,38 @@
+# vaultwarden.yml - Vaultwarden password manager Traefik route
+#
+# Two routers with different priorities:
+#   vaultwarden-admin  (priority 20) — /admin path, Authentik forwardAuth
+#   vaultwarden        (priority 10) — everything else, no auth middleware
+#                                      (Vaultwarden's own login handles this)
+#
+# This split is required — putting Authentik in front of the full domain
+# breaks all Bitwarden clients (they can't do SSO redirects).
+
+http:
+  routers:
+    vaultwarden-admin:
+      rule: "Host(`vault.woodhead.tech`) && PathPrefix(`/admin`)"
+      entryPoints:
+        - websecure
+      service: vaultwarden
+      middlewares:
+        - authentik@file
+      priority: 20
+      tls:
+        certResolver: cloudflare
+
+    vaultwarden:
+      rule: "Host(`vault.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: vaultwarden
+      priority: 10
+      tls:
+        certResolver: cloudflare
+
+  services:
+    vaultwarden:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.43:80"
+        passHostHeader: true

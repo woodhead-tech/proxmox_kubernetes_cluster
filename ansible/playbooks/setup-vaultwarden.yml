@@ -1,0 +1,110 @@
+# setup-vaultwarden.yml - Deploy Vaultwarden self-hosted password manager
+#
+# Vaultwarden is a Bitwarden-compatible server (Go binary, SQLite, Docker).
+# Traefik terminates TLS at vault.woodhead.tech. The /admin panel is protected
+# by Authentik forwardAuth (see traefik/dynamic/vaultwarden.yml). All other
+# paths use Vaultwarden's own auth so Bitwarden clients work normally.
+#
+# Required vars (pass via -e or store in vault):
+#   vaultwarden_admin_token    — admin panel token (generate with: openssl rand -base64 48)
+#   vaultwarden_smtp_user      — SMTP username (mailcow: bwoodwar@woodhead.tech)
+#   vaultwarden_smtp_password  — SMTP password for the mailbox
+#
+# Optional vars:
+#   vaultwarden_smtp_from      — From address (default: bwoodwar@woodhead.tech)
+#   vaultwarden_signups_allowed — true/false (default: true; set false after first account)
+#
+# Usage:
+#   ansible-playbook -i inventory/hosts.yml playbooks/setup-vaultwarden.yml \
+#     -e vaultwarden_admin_token=<token> \
+#     -e vaultwarden_smtp_user=bwoodwar@woodhead.tech \
+#     -e vaultwarden_smtp_password=<password>
+#
+# After deploy:
+#   1. Visit https://vault.woodhead.tech/admin (Authentik will gate it)
+#   2. Create your account at https://vault.woodhead.tech
+#   3. Set SIGNUPS_ALLOWED=false and re-run playbook to lock down registration
+
+---
+- name: Deploy Vaultwarden password manager
+  hosts: vaultwarden
+  become: true
+  vars:
+    vaultwarden_dir: /opt/vaultwarden
+    vaultwarden_data: /opt/vaultwarden/data
+    vaultwarden_smtp_from: "bwoodwar@woodhead.tech"
+    vaultwarden_signups_allowed: "true"
+
+  tasks:
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name: [ca-certificates, curl]
+        state: present
+        update_cache: true
+
+    - name: Install Docker
+      ansible.builtin.shell: |
+        curl -fsSL https://get.docker.com | sh
+      args:
+        creates: /usr/bin/docker
+
+    - name: Create vaultwarden directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0750"
+      loop:
+        - "{{ vaultwarden_dir }}"
+        - "{{ vaultwarden_data }}"
+
+    - name: Deploy docker-compose.yml
+      ansible.builtin.copy:
+        src: ../files/vaultwarden/docker-compose.yml
+        dest: "{{ vaultwarden_dir }}/docker-compose.yml"
+        mode: "0644"
+      notify: restart vaultwarden
+
+    - name: Deploy .env from template
+      ansible.builtin.template:
+        src: ../files/vaultwarden/env.j2
+        dest: "{{ vaultwarden_dir }}/.env"
+        owner: root
+        group: root
+        mode: "0600"
+      notify: restart vaultwarden
+
+    - name: Pull Vaultwarden image
+      community.docker.docker_image:
+        name: vaultwarden/server:latest
+        source: pull
+        force_source: false
+
+    - name: Start Vaultwarden
+      community.docker.docker_compose_v2:
+        project_src: "{{ vaultwarden_dir }}"
+        state: present
+
+    - name: Verify Vaultwarden is responding
+      ansible.builtin.uri:
+        url: "http://localhost:80/"
+        status_code: [200, 301, 302]
+      retries: 6
+      delay: 5
+
+    - name: Show post-deploy steps
+      ansible.builtin.debug:
+        msg:
+          - "Vaultwarden deployed. Post-deploy checklist:"
+          - "1. Visit https://vault.woodhead.tech/admin (Authentik gate)"
+          - "2. Create your account at https://vault.woodhead.tech"
+          - "3. Re-run with -e vaultwarden_signups_allowed=false to lock signups"
+          - "4. Install Bitwarden browser extension, point to https://vault.woodhead.tech"
+
+  handlers:
+    - name: restart vaultwarden
+      community.docker.docker_compose_v2:
+        project_src: "{{ vaultwarden_dir }}"
+        state: present
+        recreate: always
