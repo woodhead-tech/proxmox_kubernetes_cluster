@@ -20,7 +20,7 @@ and resource allocation.
 - [Traefik Routing Table](#traefik-routing-table)
 - [ARR Stack Internal Architecture](#arr-stack-internal-architecture)
 - [Kubernetes Cluster](#kubernetes-cluster)
-- [VLAN Segmentation Plan](#vlan-segmentation-plan)
+- [VLAN Segmentation (Project Popeye)](#vlan-segmentation-project-popeye----in-progress)
 - [Firewall Rules](#firewall-rules)
 - [Backup Strategy](#backup-strategy)
 - [Service Group Management](#service-group-management)
@@ -873,61 +873,118 @@ for current use -- no services require VLAN segmentation to function.
 
 ---
 
-## VLAN Segmentation Plan (Deferred)
+## VLAN Segmentation (Project Popeye -- In Progress)
 
-All services currently run on a flat 192.168.86.0/24 network. This works --
-no services require VLAN segmentation to function. VLAN support is deferred
-until VLAN-aware WiFi APs replace the Google Nest mesh.
+Network migration from flat 192.168.86.0/24 to segmented VLANs is underway.
+Codename "Project Popeye" (named after the house).
 
-**Prerequisites for VLANs:**
-- Replace Google Nest WiFi with VLAN-aware APs (Ubiquiti UniFi U6 or TP-Link Omada EAP)
-- VLAN-aware managed switch (assigns VLANs to physical ports)
-- Dedicated router/firewall with VLAN support (e.g., OPNsense VM or UniFi Dream Machine)
+**Status:** VLANs created on Dell X1026 switch. Awaiting OPNsense hardware
+(Topton N100) and TP-Link Omada APs before cutting over.
 
-**Target segmentation (when ready):**
+### Hardware
 
-| VLAN | Subnet         | Purpose           | Example Devices                    |
-|------|----------------|-------------------|------------------------------------|
-| 1    | 192.168.86.0/24| Management        | Proxmox nodes, SSH, admin UIs      |
-| 10   | 10.0.10.0/24   | Trusted LAN       | Workstations, laptops              |
-| 20   | 10.0.20.0/24   | Servers           | K8s, LXCs, NAS, Traefik           |
-| 30   | 10.0.30.0/24   | IoT               | Zigbee, Z-Wave, cameras, sensors   |
-| 40   | 10.0.40.0/24   | Guest WiFi        | Visitors (internet only)           |
+| Component | Model | IP | Notes |
+|-----------|-------|-----|-------|
+| Managed Switch | Dell Networking X1026 | 192.168.86.210 | 24-port GbE, 802.1Q, mgmt via x1026 wrapper on tc1 |
+| Firewall (planned) | Topton N100 4x 2.5GbE | TBD | OPNsense + Suricata IDS/IPS |
+| AP - Basement | TP-Link EAP670 (planned) | TBD | WiFi 6, multi-SSID, near homelab rack |
+| AP - 1st Floor | TP-Link EAP245 (planned) | TBD | Multi-SSID, wired via MoCA |
+| AP - 3rd Floor | TP-Link EAP245 (planned) | TBD | Multi-SSID, wired via MoCA |
+| AP - Garage | Google Nest (reuse) | TBD | Wireless bridge, IoT VLAN only |
 
-**Inter-VLAN firewall rules (future):**
+### VLAN Design
+
+| VLAN | Subnet | Purpose | SSID |
+|------|--------|---------|------|
+| 1 | 192.168.1.0/24 | Management (switch, APs, OPNsense) | -- (wired) |
+| 10 | 192.168.10.0/24 | Trusted LAN (personal devices) | "Popeye" |
+| 20 | 192.168.20.0/24 | Servers (Proxmox, LXCs, VMs, MetalLB) | -- (wired) |
+| 30 | 192.168.30.0/24 | IoT (ESP32, 3D printers, Zigbee, smart devices) | "Popeye-IoT" |
+| 40 | 192.168.40.0/24 | Guest WiFi | "Popeye-Guest" |
+| 50 | 192.168.50.0/24 | DMZ (Traefik, Mailcow, WireGuard) | -- (wired) |
+| 99 | 192.168.99.0/24 | Lab (pwnagotchi, offensive tools) | -- (wired) |
+
+### Dell X1026 Port Map (Target)
+
+| Port | Mode | VLANs Tagged | Untagged | Device |
+|------|------|-------------|----------|--------|
+| 1 | Trunk | 1,10,20,30,40,50,99 | 1 | OPNsense LAN |
+| 2-5 | Trunk | 1,20 | 20 | Proxmox nodes (4x ThinkCentre) |
+| 6 | Trunk | 1,20 | 20 | Proxmox node 5 (zotac) |
+| 7 | Trunk | 1,10,30,40 | 1 | AP1 - Basement (EAP670) |
+| 8 | Trunk | 1,10,30,40 | 1 | AP2 - 1st Floor (EAP245, via MoCA) |
+| 9 | Trunk | 1,10,30,40 | 1 | AP3 - 3rd Floor (EAP245, via MoCA) |
+| 10 | -- | -- | -- | (unused -- garage AP is wireless) |
+| 11-12 | Access | -- | 20 | TrueNAS, Raspberry Pis |
+| 13-14 | Access | -- | 10 | Wired workstations |
+| 15 | Access | -- | 30 | Wired IoT |
+| 16 | Access | -- | 99 | Pwnagotchi/Lab |
+| 17-22 | Access | -- | 20 | Future servers / expansion |
+| 23 | Access | -- | 1 | Management access (laptop) |
+| 24 | Trunk | all | 1 | Mirror/debug uplink |
+
+### Inter-VLAN Firewall Rules (OPNsense -- planned)
 
 ```
-Trusted (10) ---> Servers (20)     ALLOW   (access services)
-Trusted (10) ---> IoT (30)         ALLOW   (manage devices)
-IoT (30) -------> HA (192.168.86.41)ALLOW   (smart home control)
-IoT (30) -------> Servers (20)     DENY    (isolate compromised devices)
-IoT (30) -------> Trusted (10)     DENY    (protect workstations)
-Guest (40) -----> Internet         ALLOW   (internet only)
-Guest (40) -----> ALL internal     DENY    (full isolation)
+Trusted (10) ---> Servers (20)              ALLOW   (access Plex, Grafana, HA)
+Trusted (10) ---> IoT (30)                  ALLOW   (manage 3D printers, ESP32)
+IoT (30) -------> HA on Servers (20:8123)   ALLOW   (smart home control + MQTT)
+IoT (30) -------> Internet                  ALLOW   (OTA updates, NTP)
+IoT (30) -------> everything else           DENY    (isolate compromised devices)
+Guest (40) -----> Internet                  ALLOW   (internet only)
+Guest (40) -----> ALL RFC1918               DENY    (full isolation)
+Lab (99) -------> Internet                  ALLOW   (updates)
+Lab (99) -------> ALL RFC1918               DENY    (full isolation)
+DMZ (50) -------> Internet                  ALLOW   (ACME, mail relay)
+DMZ (50) -------> Servers (20)              ALLOW   (Traefik -> backends)
+WAN ------------> DMZ (50)                  ALLOW   (HTTP/S, SMTP/IMAP, WireGuard)
 ```
+
+### Physical Topology (House "Popeye")
+
+130-year-old house, 3 floors + detached garage. MoCA backhaul between
+basement, 1st floor (living room), and 3rd floor (attic).
+
+- **Basement:** Homelab rack (Proxmox nodes, Dell X1026, OPNsense), MoCA endpoint
+- **1st Floor:** Zotac (Zigbee hub), MoCA hub, EAP245 AP
+- **3rd Floor (Attic):** Home office (Brandon), Ender's bedroom, MoCA endpoint, EAP245 AP
+- **Garage (detached):** Motorcycle workshop, 3D print lab, Google Nest wireless bridge
+
+### Migration Phases
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 0 | Prep: VLANs on switch, order hardware | **In Progress** |
+| 1 | Parallel infrastructure: OPNsense + Omada APs alongside Nest | Pending |
+| 2 | Service migration: move LXCs to VLAN 20 one at a time | Pending |
+| 3 | Client migration: personal devices to new SSIDs | Pending |
+| 4 | Cutover: disable Google Nest routing | Pending |
+| 5 | Hardening: Suricata IPS, GeoIP blocking, CrowdSec | Pending |
 
 ---
 
 ## Firewall Rules
 
-### Port Forwarding (Google Nest WiFi Pro)
+### Port Forwarding (Google Nest WiFi Pro -- current)
 
-Configured via Google Home app > WiFi > Advanced Networking > Port Management.
+Configured via Google Home app. Will be replaced by OPNsense NAT rules in Phase 2.
 
-| WAN Port | Destination           | Protocol | Purpose               |
-|----------|-----------------------|----------|-----------------------|
-| 80       | 192.168.86.20:80      | TCP      | HTTP -> Traefik       |
-| 443      | 192.168.86.20:443     | TCP      | HTTPS -> Traefik      |
-| 51820    | 192.168.86.39:51820   | UDP      | WireGuard VPN tunnel  |
-| 25       | 192.168.86.34:25      | TCP      | SMTP inbound -> Mailcow |
-| 465      | 192.168.86.34:465     | TCP      | SMTPS -> Mailcow      |
-| 587      | 192.168.86.34:587     | TCP      | SMTP Submission -> Mailcow |
-| 993      | 192.168.86.34:993     | TCP      | IMAPS -> Mailcow      |
+| WAN Port | Destination | Protocol | Purpose |
+|----------|-------------|----------|---------|
+| 80 | 192.168.86.20:80 | TCP | HTTP -> Traefik |
+| 443 | 192.168.86.20:443 | TCP | HTTPS -> Traefik |
+| 51820 | 192.168.86.39:51820 | UDP | WireGuard VPN tunnel |
+| 25 | 192.168.86.34:25 | TCP | SMTP inbound -> Mailcow |
+| 465 | 192.168.86.34:465 | TCP | SMTPS -> Mailcow |
+| 587 | 192.168.86.34:587 | TCP | SMTP Submission -> Mailcow |
+| 993 | 192.168.86.34:993 | TCP | IMAPS -> Mailcow |
 
-Google Nest handles NAT and basic firewall (blocks unsolicited inbound by default).
-No advanced firewall rules, IDS/IPS, or VPN server available on consumer hardware.
-For advanced firewall features, consider adding a dedicated firewall appliance in
-the future (OPNsense VM or UniFi Dream Machine).
+### IDS/IPS (OPNsense + Suricata -- planned)
+
+- WAN interface: Inline IPS mode (ET Open ruleset)
+- Inter-VLAN: IDS mode initially (log lateral movement, tune before blocking)
+- GeoIP blocking on WAN inbound
+- CrowdSec plugin for collaborative threat intelligence
 
 ---
 
