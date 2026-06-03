@@ -151,7 +151,9 @@ def run_command(fd, command, debug=False):
         lines = lines[1:]
     if lines and PROMPT_RE.search(lines[-1].encode()):
         lines = lines[:-1]
-    return "\n".join(lines).replace("\x1b[K", "").strip("\r\n")
+    # strip pager prompt lines (\x1b[0mMore: ...) and the blank erasure lines after them
+    lines = [l for l in lines if not MORE_RE.search(l.encode()) and l.strip()]
+    return "\n".join(lines).replace("\x1b[K", "").replace("\x1b[0m", "").strip("\r\n")
 
 
 def interactive(fd):

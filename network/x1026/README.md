@@ -43,6 +43,27 @@ It is pure stdlib Python (pty-driven `ssh`) — no `expect`, `sshpass`, or
   (`crypto key generate rsa`).
 - `copy running-config startup-config` — persisted.
 
+## Port topology (as of 2026-06-03)
+
+10 ports active at 1G, 4 at 100M, 12 open, 2 SFP fiber (down):
+
+| Port | Speed | Device | IP |
+|------|-------|--------|----|
+| gi1/0/3 | 1G | Router / home gateway | 192.168.86.1 |
+| gi1/0/7 | 1G | thinkcentre3 / pve3 | 192.168.86.31 |
+| gi1/0/9 | 1G | thinkcentre2 / pve2 | 192.168.86.30 |
+| gi1/0/11 | 1G | thinkcentre1 / pve1 / tc1 | 192.168.86.29 |
+| gi1/0/18 | 1G | tower1 | 192.168.86.130 |
+| gi1/0/22 | 100M | Unknown (.212) | 192.168.86.212 |
+| gi1/0/23 | 100M | Unknown (00:1b:a9) | — |
+| gi1/0/24 | 100M | Raspberry Pi | — |
+| gi1/0/1,14,17,19 | 1G | Up, MACs aged out | — |
+| gi1/0/6,10 | 100M | Up, MACs aged out | — |
+| gi1/0/25–26 | 1G Fiber | SFP, Down | — |
+
+`bc:24:11:*` Proxmox LXC virtual MACs appear on the physical Proxmox node's port.
+Useful commands: `show interfaces status`, `show mac address-table`.
+
 ## Gotchas (learned the hard way)
 
 1. **Legacy SSH crypto.** The firmware only speaks old KEX/host-key/ciphers.
@@ -60,6 +81,13 @@ It is pure stdlib Python (pty-driven `ssh`) — no `expect`, `sshpass`, or
    (currently blank) must be done via the web UI (`https://192.168.86.210`).
 6. **Clock is wrong** (reads ~2016). Set SNTP / timezone before relying on
    timestamps in logs.
+7. **Pager requires 1.5s sleep.** After sending a space to advance the pager,
+   the switch takes >0.5s to clear the prompt and begin the next page. The
+   `x1026.py` run mode adds a `time.sleep(1.5)` after each pager advance.
+   `terminal length 0` and similar pager-disable commands are **not supported**
+   by this firmware.
+8. **`no ip http server`** disables the web GUI permanently — test on a spare
+   before running in production.
 
 ## Serial console fallback
 
