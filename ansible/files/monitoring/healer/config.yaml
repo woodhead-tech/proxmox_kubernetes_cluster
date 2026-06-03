@@ -1,0 +1,122 @@
+# healer config.yaml — maps Alertmanager alerts to SSH remediation actions
+#
+# Safe actions only. Never auto-heal: Ceph, TrueNAS, databases, storage.
+# Rate limit: 3 auto-heals per alert+instance per hour (hardcoded in healer.py).
+#
+# Rule structure:
+#   alert:    Prometheus alertname label (exact match)
+#   match:    additional label filters (optional, exact match)
+#   action:   human-readable description of what we're doing
+#   host:     SSH target IP (root@host via id_ansible)
+#   command:  shell command to run on the target host
+
+rules:
+
+  # --- ARR Stack (192.168.86.22) ---
+
+  - alert: ServiceDown
+    match:
+      instance: "http://192.168.86.22:8989"  # Sonarr
+    action: "Restart Sonarr container"
+    host: "192.168.86.22"
+    command: "docker restart sonarr"
+
+  - alert: ServiceDown
+    match:
+      instance: "http://192.168.86.22:7878"  # Radarr
+    action: "Restart Radarr container"
+    host: "192.168.86.22"
+    command: "docker restart radarr"
+
+  - alert: ServiceDown
+    match:
+      instance: "http://192.168.86.22:9696"  # Prowlarr
+    action: "Restart Prowlarr container"
+    host: "192.168.86.22"
+    command: "docker restart prowlarr"
+
+  - alert: ServiceDown
+    match:
+      instance: "http://192.168.86.22:6767"  # Bazarr
+    action: "Restart Bazarr container"
+    host: "192.168.86.22"
+    command: "docker restart bazarr"
+
+  - alert: ServiceDown
+    match:
+      instance: "http://192.168.86.22:5055"  # Overseerr
+    action: "Restart Overseerr container"
+    host: "192.168.86.22"
+    command: "docker restart overseerr"
+
+  # --- Plex (192.168.86.23) ---
+
+  - alert: ServiceDown
+    match:
+      instance: "http://192.168.86.23:32400/web/index.html"
+    action: "Restart Plex Media Server"
+    host: "192.168.86.23"
+    command: "systemctl restart plexmediaserver"
+
+  # --- Monitoring stack (192.168.86.25) ---
+
+  - alert: ServiceDown
+    match:
+      instance: "http://192.168.86.25:3000"  # Grafana
+    action: "Restart Grafana container"
+    host: "192.168.86.25"
+    command: "cd /opt/monitoring && docker compose restart grafana"
+
+  # --- Traefik (192.168.86.20) ---
+  # Only restart if it's truly down — Traefik restart causes brief outage for all services
+  - alert: ServiceDown
+    match:
+      instance: "http://192.168.86.20:8082"  # Traefik metrics (internal)
+    action: "Restart Traefik service"
+    host: "192.168.86.20"
+    command: "systemctl restart traefik"
+
+  # --- Authentik (192.168.86.28) ---
+
+  - alert: ServiceDown
+    match:
+      instance: "http://192.168.86.28:9000"
+    action: "Restart Authentik stack"
+    host: "192.168.86.28"
+    command: "cd /opt/authentik && docker compose restart server"
+
+  # --- Hermes (192.168.86.45) ---
+
+  - alert: ServiceDown
+    match:
+      instance: "http://192.168.86.45:9119"
+    action: "Restart Hermes dashboard service"
+    host: "192.168.86.45"
+    command: "systemctl restart hermes-dashboard"
+
+  # --- Kodi tv-kiosk (192.168.86.46) ---
+
+  - alert: ServiceDown
+    match:
+      instance: "http://192.168.86.46:8080"
+    action: "Restart Kodi bridge service"
+    host: "192.168.86.46"
+    command: "systemctl restart kodi-bridge && systemctl restart kodi"
+
+  # --- Recipe site (192.168.86.21) ---
+
+  - alert: ServiceDown
+    match:
+      instance: "http://192.168.86.21:80"
+    action: "Restart recipe site container"
+    host: "192.168.86.21"
+    command: "cd /opt/recipe-site && docker compose restart"
+
+  # -------------------------------------------------------------------------
+  # DO NOT ADD RULES FOR:
+  #   - TrueNAS (192.168.86.40) — ZFS + NFS, always needs human review
+  #   - Ceph OSDs — cascading failures, human must investigate
+  #   - Proxmox nodes — never SSH-restart a hypervisor automatically
+  #   - Databases (MariaDB/Postgres) — risk data corruption
+  #   - WireGuard — losing VPN = losing remote access
+  # -------------------------------------------------------------------------

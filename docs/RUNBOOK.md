@@ -1283,3 +1283,72 @@ AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE=/secrets/jwt
 ```
 
 After fixing, redeploy: `make authentik`
+
+---
+
+### Healer not auto-remediating
+
+**Symptom:** ServiceDown alert fires to Discord but the container doesn't restart.
+
+1. Check healer is running:
+   ```bash
+   ssh -i ~/.ssh/id_ansible root@192.168.86.25 'systemctl status healer && curl -s http://localhost:9110/health'
+   ```
+
+2. Check healer logs for the alert receipt and outcome:
+   ```bash
+   ssh -i ~/.ssh/id_ansible root@192.168.86.25 'journalctl -u healer --since "10 min ago"'
+   ```
+
+3. Check action history in the dashboard: `http://192.168.86.25:9110/`
+   - `rate_limited` — healer tried 3+ times this hour, stopped to avoid a loop
+   - `failed` / `timeout` — SSH to the target host failed; check that the healer key is present
+   - `dry_run` — `HEALER_DRY_RUN=true` is set in the systemd unit; remove it
+
+4. Verify healer SSH key is on the target LXC:
+   ```bash
+   ssh -i ~/.ssh/id_ansible root@<target-ip> 'grep healer@monitoring /root/.ssh/authorized_keys'
+   ```
+   If missing, add it:
+   ```bash
+   HEALER_PUB="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIObZRLAe0m3dYQ1wuvs1maA+6Fwj9RQ3/gHTQVy2qZAX healer@monitoring"
+   ssh -i ~/.ssh/id_ansible root@<target-ip> "echo '$HEALER_PUB' >> /root/.ssh/authorized_keys"
+   ```
+
+5. Check if a rule exists for this alert+instance in `/etc/healer/config.yaml`:
+   ```bash
+   ssh -i ~/.ssh/id_ansible root@192.168.86.25 'cat /etc/healer/config.yaml'
+   ```
+
+---
+
+### TV Kiosk (Kodi) showing no signal
+
+The display sleeps or X crashes. From any machine on the LAN:
+
+1. Wake the display via Kodi event server:
+   ```bash
+   ssh -i ~/.ssh/id_ansible root@192.168.86.46 \
+     'kodi-send --host=127.0.0.1 --port=9777 --action="Select"'
+   ```
+
+2. If that doesn't work, restart the kodi service:
+   ```bash
+   ssh -i ~/.ssh/id_ansible root@192.168.86.46 'systemctl restart kodi'
+   ```
+
+3. Verify the HTTP bridge is up (needed for Kore remote app):
+   ```bash
+   curl -s http://192.168.86.46:8080/jsonrpc \
+     -H "Content-Type: application/json" \
+     -d '{"jsonrpc":"2.0","method":"JSONRPC.Ping","id":1}'
+   # Expected: {"id":1,"jsonrpc":"2.0","result":"pong"}
+   ```
+
+4. If bridge is down: `ssh root@192.168.86.46 'systemctl restart kodi-bridge'`
+
+5. If Kodi log shows `Loading skin file: DialogConfirm.xml` on repeat — ALSA audio failed.
+   Dismiss with `kodi-send --action="Select"` then check ALSA:
+   ```bash
+   ssh root@192.168.86.46 'aplay -l'
+   ```

@@ -162,20 +162,21 @@ scrape_configs:
     static_configs:
       - targets:
           - http://192.168.86.21:80       # Recipe site
-          - http://192.168.86.22:5055     # Seerr
+          - http://192.168.86.22:5055     # Overseerr
           - http://192.168.86.22:8989     # Sonarr
           - http://192.168.86.22:7878     # Radarr
           - http://192.168.86.22:9696     # Prowlarr
           - http://192.168.86.22:6767     # Bazarr
           - http://192.168.86.22:8080     # SABnzbd (via gluetun)
           - http://192.168.86.23:32400/web/index.html    # Plex (root returns 401, use /web/index.html)
-          - http://192.168.86.24:8096     # Jellyfin
           - http://192.168.86.25:3000     # Grafana
-          - http://192.168.86.26:18789    # OpenClaw gateway
-          - http://192.168.86.27:8080/health  # Libby Alert (use /health to avoid triggering alerts)
-          - http://192.168.86.28:9000     # Authentik
-          - http://192.168.86.32:3000     # rdio-scanner (SDR)
+          - http://192.168.86.27:8080/health  # Libby Alert
+          - http://192.168.86.33:8000     # Kanboard
+          - http://192.168.86.35:3000     # AdGuard Home
           - http://192.168.86.41:8123     # Home Assistant
+          - http://192.168.86.45:9119     # Hermes dashboard
+          - http://192.168.86.46:8080     # tv-kiosk Kodi bridge
+          - http://192.168.86.48:7681     # Claude Code ttyd
           - http://192.168.86.131:8080    # Piboard
           - http://192.168.86.136:80      # Klipper Ender 5 Pro (Mainsail)
           - http://192.168.86.138:80      # Klipper Ender 3 (Mainsail)
@@ -187,20 +188,41 @@ scrape_configs:
       - target_label: __address__
         replacement: blackbox-exporter:9115
 
-  # HTTPS probes: external domain checks (end-to-end Traefik + TLS)
+  # HTTPS probes: public services that return 2xx directly (no auth gate)
   - job_name: "blackbox-https"
     metrics_path: /probe
     params:
       module: [http_2xx]
     static_configs:
       - targets:
-          - https://woodhead.tech          # Landing page
-          - https://grafana.woodhead.tech  # Grafana (redirects to auth, expect 302->200)
-          - https://traefik.woodhead.tech  # Traefik dashboard
+          - https://resume.woodhead.tech   # Resume site (public, no auth)
+          - https://alert.woodhead.tech/health  # Libby Alert health endpoint
           - https://scanner.woodhead.tech  # SDR scanner
-          - https://alert.woodhead.tech/health  # Libby Alert (use /health to avoid triggering alerts)
-          - https://docs.woodhead.tech     # Docusaurus
-          - https://resume.woodhead.tech   # Resume site
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # HTTPS probes: Authentik-gated services — 302 to auth = Traefik is healthy
+  # follow_redirects: false so probe stops at Traefik's redirect, not hairpin to external auth URL
+  - job_name: "blackbox-https-auth"
+    metrics_path: /probe
+    params:
+      module: [http_2xx_or_3xx]
+    static_configs:
+      - targets:
+          - https://grafana.woodhead.tech      # Grafana (Authentik-gated)
+          - https://traefik.woodhead.tech      # Traefik dashboard (Authentik-gated)
+          - https://docs.woodhead.tech         # Docusaurus (Authentik-gated)
+          - https://sonarr.woodhead.tech       # Sonarr
+          - https://radarr.woodhead.tech       # Radarr
+          - https://request.woodhead.tech      # Overseerr
+          - https://kanboard.woodhead.tech     # Kanboard (if routed)
+          - https://hermes.woodhead.tech       # Hermes dashboard
+          - https://claude.woodhead.tech       # Claude Code
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -216,7 +238,8 @@ scrape_configs:
       module: [https_insecure]
     static_configs:
       - targets:
-          - https://192.168.86.40:443    # TrueNAS web UI
+          - https://192.168.86.40:443           # TrueNAS web UI
+          - https://192.168.86.36:9000/health  # Step-CA health endpoint
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -239,10 +262,27 @@ scrape_configs:
           - 192.168.86.130   # tower1 (pve4)
           - 192.168.86.147   # zotac (pve5)
           - 192.168.86.40    # TrueNAS
-          - 192.168.86.41    # Home Assistant
+          - 192.168.86.41    # Home Assistant VM
           - 192.168.86.131   # Piboard
           - 192.168.86.136   # Klipper Ender 5 Pro
           - 192.168.86.138   # Klipper Ender 3
+          # LXC containers (decommissioned: 192.168.86.24 jellyfin removed)
+          - 192.168.86.20    # traefik-gw
+          - 192.168.86.21    # recipe-site
+          - 192.168.86.22    # arr-stack
+          - 192.168.86.23    # plex
+          - 192.168.86.25    # monitoring-stack
+          - 192.168.86.27    # libby-alert
+          - 192.168.86.28    # authentik
+          - 192.168.86.33    # kanboard
+          - 192.168.86.34    # mailserver
+          - 192.168.86.35    # adguard
+          - 192.168.86.36    # step-ca
+          - 192.168.86.39    # wireguard
+          - 192.168.86.44    # zigbee2mqtt
+          - 192.168.86.45    # hermes
+          - 192.168.86.46    # tv-kiosk
+          - 192.168.86.48    # claude-code
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

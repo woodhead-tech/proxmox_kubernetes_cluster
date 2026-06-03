@@ -169,7 +169,7 @@ and resource allocation.
 | 192.168.86.22      | arr-stack        | LXC    | 202   | Docker: Sonarr, Radarr, etc.        |
 | 192.168.86.23      | plex             | LXC    | 203   | Plex Media Server + iGPU            |
 | 192.168.86.24      | (free)           | --     | --    | was jellyfin (decommissioned)       |
-| 192.168.86.25      | monitoring       | LXC    | 205   | Prometheus, Grafana, Alertmanager   |
+| 192.168.86.25      | monitoring       | LXC    | 205   | Prometheus, Grafana, Alertmanager, Healer (auto-remediation) |
 | 192.168.86.26      | (free)           | --     | --    | was openclaw (decommissioned)       |
 | 192.168.86.27      | libby-alert      | LXC    | 209   | Libby life alert QR site + alerts   |
 | 192.168.86.28      | authentik        | LXC    | 207   | Identity provider (Authentik SSO, OIDC)    |
@@ -185,6 +185,7 @@ and resource allocation.
 | 192.168.86.43      | (free)           | --     | --    | was unifi (decommissioned)          |
 | 192.168.86.44      | zigbee2mqtt      | LXC    | 214   | Zigbee2MQTT + Mosquitto (on zotac)  |
 | 192.168.86.45      | hermes           | LXC    | 224   | Hermes AI agent (Discord gateway, claude-opus-4-6) |
+| 192.168.86.46      | tv-kiosk         | LXC    | 225   | Kodi media center (living room TV, on zotac, /dev/dri passthrough) |
 | 192.168.86.47      | guacamole        | LXC    | 219   | Apache Guacamole browser-based RDP  |
 | 192.168.86.48      | claude-code      | LXC    | 220   | Claude Code + ttyd web terminal (claude.woodhead.tech) |
 | 192.168.86.49      | pbs              | LXC    | 223   | Proxmox Backup Server (pbs-tc3 datastore) |
@@ -466,7 +467,8 @@ in parallel after the host is ready.
 | auto  | Pwnagotchi LXC       | 216   | --     | Starts on boot, USB WiFi dongle (on pve3)   |
 | auto  | Ollama LXC           | 217   | --     | Starts on boot, local LLM inference (iGPU)  |
 | auto  | Guacamole LXC        | 219   | --     | Starts on boot, browser-based RDP gateway   |
-| auto  | Dev Desktop LXC      | 220   | --     | Starts on boot, Arch Linux XFCE4 + xRDP     |
+| auto  | Dev Desktop LXC      | 220   | --     | Starts on boot, Claude Code + ttyd web terminal |
+| auto  | TV Kiosk LXC         | 225   | --     | Starts on boot, Kodi media center (living room TV) |
 | manual| K8s Cluster          | 400+  | --     | Bootstrapped via `make bootstrap`           |
 
 ---
@@ -957,8 +959,8 @@ Services are organized into logical groups that can be started and stopped as a 
 | `security` | 207 (authentik) | ~2GB | No | Required by `media`, `apps` |
 | `home` | 301 (homeassistant), 214 (zigbee2mqtt), 209 (libby-alert) | ~2.7GB | No | |
 | `media` | 202 (arr-stack), 203 (plex), 204 (jellyfin) | ~8GB | No | Depends on `core`, `storage` |
-| `observability` | 205 (monitoring), 206 (openclaw) | ~4GB | No | |
-| `apps` | 201 (recipe-site), 211 (kanboard), 215 (claude-os), 217 (ollama) | ~14.5GB | No | |
+| `observability` | 205 (monitoring) | ~4GB | No | Includes healer auto-remediation service |
+| `apps` | 201 (recipe-site), 211 (kanboard), 215 (claude-os), 220 (claude-code), 224 (hermes), 225 (tv-kiosk) | ~18GB | No | |
 | `infra` | 212 (mailserver), 213 (adguard) | ~3.5GB | No | |
 | `sdr` | 210 (sdr) | ~2GB | No | RTL-SDR USB passthrough |
 | `special` | 216 (pwnagotchi) | ~1GB | No | Hardware-bound; excluded from bulk ops |
