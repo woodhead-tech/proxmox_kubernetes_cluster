@@ -28,7 +28,7 @@
         traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi vaultwarden \
         bootstrap kubeconfig health k8s-base check-iso rejoin-worker harden \
         patch-proxmox patch-lxc patch-docker patch-pi destroy clean help \
-        docs-build docs-dev resume-build consulting-build consulting alertmind \
+        docs-build docs-dev resume-build consulting-build consulting alertmind booth \
         group-status group-start group-stop
 
 TERRAFORM_DIR := terraform
@@ -331,6 +331,26 @@ alertmind: ## Deploy alertmind AI alert triage (ANTHROPIC_API_KEY= DISCORD_WEBHO
 		$(if $(TWILIO_AUTH_TOKEN),--extra-vars "twilio_auth_token=$(TWILIO_AUTH_TOKEN)") \
 		$(if $(WHATSAPP_FROM),--extra-vars "whatsapp_from=$(WHATSAPP_FROM)") \
 		$(if $(WHATSAPP_TO),--extra-vars "whatsapp_to=$(WHATSAPP_TO)")
+
+booth: ## Deploy photo booth server to monitoring LXC at booth.woodhead.tech (GEMINI_API_KEY= optional)
+	@echo "==> Syncing booth source to monitoring LXC..."
+	ssh -i ~/.ssh/id_ansible root@192.168.86.25 'mkdir -p /opt/booth/photos'
+	rsync -az --delete -e 'ssh -i ~/.ssh/id_ansible' \
+		--exclude 'photos' --exclude '.venv' --exclude '__pycache__' \
+		--exclude '*.pyc' --exclude 'Dockerfile.test' --exclude 'docker-compose.test.yml' \
+		graduation-site/booth/ root@192.168.86.25:/opt/booth/
+	scp -i ~/.ssh/id_ansible \
+		ansible/files/booth/docker-compose.yml \
+		root@192.168.86.25:/opt/booth/docker-compose.yml
+	@echo "==> Starting booth container..."
+	ssh -i ~/.ssh/id_ansible root@192.168.86.25 \
+		'cd /opt/booth && GEMINI_API_KEY=$(GEMINI_API_KEY) docker compose up -d --build'
+	@echo "==> Deploying Traefik route..."
+	scp -i ~/.ssh/id_ansible \
+		ansible/files/traefik/dynamic/booth.yml \
+		root@192.168.86.20:/etc/traefik/dynamic/booth.yml
+	@echo "==> Done. Gallery: https://booth.woodhead.tech/booth.html"
+	@echo "==> Upload:        https://booth.woodhead.tech"
 
 # ===== Phase 4: Talos K8s Cluster =====
 

@@ -1,0 +1,17 @@
+http:
+  routers:
+    booth:
+      rule: "Host(`booth.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: booth
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
+  services:
+    booth:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.25:8087"

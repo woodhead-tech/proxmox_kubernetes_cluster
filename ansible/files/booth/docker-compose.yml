@@ -1,0 +1,10 @@
+services:
+  booth:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8087:8080"
+    volumes:
+      - ./photos:/app/photos
+    environment:
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
