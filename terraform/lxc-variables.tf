@@ -564,3 +564,23 @@ variable "hermes_ip" {
   type        = string
   default     = "192.168.86.44"
 }
+
+# --- Omada Controller ---
+variable "omada_vmid" {
+  description = "VM ID for the Omada WiFi Controller LXC"
+  type        = number
+  default     = 225
+}
+
+variable "omada_ip" {
+  description = "Static IP for the Omada Controller LXC"
+  type        = string
+  default     = "192.168.86.49"
+}
+
+variable "omada_root_password" {
+  description = "Temporary root password for console access during initial setup"
+  type        = string
+  default     = ""
+  sensitive   = true
+}

@@ -76,6 +76,7 @@ service_groups:
       - { vmid: 212, name: mailserver, type: lxc }
       - { vmid: 221, name: adguard, type: lxc }
       - { vmid: 222, name: step-ca, type: lxc }
+      - { vmid: 225, name: omada, type: lxc }
       - { vmid: 223, name: pbs, type: lxc }
 
   special:

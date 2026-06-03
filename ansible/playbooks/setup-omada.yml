@@ -1,0 +1,115 @@
+---
+# setup-omada.yml - Deploy TP-Link Omada Software Controller
+#
+# Runs the Omada Controller via Docker on a Debian LXC.
+# After deployment, access the web UI at https://192.168.86.49:8043
+# to complete the initial setup wizard and adopt APs.
+
+- name: Deploy Omada Software Controller
+  hosts: omada
+  become: true
+  gather_facts: true
+
+  vars:
+    omada_dir: /opt/omada
+
+  tasks:
+    - name: Install Docker prerequisites
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: true
+
+    - name: Add Docker GPG key
+      ansible.builtin.shell: |
+        install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+        chmod a+r /etc/apt/keyrings/docker.asc
+      args:
+        creates: /etc/apt/keyrings/docker.asc
+
+    - name: Add Docker repository
+      ansible.builtin.shell: |
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
+      args:
+        creates: /etc/apt/sources.list.d/docker.list
+
+    - name: Install Docker Engine
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: true
+
+    - name: Create Omada directory
+      file:
+        path: "{{ omada_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Deploy docker-compose.yml
+      copy:
+        dest: "{{ omada_dir }}/docker-compose.yml"
+        mode: "0644"
+        content: |
+          services:
+            omada-controller:
+              image: mbentley/omada-controller:latest
+              container_name: omada-controller
+              restart: unless-stopped
+              ulimits:
+                nofile:
+                  soft: 4096
+                  hard: 8192
+              stop_grace_period: 60s
+              network_mode: host
+              environment:
+                - MANAGE_HTTP_PORT=8088
+                - MANAGE_HTTPS_PORT=8043
+                - PORTAL_HTTP_PORT=8088
+                - PORTAL_HTTPS_PORT=8843
+                - TZ=America/Los_Angeles
+              volumes:
+                - omada-data:/opt/tplink/EAPController/data
+                - omada-logs:/opt/tplink/EAPController/logs
+
+          volumes:
+            omada-data:
+            omada-logs:
+
+    - name: Start Omada Controller
+      community.docker.docker_compose_v2:
+        project_src: "{{ omada_dir }}"
+        state: present
+      register: compose_result
+      ignore_errors: true
+
+    - name: Fallback - start with docker compose CLI
+      ansible.builtin.shell: |
+        cd {{ omada_dir }} && docker compose up -d
+      when: compose_result is failed
+
+    - name: Wait for Omada Controller to start
+      uri:
+        url: "https://localhost:8043"
+        validate_certs: false
+        status_code: [200, 302]
+      register: result
+      until: result.status in [200, 302]
+      retries: 30
+      delay: 5
+      ignore_errors: true
+
+    - name: Display access info
+      debug:
+        msg:
+          - "Omada Controller is running!"
+          - "Web UI: https://192.168.86.49:8043"
+          - "Complete the setup wizard to configure admin credentials."
+          - "AP discovery ports: 29810-29814 (UDP/TCP)"
