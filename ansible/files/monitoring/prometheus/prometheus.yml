@@ -41,6 +41,9 @@ scrape_configs:
       - targets: ["node-exporter:9100"]
         labels:
           instance: "monitoring"
+      - targets: ["192.168.86.207:9100"]
+        labels:
+          instance: "netsvc1"
 
   # cAdvisor: Docker container metrics (local)
   - job_name: "cadvisor"
