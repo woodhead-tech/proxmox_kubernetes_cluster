@@ -1,33 +1,83 @@
 # setup-plex.yml - Install Plex Media Server in its LXC
 #
 # This playbook:
-#   1. Configures iGPU passthrough on the Proxmox host (for hardware transcoding)
-#   2. Installs Plex Media Server from the official repository
-#   3. Optionally mounts NFS share from TrueNAS for media storage
+#   1. Mounts TrueNAS NFS at /mnt/truenas-media on the Proxmox host (pve2)
+#      and wires it into the LXC as /media via pct bind mount (mp0)
+#   2. Configures iGPU passthrough on the Proxmox host (for hardware transcoding)
+#   3. Installs Plex Media Server from the official repository
 #
 # Prerequisites:
-#   - Plex LXC created via Terraform (make apply-lxc)
+#   - Plex LXC (VMID 203) created via Terraform (make apply-lxc), runs on pve2 (thinkcentre2)
 #   - SSH access to both Proxmox host and LXC
-#   - Intel CPU with integrated GPU on the Proxmox node (for transcoding)
+#   - TrueNAS NFS export at 192.168.86.40:/mnt/tank/media accessible on LAN
 #
 # Usage:
 #   ansible-playbook playbooks/setup-plex.yml
 #
-# With NFS mount:
-#   ansible-playbook playbooks/setup-plex.yml \
-#     --extra-vars "nfs_server=192.168.86.40 nfs_share=/mnt/pool/media"
-#
 # Without GPU passthrough:
-#   ansible-playbook playbooks/setup-plex.yml \
-#     --extra-vars "gpu_passthrough=false"
+#   ansible-playbook playbooks/setup-plex.yml --extra-vars "gpu_passthrough=false"
+#
+# MANUAL STEPS REQUIRED AFTER DEPLOY (cannot be automated):
+#   1. Open http://192.168.86.23:32400/web from a LAN browser
+#   2. Sign in with your plex.tv account to CLAIM the server
+#      (required for TV apps and remote clients to connect)
+#   3. Add libraries: Movies -> /media/movies, TV Shows -> /media/tv
+#   4. Enable hardware transcoding in Settings > Transcoder (requires Plex Pass)
 ---
-# --- Play 1: Configure GPU passthrough on the Proxmox host ---
-- name: Configure iGPU passthrough for Plex LXC
+# --- Play 1: Configure Proxmox host (NFS mount + bind mount + GPU passthrough) ---
+- name: Configure Proxmox host for Plex LXC
   hosts: pve2
   vars:
     plex_vmid: 203
     gpu_passthrough: true
+    nfs_server: "192.168.86.40"
+    nfs_share: "/mnt/tank/media"
+    host_mount: "/mnt/truenas-media"
+
   tasks:
+    # --- NFS host mount ---
+    - name: Create NFS mount point on Proxmox host
+      ansible.builtin.file:
+        path: "{{ host_mount }}"
+        state: directory
+        mode: "0755"
+
+    - name: Add NFS mount to fstab (systemd automount)
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "{{ nfs_server }}:{{ nfs_share }} {{ host_mount }} nfs soft,intr,_netdev,x-systemd.automount,x-systemd.mount-timeout=30 0 0"
+        state: present
+
+    - name: Reload systemd and mount NFS
+      ansible.builtin.shell:
+        cmd: systemctl daemon-reload && (mountpoint -q {{ host_mount }} || mount {{ host_mount }})
+      changed_when: true
+
+    - name: Verify NFS media is accessible
+      ansible.builtin.command:
+        cmd: "timeout 5 ls {{ host_mount }}"
+      register: nfs_contents
+      changed_when: false
+
+    - name: Show NFS contents
+      ansible.builtin.debug:
+        msg: "TrueNAS media directories: {{ nfs_contents.stdout_lines }}"
+
+    # --- Wire NFS into LXC via pct bind mount ---
+    - name: Stop Plex LXC to apply bind mount
+      ansible.builtin.command:
+        cmd: pct stop {{ plex_vmid }}
+      register: pct_stop
+      changed_when: pct_stop.rc == 0
+      failed_when: false
+
+    - name: Add media bind mount to LXC config
+      ansible.builtin.command:
+        cmd: pct set {{ plex_vmid }} -mp0 {{ host_mount }},mp=/media
+      register: pct_set
+      changed_when: pct_set.rc == 0
+
+    # --- GPU Passthrough ---
     - name: Check if /dev/dri exists on Proxmox host
       ansible.builtin.stat:
         path: /dev/dri
@@ -42,7 +92,6 @@
           lxc.cgroup2.devices.allow: c 226:* rwm
           lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
       when: gpu_passthrough | bool and dri_device.stat.exists
-      notify: Restart Plex LXC
 
     - name: Note about GPU
       ansible.builtin.debug:
@@ -51,19 +100,20 @@
           not found on this node. Plex will use software transcoding (CPU).
       when: not (gpu_passthrough | bool) or not dri_device.stat.exists
 
-  handlers:
-    - name: Restart Plex LXC
+    - name: Start Plex LXC
       ansible.builtin.command:
-        cmd: "bash -c 'pct stop {{ plex_vmid }} && sleep 3 && pct start {{ plex_vmid }}'"
-      changed_when: true
+        cmd: pct start {{ plex_vmid }}
+      register: pct_start
+      changed_when: pct_start.rc == 0
+
+    - name: Wait for LXC to boot
+      ansible.builtin.pause:
+        seconds: 5
 
 # --- Play 2: Install Plex inside the LXC ---
 - name: Install Plex Media Server
   hosts: lxc_services:&plex
   vars:
-    # NFS mount for media storage (optional, set via --extra-vars)
-    nfs_server: ""
-    nfs_share: ""
     media_mount: /media
 
   tasks:
@@ -78,11 +128,10 @@
           - ca-certificates
           - curl
           - gnupg
-          - nfs-common       # For NFS mounts from TrueNAS
+          - nfs-common
         state: present
 
     # --- Plex Installation ---
-    # Official Plex repository for Debian
     - name: Add Plex GPG key
       ansible.builtin.shell:
         cmd: curl -fsSL https://downloads.plex.tv/plex-keys/PlexSign.key | gpg --dearmor -o /etc/apt/keyrings/plex.gpg
@@ -112,19 +161,19 @@
         enabled: true
         state: started
 
-    # --- Media Mount ---
-    - name: Create media mount point
-      ansible.builtin.file:
-        path: "{{ media_mount }}"
-        state: directory
-        mode: "0755"
+    # --- Verify media mount ---
+    - name: Verify media is accessible inside LXC
+      ansible.builtin.command:
+        cmd: "timeout 5 ls {{ media_mount }}"
+      register: media_contents
+      changed_when: false
+      failed_when: media_contents.rc != 0
 
-    # NFS is bind-mounted into the LXC via the Proxmox host (pct set -mp0).
-    # Unprivileged LXCs cannot run mount.nfs directly; the host mounts
-    # 192.168.86.40:/mnt/tank/media at /mnt/truenas-media and the LXC sees
-    # it as /media through the bind mount configured in the LXC's .conf file.
+    - name: Show media directories
+      ansible.builtin.debug:
+        msg: "Media at {{ media_mount }}: {{ media_contents.stdout_lines }}"
 
-    # --- Verify GPU access (if passthrough was configured) ---
+    # --- Verify GPU access ---
     - name: Check for GPU device inside container
       ansible.builtin.stat:
         path: /dev/dri/renderD128
@@ -151,11 +200,12 @@
           - "Plex Media Server deployed"
           - "Service status: {{ plex_status.stdout }}"
           - "Web UI: http://{{ ansible_host }}:32400/web"
-          - "Media mount: {{ media_mount }} (NFS: {{ 'yes' if nfs_server != '' else 'no - not configured' }})"
+          - "Media: {{ media_contents.stdout_lines }}"
           - "GPU: {{ 'available' if gpu_device.stat.exists else 'not detected' }}"
           - ""
-          - "NEXT STEPS:"
-          - "  1. Open http://{{ ansible_host }}:32400/web"
-          - "  2. Sign in with your Plex account"
-          - "  3. Add media libraries pointing to /media/movies, /media/tv, etc."
-          - "  4. Enable hardware transcoding in Settings > Transcoder (requires Plex Pass)"
+          - "MANUAL STEPS REQUIRED:"
+          - "  1. Open http://{{ ansible_host }}:32400/web from a LAN browser"
+          - "  2. Sign in with your plex.tv account to CLAIM the server"
+          - "     (TV apps and remote clients won't connect until this is done)"
+          - "  3. Add libraries: Movies -> /media/movies, TV Shows -> /media/tv"
+          - "  4. Enable hardware transcoding in Settings > Transcoder (Plex Pass)"
