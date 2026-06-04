@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>woodhead.tech — Network Map</title>
+<style>
+:root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace; background: var(--bg); color: var(--text); overflow: hidden; }
+#graph { width: 100vw; height: 100vh; }
+.tooltip { position: absolute; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; pointer-events: none; opacity: 0; transition: opacity 0.15s; font-size: 13px; max-width: 320px; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+.tooltip .name { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+.tooltip .ip { color: #58a6ff; font-family: monospace; }
+.tooltip .services { color: var(--muted); margin-top: 4px; font-size: 12px; }
+.tooltip .url { color: #3fb950; font-size: 12px; margin-top: 2px; }
+.legend { position: fixed; bottom: 16px; left: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-size: 12px; }
+.legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+h1 { position: fixed; top: 16px; left: 16px; font-size: 16px; font-weight: 600; opacity: 0.7; }
+.controls { position: fixed; top: 16px; right: 16px; display: flex; gap: 8px; }
+.controls button { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+.controls button:hover { background: var(--border); }
+</style>
+</head>
+<body>
+<h1>woodhead.tech network map</h1>
+<div class="controls">
+    <button onclick="resetZoom()">Reset</button>
+    <button onclick="toggleLabels()">Labels</button>
+</div>
+<svg id="graph"></svg>
+<div class="tooltip" id="tooltip"></div>
+<div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>Proxmox Node</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#58a6ff"></div>LXC Container</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>VM</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#d29922"></div>K8s Node</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#a371f7"></div>Device</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8b949e"></div>External</div>
+</div>
+<script src="https://d3js.org/d3.v7.min.js" integrity="sha384-H4FBUfOI0S1AEbVbNgtP/P6Bi1GqSfW2Ak0f/a7RXuKWXMBKlBIZGuIPP5pHbaI" crossorigin="anonymous"></script>
+<script>
+// Network topology data
+const nodes = [
+    // Proxmox nodes
+    {id:"pve1",label:"pve1 (thinkcentre1)",ip:"192.168.86.29",type:"proxmox",group:"core"},
+    {id:"pve2",label:"pve2 (thinkcentre2)",ip:"192.168.86.30",type:"proxmox",group:"core"},
+    {id:"pve3",label:"pve3 (thinkcentre3)",ip:"192.168.86.31",type:"proxmox",group:"core"},
+    {id:"tower1",label:"tower1",ip:"192.168.86.130",type:"proxmox",group:"core"},
+    {id:"zotac",label:"zotac",ip:"192.168.86.147",type:"proxmox",group:"core"},
+    // LXC containers
+    {id:"traefik",label:"Traefik",ip:"192.168.86.20",type:"lxc",group:"core",url:"traefik.woodhead.tech",services:"Reverse proxy, TLS termination"},
+    {id:"wireguard",label:"WireGuard",ip:"192.168.86.39",type:"lxc",group:"core",services:"VPN tunnel"},
+    {id:"arr",label:"ARR Stack",ip:"192.168.86.22",type:"lxc",group:"media",url:"sonarr/radarr/prowlarr.woodhead.tech",services:"Sonarr, Radarr, Prowlarr, Bazarr, SABnzbd, Overseerr"},
+    {id:"plex",label:"Plex",ip:"192.168.86.23",type:"lxc",group:"media",url:"plex.woodhead.tech",services:"Media server (iGPU transcode)"},
+    {id:"monitoring",label:"Monitoring",ip:"192.168.86.25",type:"lxc",group:"observability",url:"grafana.woodhead.tech",services:"Prometheus, Grafana, Alertmanager, alertmind"},
+    {id:"authentik",label:"Authentik",ip:"192.168.86.28",type:"lxc",group:"security",url:"auth.woodhead.tech",services:"SSO / Identity Provider"},
+    {id:"mailserver",label:"Mailcow",ip:"192.168.86.34",type:"lxc",group:"infra",url:"mail.woodhead.tech",services:"Email (Mailgun relay)"},
+    {id:"kanboard",label:"Kanboard",ip:"192.168.86.33",type:"lxc",group:"apps",url:"tasks.woodhead.tech",services:"Project management"},
+    {id:"recipe",label:"Recipe Site",ip:"192.168.86.21",type:"lxc",group:"apps",url:"recipes.woodhead.tech",services:"Go app + SQLite"},
+    {id:"photos",label:"Grad Photos",ip:"192.168.86.45",type:"lxc",group:"apps",url:"photos.woodhead.tech",services:"Photo upload + live gallery"},
+    {id:"adguard",label:"AdGuard",ip:"192.168.86.35",type:"lxc",group:"infra",services:"DNS ad blocking"},
+    {id:"stepca",label:"Step-CA",ip:"192.168.86.36",type:"lxc",group:"infra",services:"SSH Certificate Authority"},
+    {id:"zigbee",label:"Zigbee2MQTT",ip:"192.168.86.44",type:"lxc",group:"home",services:"Zigbee bridge + Mosquitto"},
+    {id:"libby",label:"Libby Alert",ip:"192.168.86.27",type:"lxc",group:"home",url:"alert.woodhead.tech",services:"Life alert QR site"},
+    {id:"claude",label:"Claude OS",ip:"192.168.86.37",type:"lxc",group:"apps",url:"claude-os.woodhead.tech",services:"AI memory system"},
+    {id:"pwnagotchi",label:"Pwnagotchi",ip:"192.168.86.38",type:"lxc",group:"special",services:"WiFi learning (WireGuard only)"},
+    {id:"guacamole",label:"Guacamole",ip:"192.168.86.47",type:"lxc",group:"apps",services:"Remote desktop gateway"},
+    {id:"vaultwarden",label:"Vaultwarden",ip:"192.168.86.43",type:"lxc",group:"security",services:"Password manager"},
+    {id:"omada",label:"Omada",ip:"192.168.86.49",type:"lxc",group:"infra",services:"WiFi AP controller"},
+    // VMs
+    {id:"truenas",label:"TrueNAS",ip:"192.168.86.40",type:"vm",group:"storage",url:"nas.woodhead.tech",services:"NAS (16GB RAM, Ceph)"},
+    {id:"ha",label:"Home Assistant",ip:"192.168.86.41",type:"vm",group:"home",url:"home.woodhead.tech",services:"Smart home automation"},
+    // K8s
+    {id:"k8s-cp",label:"K8s Control Plane",ip:"192.168.86.101",type:"k8s",group:"k8s",services:"Talos v1.12.5, etcd"},
+    {id:"k8s-w0",label:"K8s Worker 0",ip:"192.168.86.111",type:"k8s",group:"k8s"},
+    {id:"k8s-w1",label:"K8s Worker 1",ip:"192.168.86.112",type:"k8s",group:"k8s"},
+    {id:"k8s-w2",label:"K8s Worker 2",ip:"192.168.86.113",type:"k8s",group:"k8s"},
+    {id:"k8s-vip",label:"K8s VIP",ip:"192.168.86.100",type:"k8s",group:"k8s",services:"API endpoint"},
+    // Devices
+    {id:"piboard",label:"Piboard",ip:"192.168.86.131",type:"device",group:"device",services:"Go dashboard + Waveshare 5\""},
+    {id:"ender5",label:"Ender 5 Pro",ip:"192.168.86.136",type:"device",group:"device",url:"ender5.woodhead.tech",services:"Klipper / MainsailOS"},
+    {id:"ender3",label:"Ender 3",ip:"192.168.86.138",type:"device",group:"device",url:"ender3.woodhead.tech",services:"Klipper / MainsailOS"},
+    // External
+    {id:"cloudflare",label:"Cloudflare",ip:"",type:"external",group:"external",services:"DNS, CDN, TLS certs"},
+    {id:"internet",label:"Internet",ip:"50.47.84.160",type:"external",group:"external",services:"WAN uplink"},
+];
+
+// Links: source → target (hosting, traffic flow, dependencies)
+const links = [
+    // Proxmox hosts → their VMs/LXCs
+    {source:"pve1",target:"traefik"},{source:"pve1",target:"wireguard"},{source:"pve1",target:"recipe"},
+    {source:"pve1",target:"authentik"},{source:"pve1",target:"kanboard"},{source:"pve1",target:"libby"},
+    {source:"pve1",target:"claude"},{source:"pve1",target:"adguard"},{source:"pve1",target:"stepca"},
+    {source:"pve1",target:"vaultwarden"},{source:"pve1",target:"photos"},
+    {source:"pve2",target:"arr"},{source:"pve2",target:"plex"},{source:"pve2",target:"monitoring"},
+    {source:"pve3",target:"mailserver"},{source:"pve3",target:"pwnagotchi"},
+    {source:"tower1",target:"truenas"},{source:"tower1",target:"ha"},{source:"tower1",target:"k8s-cp"},{source:"tower1",target:"guacamole"},
+    {source:"zotac",target:"zigbee"},{source:"zotac",target:"k8s-w2"},{source:"zotac",target:"omada"},
+    {source:"pve2",target:"k8s-w0"},{source:"pve3",target:"k8s-w1"},
+    // Traffic flow
+    {source:"internet",target:"cloudflare"},{source:"cloudflare",target:"traefik"},
+    {source:"traefik",target:"monitoring"},{source:"traefik",target:"arr"},{source:"traefik",target:"plex"},
+    {source:"traefik",target:"authentik"},{source:"traefik",target:"ha"},{source:"traefik",target:"kanboard"},
+    {source:"traefik",target:"photos"},{source:"traefik",target:"mailserver"},{source:"traefik",target:"truenas"},
+    // K8s internal
+    {source:"k8s-vip",target:"k8s-cp"},{source:"k8s-cp",target:"k8s-w0"},{source:"k8s-cp",target:"k8s-w1"},{source:"k8s-cp",target:"k8s-w2"},
+    // Storage dependency
+    {source:"truenas",target:"arr"},{source:"truenas",target:"plex"},
+];
+
+const colors = {proxmox:"#f85149",lxc:"#58a6ff",vm:"#3fb950",k8s:"#d29922",device:"#a371f7",external:"#8b949e"};
+const sizes = {proxmox:14,lxc:10,vm:12,k8s:9,device:8,external:10};
+
+const width = window.innerWidth, height = window.innerHeight;
+const svg = d3.select("#graph").attr("width",width).attr("height",height);
+const tooltip = d3.select("#tooltip");
+let showLabels = true;
+
+const g = svg.append("g");
+const zoom = d3.zoom().scaleExtent([0.3,4]).on("zoom",e=>g.attr("transform",e.transform));
+svg.call(zoom);
+
+const sim = d3.forceSimulation(nodes)
+    .force("link",d3.forceLink(links).id(d=>d.id).distance(80))
+    .force("charge",d3.forceManyBody().strength(-300))
+    .force("center",d3.forceCenter(width/2,height/2))
+    .force("collide",d3.forceCollide().radius(d=>sizes[d.type]+10));
+
+const link = g.append("g").selectAll("line").data(links).join("line")
+    .attr("stroke","#30363d").attr("stroke-opacity",0.4).attr("stroke-width",1);
+
+const node = g.append("g").selectAll("g").data(nodes).join("g")
+    .call(d3.drag().on("start",dragStart).on("drag",dragged).on("end",dragEnd));
+
+node.append("circle")
+    .attr("r",d=>sizes[d.type])
+    .attr("fill",d=>colors[d.type])
+    .attr("stroke",d=>colors[d.type])
+    .attr("stroke-width",2)
+    .attr("fill-opacity",0.2);
+
+const labels = node.append("text")
+    .text(d=>d.label)
+    .attr("dx",d=>sizes[d.type]+4).attr("dy",4)
+    .attr("font-size","11px").attr("fill","var(--muted)");
+
+node.on("mouseover",(e,d)=>{
+    let html='<div class="name">'+d.label+'</div>';
+    if(d.ip) html+='<div class="ip">'+d.ip+'</div>';
+    if(d.url) html+='<div class="url">https://'+d.url+'</div>';
+    if(d.services) html+='<div class="services">'+d.services+'</div>';
+    tooltip.html(html).style("opacity",1).style("left",(e.pageX+12)+"px").style("top",(e.pageY-12)+"px");
+}).on("mouseout",()=>tooltip.style("opacity",0));
+
+sim.on("tick",()=>{
+    link.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);
+    node.attr("transform",d=>"translate("+d.x+","+d.y+")");
+});
+
+function dragStart(e,d){if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;}
+function dragged(e,d){d.fx=e.x;d.fy=e.y;}
+function dragEnd(e,d){if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}
+function resetZoom(){svg.transition().duration(500).call(zoom.transform,d3.zoomIdentity);}
+function toggleLabels(){showLabels=!showLabels;labels.style("display",showLabels?"block":"none");}
+</script>
+</body>
+</html>

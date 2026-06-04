@@ -1,0 +1,17 @@
+http:
+  routers:
+    netmap:
+      rule: "Host(`netmap.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: netmap
+      tls:
+        certResolver: cloudflare
+      middlewares:
+        - authentik@file
+
+  services:
+    netmap:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.25:8089"
