@@ -35,12 +35,65 @@ scrape_configs:
     static_configs:
       - targets: ["localhost:9090"]
 
-  # Node Exporter: monitoring LXC host metrics
+  # Node Exporter: per-LXC host metrics (CPU, memory, disk, network)
+  # monitoring-stack uses the Docker container (node-exporter:9100).
+  # All other LXCs run the prometheus-node-exporter apt package on port 9100.
   - job_name: "node-exporter"
     static_configs:
       - targets: ["node-exporter:9100"]
         labels:
           instance: "monitoring"
+      - targets: ["192.168.86.20:9100"]
+        labels:
+          instance: "traefik-gw"
+      - targets: ["192.168.86.21:9100"]
+        labels:
+          instance: "recipe-site"
+      - targets: ["192.168.86.22:9100"]
+        labels:
+          instance: "arr-stack"
+      - targets: ["192.168.86.23:9100"]
+        labels:
+          instance: "plex-server"
+      - targets: ["192.168.86.27:9100"]
+        labels:
+          instance: "libby-alert"
+      - targets: ["192.168.86.28:9100"]
+        labels:
+          instance: "authentik"
+      - targets: ["192.168.86.33:9100"]
+        labels:
+          instance: "kanboard"
+      - targets: ["192.168.86.34:9100"]
+        labels:
+          instance: "mailserver"
+      - targets: ["192.168.86.35:9100"]
+        labels:
+          instance: "adguard"
+      - targets: ["192.168.86.36:9100"]
+        labels:
+          instance: "step-ca"
+      - targets: ["192.168.86.37:9100"]
+        labels:
+          instance: "claude-os"
+      - targets: ["192.168.86.39:9100"]
+        labels:
+          instance: "wireguard"
+      - targets: ["192.168.86.42:9100"]
+        labels:
+          instance: "ollama"
+      - targets: ["192.168.86.43:9100"]
+        labels:
+          instance: "vaultwarden"
+      - targets: ["192.168.86.45:9100"]
+        labels:
+          instance: "hermes"
+      - targets: ["192.168.86.46:9100"]
+        labels:
+          instance: "tv-kiosk"
+      - targets: ["192.168.86.48:9100"]
+        labels:
+          instance: "claude-code"
       - targets: ["192.168.86.207:9100"]
         labels:
           instance: "netsvc1"

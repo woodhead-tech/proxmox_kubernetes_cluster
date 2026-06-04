@@ -157,6 +157,14 @@ plex: ## Deploy Plex Media Server into its LXC (with iGPU passthrough)
 jellyfin: ## Deploy Jellyfin Media Server into its LXC (with iGPU passthrough)
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-jellyfin.yml
 
+node-exporter: ## Install prometheus-node-exporter on all LXC containers and hot-reload Prometheus
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-node-exporter.yml
+	scp -i ~/.ssh/id_ansible \
+		files/monitoring/prometheus/prometheus.yml \
+		root@192.168.86.25:/opt/monitoring/prometheus/config/prometheus.yml
+	ssh -i ~/.ssh/id_ansible root@192.168.86.25 \
+		'curl -s -o /dev/null -w "Prometheus reload: %{http_code}\n" -X POST http://localhost:9090/-/reload'
+
 monitoring: ## Deploy monitoring stack (Prometheus, Grafana, Alertmanager, Dexcom) into its LXC
 	@# Usage: make monitoring DISCORD_WEBHOOK=https://... GRAFANA_PASSWORD=... PVE_USER=monitoring@pve PVE_TOKEN_NAME=prometheus PVE_TOKEN_VALUE=...
 	@# Dexcom: make monitoring DEXCOM_USERNAME=user DEXCOM_PASSWORD=pass HA_GLUCOSE_WEBHOOK=http://192.168.86.41:8123/api/webhook/<id>

@@ -1,0 +1,39 @@
+---
+# setup-node-exporter.yml
+# Installs prometheus-node-exporter on all LXC containers so Prometheus
+# can scrape per-host CPU, memory, disk, and network metrics.
+#
+# Skips monitoring-stack (.25) — it already runs node-exporter via Docker.
+# Safe to re-run; apt is idempotent and the service is left running.
+#
+# Usage:
+#   cd ansible && ansible-playbook playbooks/setup-node-exporter.yml
+#   cd ansible && ansible-playbook playbooks/setup-node-exporter.yml --limit recipe-site
+
+- name: Install node-exporter on LXC containers
+  hosts: lxc_services:adguard:traefik
+  become: true
+  gather_facts: false
+  ignore_unreachable: true
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install prometheus-node-exporter
+      ansible.builtin.apt:
+        name: prometheus-node-exporter
+        state: present
+
+    - name: Enable and start node-exporter
+      ansible.builtin.systemd:
+        name: prometheus-node-exporter
+        enabled: true
+        state: started
+
+    - name: Confirm node-exporter is listening on 9100
+      ansible.builtin.wait_for:
+        port: 9100
+        timeout: 10
