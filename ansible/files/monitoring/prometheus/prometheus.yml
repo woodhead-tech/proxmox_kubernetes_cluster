@@ -180,6 +180,7 @@ scrape_configs:
           - http://192.168.86.45:9119     # Hermes dashboard
           - http://192.168.86.46:8080     # tv-kiosk Kodi bridge
           - http://192.168.86.48:7681     # Claude Code ttyd
+          - http://192.168.86.25:8083     # Landing page container (keystone, same-node)
           - http://192.168.86.131:8080    # Piboard
           - http://192.168.86.136:80      # Klipper Ender 5 Pro (Mainsail)
           - http://192.168.86.138:80      # Klipper Ender 3 (Mainsail)
@@ -201,6 +202,22 @@ scrape_configs:
           - https://resume.woodhead.tech   # Resume site (public, no auth)
           - https://alert.woodhead.tech/health  # Libby Alert health endpoint
           - https://scanner.woodhead.tech  # SDR scanner
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # Keystone HTTPS probe: 10s timeout to absorb inter-node TCP retransmits (TC2→TC1 packet loss)
+  - job_name: "blackbox-https-keystone"
+    metrics_path: /probe
+    params:
+      module: [http_2xx_slow]
+    static_configs:
+      - targets:
+          - https://lab.woodhead.tech      # Homelab landing page (keystone)
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

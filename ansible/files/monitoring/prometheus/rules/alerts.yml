@@ -12,6 +12,26 @@ groups:
   # --- Service Health ---
   - name: service_health
     rules:
+      # Keystone: internal container probe failed 1+ min (same-node, no cross-node noise)
+      - alert: KeystoneContainerDown
+        expr: probe_success{job="blackbox-http", instance="http://192.168.86.25:8083"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Keystone container down: landing page nginx not responding"
+          description: "Direct probe to landing page container (192.168.86.25:8083) has been failing for 1 minute. monitoring-stack LXC or nginx container may be down."
+
+      # Keystone: end-to-end HTTPS probe failed 2+ min (cross-node, allow retransmit settling)
+      - alert: KeystoneServiceDown
+        expr: probe_success{job="blackbox-https-keystone"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Keystone service down: lab.woodhead.tech not reachable"
+          description: "HTTPS probe to lab.woodhead.tech has been failing for 2 minutes. Traefik routing or TLS may be broken."
+
       # Service HTTP probe has failed for 2+ minutes
       - alert: ServiceDown
         expr: probe_success{job=~"blackbox-http|blackbox-https"} == 0
