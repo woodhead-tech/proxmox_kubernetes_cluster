@@ -52,6 +52,21 @@ modules:
       follow_redirects: true
       preferred_ip_protocol: ip4
 
+  # Keystone probe: bypasses DNS by hitting Traefik IP directly with Host header
+  # Avoids the intermittent DNS timeout in the Docker bridge → gateway → AdGuard chain
+  # 301 redirect from Traefik confirms the lab.woodhead.tech route is alive
+  http_traefik_lab:
+    prober: http
+    timeout: 5s
+    http:
+      valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+      valid_status_codes: [301]
+      method: GET
+      follow_redirects: false
+      preferred_ip_protocol: ip4
+      headers:
+        Host: lab.woodhead.tech
+
   # ICMP probe: ping (checks host reachability and latency)
   icmp:
     prober: icmp
