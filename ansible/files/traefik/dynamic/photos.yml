@@ -1,0 +1,15 @@
+http:
+  routers:
+    photos:
+      rule: "Host(`photos.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: photos
+      tls:
+        certResolver: cloudflare
+
+  services:
+    photos:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.45:80"

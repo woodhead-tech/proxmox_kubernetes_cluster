@@ -540,6 +540,26 @@ variable "step_ca_ip" {
   default     = "192.168.86.36"
 }
 
+# --- Photos LXC ---
+variable "photos_vmid" {
+  description = "VM ID for the graduation photos upload app LXC"
+  type        = number
+  default     = 218
+}
+
+variable "photos_ip" {
+  description = "Static IP for the photos LXC"
+  type        = string
+  default     = "192.168.86.45"
+}
+
+variable "photos_root_password" {
+  description = "Root password for the photos LXC"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 # --- Domain ---
 variable "domain" {
   description = "Base domain name for services"
