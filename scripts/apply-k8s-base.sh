@@ -44,6 +44,10 @@ fi
 log "Applying base namespaces..."
 kubectl apply -f "${K8S_DIR}/namespace.yml"
 
+# --- Kubelet CSR auto-approver (always apply) ---
+log "Applying kubelet CSR auto-approver..."
+kubectl apply -f "${K8S_DIR}/kubelet-csr-approver.yml" 2>/dev/null || true
+
 # --- MetalLB (optional) ---
 if [[ "${INSTALL_METALLB}" == "true" ]]; then
   log "Installing MetalLB ${METALLB_VERSION}..."
@@ -58,7 +62,19 @@ if [[ "${INSTALL_METALLB}" == "true" ]]; then
 
   log "Applying MetalLB IP pool configuration..."
   kubectl apply -f "${K8S_DIR}/metallb/namespace.yml"
-  kubectl apply -f "${K8S_DIR}/metallb/ip-pool.yml"
+
+  # Retry IP pool apply — MetalLB webhook may need time to be ready after fresh bootstrap.
+  # If it fails due to webhook timeout, temporarily remove and re-add the webhook config.
+  if ! kubectl apply -f "${K8S_DIR}/metallb/ip-pool.yml" 2>/dev/null; then
+    log "Webhook not ready — bypassing temporarily to apply IP pool..."
+    kubectl get validatingwebhookconfiguration metallb-webhook-configuration -o yaml > /tmp/metallb-webhook-backup.yaml 2>/dev/null || true
+    kubectl delete validatingwebhookconfiguration metallb-webhook-configuration 2>/dev/null || true
+    kubectl apply -f "${K8S_DIR}/metallb/ip-pool.yml"
+    if [[ -f /tmp/metallb-webhook-backup.yaml ]]; then
+      kubectl apply -f /tmp/metallb-webhook-backup.yaml
+      rm -f /tmp/metallb-webhook-backup.yaml
+    fi
+  fi
 fi
 
 # --- Summary ---
