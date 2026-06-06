@@ -16,4 +16,4 @@ http:
     hermes:
       loadBalancer:
         servers:
-          - url: "http://192.168.86.45:9119"
+          - url: "http://192.168.86.51:9119"
