@@ -319,7 +319,7 @@ consulting: ## Deploy consulting site to monitoring LXC
 
 static-sites: ## Migrate static sites (docs/resume/homelab/consulting/landing/v2mom) from monitoring-stack to dedicated LXC at 192.168.86.51
 	@echo "Migrating static sites from monitoring-stack (.25) to static-sites LXC (.51)"
-	@echo "Prerequisite: static-sites LXC (VMID 227) must be provisioned via: make apply"
+	@echo "Prerequisite: static-sites LXC (VMID 228) must be provisioned via: make apply"
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-static-sites.yml
 	@echo ""
 	@echo "Migration complete. Next: remove static site services from"
