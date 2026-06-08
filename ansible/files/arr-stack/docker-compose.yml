@@ -145,6 +145,8 @@ services:
     volumes:
       - /opt/arr/sabnzbd/config:/config
       - /media/downloads:/downloads
+    mem_limit: 2g
+    memswap_limit: 2g
     restart: unless-stopped
 
   # --- Whisparr: Adult Movie Management ---
