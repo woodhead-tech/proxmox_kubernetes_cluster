@@ -133,6 +133,16 @@ Explicit Xorg config at `/etc/X11/xorg.conf.d/10-modesetting.conf` forces the
 modesetting driver to use `PCI:0:2:0` (the N3150 iGPU). Without this, X tries to
 open `/dev/dri/card0` which doesn't exist — the card appears as `card1` inside the LXC.
 
+## Chromium GL Flags
+
+Chromium on this host requires `--use-angle=default` (ANGLE renderer). Do **not** use `--use-gl=egl` — it passes `egl-gles2` which modern Chromium rejects with:
+
+```
+Requested GL implementation (gl=egl-gles2,angle=none) not found in allowed implementations: [(gl=egl-angle,angle=default)]
+```
+
+The correct flag is in `/usr/local/bin/chromium-kiosk-session.sh`. If redeploying, ensure it contains `--use-angle=default` not `--use-gl=egl`.
+
 ## Display Blanking
 
 DPMS is disabled in `/home/kodi/.xinitrc` so the TV never sleeps:

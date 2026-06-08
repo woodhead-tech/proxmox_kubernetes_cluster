@@ -1,32 +1,32 @@
-# skypups.yml - Traefik route for Sky Pups Treats proposal demo
+# skypups.yml - Sky Pups Treats consulting demo redirect
 #
-# Routes skypups.woodhead.tech to the consulting site proposal page.
-# Protected by Authentik SSO — credentials shared directly with the client.
-# After login, redirects to /proposals/skypups on the consulting site.
+# Engagement complete. Redirects skypups.woodhead.tech to the main consulting
+# site. CloudFront distribution (d2vzjqueq92j16.cloudfront.net) can be
+# deactivated in AWS console — it no longer receives any traffic.
 http:
   middlewares:
-    skypups-redirect:
+    skypups-to-consulting:
       redirectRegex:
-        regex: "^https://skypups\\.woodhead\\.tech/?$"
-        replacement: "https://skypups.woodhead.tech/proposals/skypups"
-        permanent: false
+        regex: ".*"
+        replacement: "https://woodhead.tech"
+        permanent: true
 
   routers:
     skypups:
       rule: "Host(`skypups.woodhead.tech`)"
       entryPoints:
         - websecure
-      service: skypups
+      service: skypups-noop
       middlewares:
-        - authentik@file
-        - skypups-redirect
+        - skypups-to-consulting
       tls:
         certResolver: cloudflare
         domains:
           - main: "*.woodhead.tech"
 
   services:
-    skypups:
+    # Redirect fires before the service is reached; this is a required placeholder.
+    skypups-noop:
       loadBalancer:
         servers:
-          - url: "http://192.168.86.25:8085"
+          - url: "http://127.0.0.1:1"
