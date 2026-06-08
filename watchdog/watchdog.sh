@@ -23,6 +23,7 @@ log "=== watchdog run start ==="
 
 CHECKS=(
     "check-ceph"
+    "check-corosync"
     "check-arp"
     "check-nfs"
     "check-klipper"

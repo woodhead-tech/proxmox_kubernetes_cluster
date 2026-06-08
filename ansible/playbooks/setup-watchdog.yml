@@ -59,6 +59,7 @@
         - watchdog.sh
         - lib/notify.sh
         - checks/check-ceph.sh
+        - checks/check-corosync.sh
         - checks/check-arp.sh
         - checks/check-nfs.sh
         - checks/check-klipper.sh
