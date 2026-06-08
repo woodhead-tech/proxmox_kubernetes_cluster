@@ -70,7 +70,6 @@ service_groups:
       - { vmid: 201, name: recipe-site, type: lxc }
       - { vmid: 206, name: openclaw, type: lxc }
       - { vmid: 211, name: kanboard, type: lxc }
-      - { vmid: 215, name: claude-os, type: lxc }
       - { vmid: 218, name: photos, type: lxc }
       - { vmid: 219, name: guacamole, type: lxc }
       - { vmid: 228, name: static-sites, type: lxc }
