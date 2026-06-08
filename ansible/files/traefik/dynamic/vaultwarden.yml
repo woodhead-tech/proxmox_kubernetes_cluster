@@ -34,5 +34,10 @@ http:
     vaultwarden:
       loadBalancer:
         servers:
-          - url: "http://192.168.86.43:80"
+          - url: "https://192.168.86.43:443"
+        serversTransport: vaultwardenTransport
         passHostHeader: true
+
+  serversTransports:
+    vaultwardenTransport:
+      insecureSkipVerify: true
