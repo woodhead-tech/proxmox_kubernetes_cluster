@@ -204,11 +204,9 @@
     # thermal_zone0 is the WiFi adapter (iwlwifi) and returns ENODATA in LXC.
     # Patch temperature() to iterate zones until one is readable.
     - name: Patch pwnagotchi temperature() for LXC thermal zone support
-      ansible.builtin.script:
-        cmd: /dev/stdin
-        executable: python3
-      args:
-        stdin: |
+      ansible.builtin.shell:
+        cmd: |
+          {{ pwnagotchi_dir }}/venv/bin/python3 << 'PYEOF'
           import pathlib
 
           venv = pathlib.Path("{{ pwnagotchi_dir }}/venv")
@@ -244,6 +242,7 @@
               print("patched")
           else:
               print("already patched")
+          PYEOF
       register: temp_patch
       changed_when: "'patched' in temp_patch.stdout"
 
