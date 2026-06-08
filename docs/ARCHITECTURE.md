@@ -1116,3 +1116,16 @@ Full operational runbook: `docs/RUNBOOK.md` and `homelab-admin` skill `reference
 |                              |
 +------------------------------+
 ```
+
+## Smart Home Device Mapping
+
+### Linkind Plug Serial → Device Mapping
+
+| Matter Serial | Commissioning Code | HA Device ID | Role |
+|---|---|---|---|
+| `00005795737` | `3016-351-2379` | `a5477bf1...` | Basking lamp |
+| `00005806904` | `2201-851-2373` | `8be2197e...` | Ambient light |
+| `00005795754` | `1016-521-2372` | `aa9590f7...` | Ceramic heater |
+| `00005807765` | *(check sticker)* | `98adc57d...` | Living room lamp |
+
+Manufacturer reports as "Leedarson" in Home Assistant (Linkind OEM). All four are in the **Choppy's Enclosure** area (enclosure devices) or **Living Room** area (living room lamp).
