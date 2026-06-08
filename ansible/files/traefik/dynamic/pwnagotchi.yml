@@ -1,7 +1,8 @@
 # pwnagotchi.yml - Traefik route for pwnagotchi web UI
 #
 # LXC 216, IP 192.168.86.38, port 8080
-# Access via WireGuard VPN for security — avoid exposing publicly if possible.
+# Restricted to LAN + WireGuard VPN only via lan-only@file middleware.
+# The pwnagotchi UI has no authentication — public exposure would leak WiFi capture data.
 
 http:
   routers:
@@ -10,6 +11,8 @@ http:
       entryPoints:
         - websecure
       service: pwnagotchi
+      middlewares:
+        - lan-only@file
       tls:
         certResolver: cloudflare
         domains:
