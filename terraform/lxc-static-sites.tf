@@ -14,7 +14,7 @@
 #
 # After migration, remove these services from ansible/files/monitoring/docker-compose.yml.
 #
-# VMID: 227 | IP: 192.168.86.51 | Group: apps
+# VMID: 228 | IP: 192.168.86.51 | Group: apps
 
 resource "proxmox_virtual_environment_container" "static_sites" {
   node_name   = lookup(var.node_assignments, "static-sites", var.proxmox_node)

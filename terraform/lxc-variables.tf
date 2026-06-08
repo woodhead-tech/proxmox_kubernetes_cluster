@@ -609,7 +609,7 @@ variable "omada_root_password" {
 variable "static_sites_vmid" {
   description = "VM ID for the static sites LXC (docs, resume, homelab, consulting, landing, v2mom)"
   type        = number
-  default     = 227
+  default     = 228
 }
 
 variable "static_sites_ip" {

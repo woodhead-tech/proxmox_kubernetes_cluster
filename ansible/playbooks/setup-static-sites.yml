@@ -63,6 +63,7 @@
           - ca-certificates
           - curl
           - gnupg
+          - rsync
         state: present
 
     # --- Docker Installation ---
@@ -98,6 +99,16 @@
           - containerd.io
           - docker-compose-plugin
         state: present
+
+    - name: Configure Docker daemon DNS (required for Docker-in-LXC)
+      ansible.builtin.copy:
+        content: |
+          {
+            "dns": ["8.8.8.8", "1.1.1.1"]
+          }
+        dest: /etc/docker/daemon.json
+        mode: "0644"
+      notify: Restart Docker
 
     - name: Enable and start Docker
       ansible.builtin.systemd:
@@ -234,7 +245,7 @@
         owner: traefik
         group: traefik
         mode: "0644"
-      delegate_to: traefik
+      delegate_to: traefik-gw
 
     - name: Remove old per-file static site routes from traefik-gw
       ansible.builtin.file:
@@ -247,13 +258,13 @@
         - homelab-site.yml
         - consulting-site.yml
         - v2mom.yml
-      delegate_to: traefik
+      delegate_to: traefik-gw
 
-    - name: Reload Traefik (file provider hot-reloads, but signal to be safe)
+    - name: Restart Traefik to ensure new routes are live
       ansible.builtin.systemd:
         name: traefik
-        state: reloaded
-      delegate_to: traefik
+        state: restarted
+      delegate_to: traefik-gw
 
     # --- Verification ---
     - name: Verify all site containers are running
@@ -273,4 +284,10 @@
           - "  1. Verify: curl -H 'Host: docs.woodhead.tech' http://192.168.86.51:8081"
           - "  2. Remove static site services from ansible/files/monitoring/docker-compose.yml"
           - "  3. make monitoring  (redeploy monitoring without static sites)"
-          - "  4. Add static-sites (VMID 227) to service_groups.yml apps group"
+          - "  4. Add static-sites (VMID 228) to service_groups.yml apps group"
+
+  handlers:
+    - name: Restart Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted
