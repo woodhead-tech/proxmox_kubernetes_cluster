@@ -26,7 +26,8 @@
 .PHONY: setup prepare prepare-truenas ddns init plan apply \
         apply-truenas apply-homeassistant apply-lxc plan-lxc \
         traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi vaultwarden \
-        bootstrap kubeconfig health k8s-base check-iso rejoin-worker harden \
+        bootstrap recover-k8s kubeconfig health k8s-base check-iso rejoin-worker harden \
+        certs-push certs-pull certs-check approve-csrs \
         patch-proxmox patch-lxc patch-docker patch-pi destroy clean help \
         docs-build docs-dev resume-build consulting-build consulting alertmind booth \
         group-status group-start group-stop
@@ -407,6 +408,41 @@ bootstrap: ## Generate Talos configs and bootstrap the cluster (runs check-iso f
 	chmod +x $(SCRIPTS_DIR)/bootstrap.sh $(SCRIPTS_DIR)/check-iso.sh
 	./$(SCRIPTS_DIR)/check-iso.sh
 	./$(SCRIPTS_DIR)/bootstrap.sh
+
+recover-k8s: ## Re-bootstrap cluster after cert mismatch (resets all Talos VMs via Proxmox)
+	@echo "This will reset all Talos VMs and re-apply configs. K8s state is preserved (wipe=false)."
+	@echo "Required env vars: CLUSTER_VIP, CONTROLPLANE_IPS, WORKER_IPS"
+	@[ -n "$(CLUSTER_VIP)" ] || (echo "ERROR: Set CLUSTER_VIP"; exit 1)
+	@[ -n "$(CONTROLPLANE_IPS)" ] || (echo "ERROR: Set CONTROLPLANE_IPS"; exit 1)
+	@[ -n "$(WORKER_IPS)" ] || (echo "ERROR: Set WORKER_IPS"; exit 1)
+	chmod +x $(SCRIPTS_DIR)/recover-k8s.sh
+	CLUSTER_VIP=$(CLUSTER_VIP) CONTROLPLANE_IPS=$(CONTROLPLANE_IPS) WORKER_IPS=$(WORKER_IPS) \
+	  ./$(SCRIPTS_DIR)/recover-k8s.sh
+
+certs-push: ## Push talosconfig + kubeconfig to Vaultwarden (requires BW_SESSION)
+	@[ -n "$(BW_SESSION)" ] || (echo "ERROR: Run: export BW_SESSION=\$$(bw unlock --raw)"; exit 1)
+	chmod +x $(SCRIPTS_DIR)/certs-vault.sh
+	BW_SESSION=$(BW_SESSION) ./$(SCRIPTS_DIR)/certs-vault.sh push
+
+certs-pull: ## Pull talosconfig + kubeconfig from Vaultwarden into talos/_out/
+	@[ -n "$(BW_SESSION)" ] || (echo "ERROR: Run: export BW_SESSION=\$$(bw unlock --raw)"; exit 1)
+	chmod +x $(SCRIPTS_DIR)/certs-vault.sh
+	BW_SESSION=$(BW_SESSION) ./$(SCRIPTS_DIR)/certs-vault.sh pull
+	@echo "Certs restored to $(TALOS_OUT)/. Verify with: make certs-check"
+
+certs-check: ## Verify talosctl + kubectl connectivity using certs in talos/_out/
+	chmod +x $(SCRIPTS_DIR)/certs-vault.sh
+	./$(SCRIPTS_DIR)/certs-vault.sh check
+
+approve-csrs: ## Approve all pending kubelet serving CSRs (run after bootstrap or node rejoin)
+	@if [ ! -f "$(TALOS_OUT)/kubeconfig" ]; then \
+		echo "Error: No kubeconfig found. Run 'make certs-pull' first."; \
+		exit 1; \
+	fi
+	KUBECONFIG=$(TALOS_OUT)/kubeconfig kubectl get csr --no-headers 2>/dev/null | \
+		grep Pending | awk '{print $$1}' | xargs -r kubectl certificate approve \
+		--kubeconfig $(TALOS_OUT)/kubeconfig
+	@echo "Done. Verify: kubectl get csr --kubeconfig $(TALOS_OUT)/kubeconfig"
 
 kubeconfig: ## Fetch kubeconfig from the running cluster
 	@if [ ! -f "$(TALOS_OUT)/talosconfig" ]; then \

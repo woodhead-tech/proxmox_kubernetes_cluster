@@ -146,3 +146,20 @@ services:
       - /opt/arr/sabnzbd/config:/config
       - /media/downloads:/downloads
     restart: unless-stopped
+
+  # --- Whisparr: Adult Movie Management ---
+  # Collection manager for adult movies, fork of Radarr/Sonarr.
+  whisparr:
+    image: ghcr.io/hotio/whisparr:latest
+    container_name: whisparr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - /opt/arr/whisparr/config:/config
+      - /media:/media
+      - /media/downloads:/downloads  # Same path as SABnzbd for hardlinks
+    ports:
+      - "6969:6969"
+    restart: unless-stopped

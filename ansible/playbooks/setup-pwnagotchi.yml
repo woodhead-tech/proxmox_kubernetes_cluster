@@ -200,6 +200,53 @@
         virtualenv: "{{ pwnagotchi_dir }}/venv"
         extra_args: "--upgrade"
 
+    # --- LXC thermal zone fix ---
+    # thermal_zone0 is the WiFi adapter (iwlwifi) and returns ENODATA in LXC.
+    # Patch temperature() to iterate zones until one is readable.
+    - name: Patch pwnagotchi temperature() for LXC thermal zone support
+      ansible.builtin.script:
+        cmd: /dev/stdin
+        executable: python3
+      args:
+        stdin: |
+          import pathlib
+
+          venv = pathlib.Path("{{ pwnagotchi_dir }}/venv")
+          pkg = next(venv.glob("lib/python3.*/site-packages/pwnagotchi/__init__.py"))
+
+          old = (
+              "def temperature(celsius=True):\n"
+              "    with open('/sys/class/thermal/thermal_zone0/temp', 'rt') as fp:\n"
+              "        temp = int(fp.read().strip())\n"
+              "    c = int(temp / 1000)\n"
+              "    return c if celsius else ((c * (9 / 5)) + 32)"
+          )
+          new = (
+              "def temperature(celsius=True):\n"
+              "    import glob\n"
+              "    for zone in sorted(glob.glob('/sys/class/thermal/thermal_zone*/temp')):\n"
+              "        try:\n"
+              "            with open(zone, 'rt') as fp:\n"
+              "                raw = fp.read().strip()\n"
+              "            if raw:\n"
+              "                temp = int(raw)\n"
+              "                c = int(temp / 1000)\n"
+              "                return c if celsius else ((c * (9 / 5)) + 32)\n"
+              "        except (OSError, ValueError):\n"
+              "            continue\n"
+              "    return 0"
+          )
+          content = pkg.read_text()
+          if new not in content:
+              if old not in content:
+                  raise SystemExit("ERROR: could not find temperature() to patch")
+              pkg.write_text(content.replace(old, new))
+              print("patched")
+          else:
+              print("already patched")
+      register: temp_patch
+      changed_when: "'patched' in temp_patch.stdout"
+
     # --- Monitor mode scripts (bettercap !cmd doesn't handle &&) ---
     - name: Install monitor mode start script
       ansible.builtin.copy:
