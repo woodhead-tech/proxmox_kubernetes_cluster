@@ -13,7 +13,6 @@ set -euo pipefail
 
 ACTION="${1:?Usage: $0 push|pull|check}"
 VAULTWARDEN_URL="${VAULTWARDEN_URL:-https://vaultwarden.woodhead.tech}"
-BW_SESSION="${BW_SESSION:?Set BW_SESSION=\$(bw unlock --raw)}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -29,6 +28,7 @@ bw config server "$VAULTWARDEN_URL" > /dev/null 2>&1
 
 case "$ACTION" in
 push)
+  [[ -n "${BW_SESSION:-}" ]] || { echo "ERROR: BW_SESSION env var not set. Run: export BW_SESSION=\$(bw unlock --raw)"; exit 1; }
   [[ -f "${OUTPUT_DIR}/talosconfig" ]] || { echo "ERROR: ${OUTPUT_DIR}/talosconfig not found"; exit 1; }
   [[ -f "${OUTPUT_DIR}/kubeconfig" ]] || { echo "ERROR: ${OUTPUT_DIR}/kubeconfig not found"; exit 1; }
 
@@ -57,18 +57,25 @@ print(json.dumps(item))
   ;;
 
 pull)
+  [[ -n "${BW_SESSION:-}" ]] || { echo "ERROR: BW_SESSION env var not set. Run: export BW_SESSION=\$(bw unlock --raw)"; exit 1; }
   log "Pulling certs from Vaultwarden..."
   bw sync --session "$BW_SESSION" > /dev/null 2>&1 || true
 
   mkdir -p "$OUTPUT_DIR"
 
-  bw get item "$TALOSCONFIG_ITEM_ID" --session "$BW_SESSION" 2>/dev/null | \
+  log "Pulling talosconfig..."
+  tmp_talosconfig=$(mktemp)
+  bw get item "$TALOSCONFIG_ITEM_ID" --session "$BW_SESSION" | \
     python3 -c "import sys,json; print(json.load(sys.stdin)['notes'])" \
-    > "${OUTPUT_DIR}/talosconfig"
+    > "$tmp_talosconfig"
+  mv "$tmp_talosconfig" "${OUTPUT_DIR}/talosconfig"
 
-  bw get item "$KUBECONFIG_ITEM_ID" --session "$BW_SESSION" 2>/dev/null | \
+  log "Pulling kubeconfig..."
+  tmp_kubeconfig=$(mktemp)
+  bw get item "$KUBECONFIG_ITEM_ID" --session "$BW_SESSION" | \
     python3 -c "import sys,json; print(json.load(sys.stdin)['notes'])" \
-    > "${OUTPUT_DIR}/kubeconfig"
+    > "$tmp_kubeconfig"
+  mv "$tmp_kubeconfig" "${OUTPUT_DIR}/kubeconfig"
 
   chmod 600 "${OUTPUT_DIR}/talosconfig" "${OUTPUT_DIR}/kubeconfig"
 

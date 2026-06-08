@@ -431,9 +431,8 @@ certs-pull: ## Pull talosconfig + kubeconfig from Vaultwarden into talos/_out/
 	@echo "Certs restored to $(TALOS_OUT)/. Verify with: make certs-check"
 
 certs-check: ## Verify talosctl + kubectl connectivity using certs in talos/_out/
-	@[ -n "$(BW_SESSION)" ] || (echo "ERROR: Run: export BW_SESSION=\$$(bw unlock --raw)"; exit 1)
 	chmod +x $(SCRIPTS_DIR)/certs-vault.sh
-	BW_SESSION=$(BW_SESSION) ./$(SCRIPTS_DIR)/certs-vault.sh check
+	./$(SCRIPTS_DIR)/certs-vault.sh check
 
 approve-csrs: ## Approve all pending kubelet serving CSRs (run after bootstrap or node rejoin)
 	@if [ ! -f "$(TALOS_OUT)/kubeconfig" ]; then \
@@ -443,7 +442,7 @@ approve-csrs: ## Approve all pending kubelet serving CSRs (run after bootstrap o
 	KUBECONFIG=$(TALOS_OUT)/kubeconfig kubectl get csr --no-headers 2>/dev/null | \
 		grep Pending | awk '{print $$1}' | xargs -r kubectl certificate approve \
 		--kubeconfig $(TALOS_OUT)/kubeconfig
-	@echo "All pending CSRs approved"
+	@echo "Done. Verify: kubectl get csr --kubeconfig $(TALOS_OUT)/kubeconfig"
 
 kubeconfig: ## Fetch kubeconfig from the running cluster
 	@if [ ! -f "$(TALOS_OUT)/talosconfig" ]; then \

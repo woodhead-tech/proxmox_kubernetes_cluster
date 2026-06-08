@@ -68,11 +68,15 @@ if [[ "${INSTALL_METALLB}" == "true" ]]; then
   if ! kubectl apply -f "${K8S_DIR}/metallb/ip-pool.yml" 2>/dev/null; then
     log "Webhook not ready — bypassing temporarily to apply IP pool..."
     kubectl get validatingwebhookconfiguration metallb-webhook-configuration -o yaml > /tmp/metallb-webhook-backup.yaml 2>/dev/null || true
+    if [[ -f /tmp/metallb-webhook-backup.yaml ]]; then
+      trap 'kubectl apply -f /tmp/metallb-webhook-backup.yaml 2>/dev/null; rm -f /tmp/metallb-webhook-backup.yaml' EXIT
+    fi
     kubectl delete validatingwebhookconfiguration metallb-webhook-configuration 2>/dev/null || true
     kubectl apply -f "${K8S_DIR}/metallb/ip-pool.yml"
     if [[ -f /tmp/metallb-webhook-backup.yaml ]]; then
       kubectl apply -f /tmp/metallb-webhook-backup.yaml
       rm -f /tmp/metallb-webhook-backup.yaml
+      trap - EXIT
     fi
   fi
 fi

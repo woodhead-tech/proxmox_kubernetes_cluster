@@ -771,7 +771,7 @@ and a proper MX record for the domain. Service accounts (e.g., `clawbot@woodhead
 
 ### Grafana Cloud Paging / Alerting
 
-**Status**: PLANNED
+**Status**: READY TO DEPLOY (grafana.net account created, API key stored in `scripts/secrets/grafana.env`)
 
 **Type**: Monitoring integration — Grafana Cloud (grafana.net account)
 **Goal**: Route critical homelab alerts (libby alerts, downed services, sensor failures) through Grafana Cloud's alerting and on-call paging infrastructure instead of raw Discord webhooks. Provides escalation policies, silences, acknowledgment, and mobile push/SMS paging.
@@ -784,7 +784,7 @@ and a proper MX record for the domain. Service accounts (e.g., `clawbot@woodhead
 **Key decisions**:
 - Push metrics to Grafana Cloud (remote_write from Prometheus) or run Grafana Agent on the monitoring LXC
 - Use Grafana Alerting (cloud-managed) or keep Alertmanager and add a Grafana Cloud contact point
-- API key stored in Ansible vault / secrets.yaml — never committed to git
+- API key stored in Ansible vault / secrets / gitignored env files (e.g. `scripts/secrets/grafana.env`) — never committed to git
 
 **Implementation plan**:
 1. Configure Grafana Agent on monitoring LXC (205) to scrape local Prometheus and ship to Grafana Cloud
@@ -855,7 +855,7 @@ This exposes `GET /api/prometheus` on HA (port 8123). Add a Prometheus scrape jo
 21. **pwnagotchi** -- DONE (LXC 216 on thinkcentre3 at 192.168.86.38; TP-Link TL-WN722N v2 RTL8188EUS USB WiFi in monitor mode via lxc.net.1.type=phys; bettercap + pwngrid + pwnagotchi Python AI; pwnagotchi.woodhead.tech)
 22. **Legitimate SSL Certs** -- PLANNED (replace self-signed/wildcard certs with proper Let's Encrypt certs per service; evaluate cert-manager in K8s or Traefik ACME for LXC services; ensure all subdomains have valid TLS)
 23. **Piboard Touchscreen** -- PLANNED (verify XPT2046 SPI touch on Waveshare 5" display; add `--touch-events=enabled` to Chromium kiosk flags; calibrate if needed)
-24. **Grafana Cloud Paging** -- PLANNED (route critical alerts through grafana.net on-call; Grafana Agent on monitoring LXC ships metrics to cloud; escalation for Libby alerts, downed services, enclosure, Dexcom)
+24. **Grafana Cloud Paging** -- READY TO DEPLOY (grafana.net account created, API key stored in scripts/secrets/grafana.env; route critical alerts through grafana.net on-call; Grafana Agent on monitoring LXC ships metrics to cloud)
 25. **Gutgrinda Enclosure in Grafana** -- PLANNED (enable HA Prometheus integration, scrape from monitoring LXC, Grafana dashboard for temp/humidity/plug states)
 
 ---

@@ -62,8 +62,8 @@ wait_for_maintenance() {
     sleep 5
     elapsed=$((elapsed + 5))
   done
-  log "WARNING: $ip did not reach maintenance mode within ${timeout}s — continuing anyway"
-  return 0
+  log "ERROR: $ip did not reach maintenance mode within ${timeout}s"
+  return 1
 }
 
 IFS=',' read -ra CP_NODES <<< "$CONTROLPLANE_IPS"
@@ -132,7 +132,14 @@ talosctl config endpoint "${CP_NODES[0]}"
 talosctl config node "${CP_NODES[0]}"
 
 log "Bootstrapping etcd (will fail gracefully if already bootstrapped)"
-talosctl bootstrap --nodes "${CP_NODES[0]}" 2>&1 | grep -v "AlreadyExists" || true
+bootstrap_out=$(talosctl bootstrap --nodes "${CP_NODES[0]}" 2>&1) || {
+  if echo "$bootstrap_out" | grep -q "AlreadyExists"; then
+    log "etcd already bootstrapped, continuing"
+  else
+    log "ERROR: bootstrap failed: $bootstrap_out"
+    exit 1
+  fi
+}
 
 # --- Step 7: Fetch kubeconfig ---
 log "Waiting for K8s API to be available..."
