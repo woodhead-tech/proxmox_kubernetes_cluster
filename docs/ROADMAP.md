@@ -328,8 +328,9 @@ Keeping track of allocated IPs to avoid conflicts:
 | 192.168.86.32     | SDR Scanner          | LXC  | 210   |
 | 192.168.86.33     | Kanboard             | LXC  | 211   |
 | 192.168.86.34     | Mailcow email        | LXC  | 212   |
-| 192.168.86.35     | PXE boot server      | LXC  | 213   |
-| 192.168.86.36     | Zigbee2MQTT          | LXC  | 214   |
+| 192.168.86.35     | AdGuard Home DNS     | LXC  | 221   |
+| 192.168.86.36     | step-ca SSH CA       | LXC  | 222   |
+| 192.168.86.50     | PXE boot server      | LXC  | 213   |
 | 192.168.86.37     | Claude OS            | LXC  | 215   |
 | 192.168.86.38     | pwnagotchi           | LXC  | 216   |
 | 192.168.86.39     | WireGuard VPN        | LXC  | 208   |

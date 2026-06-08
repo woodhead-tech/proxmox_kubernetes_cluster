@@ -345,7 +345,7 @@ variable "pxe_vmid" {
 variable "pxe_ip" {
   description = "Static IP for the PXE boot server LXC"
   type        = string
-  default     = "192.168.86.35"
+  default     = "192.168.86.50"
 }
 
 variable "pxe_cores" {
@@ -599,6 +599,26 @@ variable "omada_ip" {
 }
 
 variable "omada_root_password" {
+  description = "Temporary root password for console access during initial setup"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+# --- Static Sites LXC ---
+variable "static_sites_vmid" {
+  description = "VM ID for the static sites LXC (docs, resume, homelab, consulting, landing, v2mom)"
+  type        = number
+  default     = 227
+}
+
+variable "static_sites_ip" {
+  description = "Static IP for the static sites LXC"
+  type        = string
+  default     = "192.168.86.51"
+}
+
+variable "static_sites_root_password" {
   description = "Temporary root password for console access during initial setup"
   type        = string
   default     = ""
