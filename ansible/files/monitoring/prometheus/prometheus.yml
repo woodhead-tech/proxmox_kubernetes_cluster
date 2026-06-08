@@ -88,9 +88,6 @@ scrape_configs:
       - targets: ["192.168.86.45:9100"]
         labels:
           instance: "hermes"
-      - targets: ["192.168.86.46:9100"]
-        labels:
-          instance: "tv-kiosk"
       - targets: ["192.168.86.48:9100"]
         labels:
           instance: "claude-code"
@@ -231,7 +228,6 @@ scrape_configs:
           - http://192.168.86.35:3000     # AdGuard Home
           - http://192.168.86.41:8123     # Home Assistant
           - http://192.168.86.45:9119     # Hermes dashboard
-          - http://192.168.86.46:8080     # tv-kiosk Kodi bridge
           - http://192.168.86.48:7681     # Claude Code ttyd
           - http://192.168.86.25:8083     # Landing page container (keystone, same-node)
           - http://192.168.86.131:8080    # Piboard
@@ -356,7 +352,6 @@ scrape_configs:
           - 192.168.86.39    # wireguard
           - 192.168.86.44    # zigbee2mqtt
           - 192.168.86.45    # hermes
-          - 192.168.86.46    # tv-kiosk
           - 192.168.86.48    # claude-code
     relabel_configs:
       - source_labels: [__address__]

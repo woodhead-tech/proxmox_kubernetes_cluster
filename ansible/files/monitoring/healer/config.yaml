@@ -94,15 +94,6 @@ rules:
     host: "192.168.86.45"
     command: "systemctl restart hermes-dashboard"
 
-  # --- Kodi tv-kiosk (192.168.86.46) ---
-
-  - alert: ServiceDown
-    match:
-      instance: "http://192.168.86.46:8080"
-    action: "Restart Kodi bridge service"
-    host: "192.168.86.46"
-    command: "systemctl restart kodi-bridge && systemctl restart kodi"
-
   # --- Recipe site (192.168.86.21) ---
 
   - alert: ServiceDown

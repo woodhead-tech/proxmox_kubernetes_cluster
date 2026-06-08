@@ -38,7 +38,8 @@ service_groups:
       - { vmid: 300, name: truenas, type: vm }
 
   security:
-    description: "Authentik SSO"
+    always_on: true
+    description: "Authentik SSO — 18 Traefik routes depend on it; treat as core"
     required_by: [media, apps]
     members:
       - { vmid: 207, name: authentik, type: lxc }
@@ -51,11 +52,12 @@ service_groups:
       - { vmid: 209, name: libby-alert, type: lxc }
 
   media:
-    description: "ARR stack, Plex"
+    description: "ARR stack, Plex, Jellyfin"
     depends_on: [core, storage]
     members:
       - { vmid: 202, name: arr-stack, type: lxc }
       - { vmid: 203, name: plex, type: lxc }
+      - { vmid: 204, name: jellyfin, type: lxc }
 
   observability:
     description: "Prometheus, Grafana, Alertmanager"
@@ -66,23 +68,27 @@ service_groups:
     description: "Lightweight application services + remote access"
     members:
       - { vmid: 201, name: recipe-site, type: lxc }
+      - { vmid: 206, name: openclaw, type: lxc }
       - { vmid: 211, name: kanboard, type: lxc }
       - { vmid: 215, name: claude-os, type: lxc }
+      - { vmid: 218, name: photos, type: lxc }
       - { vmid: 219, name: guacamole, type: lxc }
 
   infra:
-    description: "Email, DNS, backups, SSH CA"
+    description: "Email, DNS, backups, SSH CA, secrets"
     members:
       - { vmid: 212, name: mailserver, type: lxc }
       - { vmid: 221, name: adguard, type: lxc }
       - { vmid: 222, name: step-ca, type: lxc }
-      - { vmid: 225, name: omada, type: lxc }
       - { vmid: 223, name: pbs, type: lxc }
+      - { vmid: 225, name: omada, type: lxc }
+      - { vmid: 226, name: vaultwarden, type: lxc }
 
   special:
     hardware_bound: true
     description: "USB passthrough services (excluded from bulk ops)"
     members:
+      - { vmid: 210, name: sdr-scanner, type: lxc }
       - { vmid: 216, name: pwnagotchi, type: lxc }
 
   k8s:
