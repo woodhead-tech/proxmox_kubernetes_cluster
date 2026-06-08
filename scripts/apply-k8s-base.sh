@@ -51,7 +51,7 @@ kubectl apply -f "${K8S_DIR}/kubelet-csr-approver.yml" 2>/dev/null || true
 # --- MetalLB (optional) ---
 if [[ "${INSTALL_METALLB}" == "true" ]]; then
   log "Installing MetalLB ${METALLB_VERSION}..."
-  kubectl apply -f "https://raw.githubusercontent.com/metallb/metallb/${METALLB_VERSION}/config/manifests/metallb-native.yaml"
+  kubectl apply --server-side --force-conflicts -f "https://raw.githubusercontent.com/metallb/metallb/${METALLB_VERSION}/config/manifests/metallb-native.yaml"
 
   # Wait for MetalLB pods to be ready before applying config
   log "Waiting for MetalLB controller to be ready..."
