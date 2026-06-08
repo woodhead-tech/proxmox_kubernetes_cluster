@@ -187,37 +187,6 @@ variable "monitoring_disk_size" {
   default     = 20
 }
 
-# --- OpenClaw LXC ---
-variable "openclaw_vmid" {
-  description = "VM ID for the OpenClaw AI agent framework LXC"
-  type        = number
-  default     = 206
-}
-
-variable "openclaw_ip" {
-  description = "Static IP for the OpenClaw LXC"
-  type        = string
-  default     = "192.168.86.26"
-}
-
-variable "openclaw_cores" {
-  description = "CPU cores for OpenClaw (Node.js gateway + CLI)"
-  type        = number
-  default     = 2
-}
-
-variable "openclaw_memory" {
-  description = "Memory in MB for OpenClaw (Node.js runtime + LLM API calls)"
-  type        = number
-  default     = 2048
-}
-
-variable "openclaw_disk_size" {
-  description = "Disk size in GB for OpenClaw (source build + Docker images + workspace)"
-  type        = number
-  default     = 20
-}
-
 # --- Authelia SSO LXC ---
 variable "authelia_vmid" {
   description = "VM ID for the Authelia SSO gateway LXC"
@@ -379,37 +348,6 @@ variable "zigbee2mqtt_ip" {
   default     = "192.168.86.44"
 }
 
-# --- Claude OS LXC ---
-variable "claude_os_vmid" {
-  description = "VM ID for the Claude OS LXC"
-  type        = number
-  default     = 215
-}
-
-variable "claude_os_ip" {
-  description = "Static IP for the Claude OS LXC"
-  type        = string
-  default     = "192.168.86.37"
-}
-
-variable "claude_os_cores" {
-  description = "CPU cores for Claude OS (Python API + Node.js frontend + optional Ollama)"
-  type        = number
-  default     = 4
-}
-
-variable "claude_os_memory" {
-  description = "Memory in MB for Claude OS (2GB min for OpenAI, 4GB+ for local Ollama lite)"
-  type        = number
-  default     = 4096
-}
-
-variable "claude_os_disk_size" {
-  description = "Disk size in GB for Claude OS (repo + venv + SQLite DB + optional Ollama models)"
-  type        = number
-  default     = 20
-}
-
 # --- Pwnagotchi LXC ---
 variable "pwnagotchi_vmid" {
   description = "VM ID for the Pwnagotchi LXC (must be on pve3 where WiFi dongle is attached)"
@@ -421,37 +359,6 @@ variable "pwnagotchi_ip" {
   description = "Static IP for the Pwnagotchi LXC"
   type        = string
   default     = "192.168.86.38"
-}
-
-# --- Ollama LXC ---
-variable "ollama_vmid" {
-  description = "VM ID for the Ollama LXC"
-  type        = number
-  default     = 217
-}
-
-variable "ollama_ip" {
-  description = "Static IP for the Ollama LXC"
-  type        = string
-  default     = "192.168.86.42"
-}
-
-variable "ollama_cores" {
-  description = "CPU cores for Ollama (handles inference if GPU is unavailable)"
-  type        = number
-  default     = 4
-}
-
-variable "ollama_memory" {
-  description = "Memory in MB for Ollama (8GB+ recommended for Llama 3)"
-  type        = number
-  default     = 8192
-}
-
-variable "ollama_disk_size" {
-  description = "Disk size in GB for Ollama (models are large; 40GB+ recommended)"
-  type        = number
-  default     = 40
 }
 
 # --- Guacamole LXC ---
@@ -573,17 +480,6 @@ variable "acme_email" {
   default     = ""
 }
 
-variable "hermes_vmid" {
-  description = "VMID for Hermes agent LXC"
-  type        = number
-  default     = 224
-}
-
-variable "hermes_ip" {
-  description = "IP address for Hermes agent LXC"
-  type        = string
-  default     = "192.168.86.44"
-}
 
 # --- Omada Controller ---
 variable "omada_vmid" {
