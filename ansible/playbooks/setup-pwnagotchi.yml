@@ -391,6 +391,56 @@
       delay: 5
       until: web_health.status in [200, 401]
 
+    # --- Backup retention (keep last N backups, prune the rest) ---
+    - name: Install backup prune script
+      ansible.builtin.copy:
+        dest: /usr/local/bin/pwnagotchi-backup-prune.sh
+        mode: "0755"
+        content: |
+          #!/bin/bash
+          # Keep only the N most recent pwnagotchi backups.
+          BACKUP_DIR=/etc/pwnagotchi/backups
+          KEEP=10
+          ls -1t "${BACKUP_DIR}"/pwnagotchi-backup-*.tar.gz 2>/dev/null \
+            | tail -n +$((KEEP + 1)) \
+            | xargs -r rm -f
+
+    - name: Install backup prune systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/pwnagotchi-backup-prune.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Prune old pwnagotchi backups (keep 10 most recent)
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/pwnagotchi-backup-prune.sh
+      notify: reload systemd
+
+    - name: Install backup prune systemd timer
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/pwnagotchi-backup-prune.timer
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Daily pwnagotchi backup prune
+
+          [Timer]
+          OnCalendar=daily
+          Persistent=true
+
+          [Install]
+          WantedBy=timers.target
+      notify: reload systemd
+
+    - name: Enable and start backup prune timer
+      ansible.builtin.systemd:
+        name: pwnagotchi-backup-prune.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+
     - name: Deployment summary
       ansible.builtin.debug:
         msg:
@@ -399,6 +449,7 @@
           - "External: https://pwnagotchi.woodhead.tech"
           - "Handshakes: {{ handshakes_dir }}"
           - "Logs: journalctl -u pwnagotchi -f"
+          - "Backup retention: 10 most recent (pruned daily)"
 
   handlers:
     - name: reload systemd
