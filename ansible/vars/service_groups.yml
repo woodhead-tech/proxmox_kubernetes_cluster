@@ -73,6 +73,7 @@ service_groups:
       - { vmid: 215, name: claude-os, type: lxc }
       - { vmid: 218, name: photos, type: lxc }
       - { vmid: 219, name: guacamole, type: lxc }
+      - { vmid: 227, name: static-sites, type: lxc }
 
   infra:
     description: "Email, DNS, backups, SSH CA, secrets"

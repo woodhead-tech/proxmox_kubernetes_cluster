@@ -5,7 +5,7 @@ title: PXE Server
 
 # PXE Server
 
-LXC 213 | `192.168.86.35` | Port 69 (TFTP), 80 (HTTP)
+LXC 213 | `192.168.86.50` | Port 69 (TFTP), 80 (HTTP)
 
 Network boot server for bare-metal and VM installations across the LAN. Runs proxy-DHCP mode so it coexists with the Google Nest DHCP server — no network reconfiguration needed.
 
@@ -19,7 +19,7 @@ Network boot server for bare-metal and VM installations across the LAN. Runs pro
 Client (F12 / PXE boot)
     |  DHCP broadcast
     v
-Google Nest (192.168.86.1)     PXE Server (192.168.86.35)
+Google Nest (192.168.86.1)     PXE Server (192.168.86.50)
     |  Issues IP lease          |  Proxy-DHCP: sends PXE boot options
     +----> Client <-----------+
                 |
@@ -57,10 +57,10 @@ make pxe
 
 ```bash
 # Service status
-ssh root@192.168.86.35 'systemctl status dnsmasq nginx'
+ssh root@192.168.86.50 'systemctl status dnsmasq nginx'
 
 # Test TFTP connectivity
-tftp 192.168.86.35 -c get pxelinux.0 /dev/null && echo "TFTP OK"
+tftp 192.168.86.50 -c get pxelinux.0 /dev/null && echo "TFTP OK"
 ```
 
 ## Troubleshooting

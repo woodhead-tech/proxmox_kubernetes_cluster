@@ -91,6 +91,9 @@ scrape_configs:
       - targets: ["192.168.86.48:9100"]
         labels:
           instance: "claude-code"
+      - targets: ["192.168.86.51:9100"]
+        labels:
+          instance: "static-sites"
       - targets: ["192.168.86.207:9100"]
         labels:
           instance: "netsvc1"
@@ -229,7 +232,7 @@ scrape_configs:
           - http://192.168.86.41:8123     # Home Assistant
           - http://192.168.86.45:9119     # Hermes dashboard
           - http://192.168.86.48:7681     # Claude Code ttyd
-          - http://192.168.86.25:8083     # Landing page container (keystone, same-node)
+          - http://192.168.86.51:8083     # Landing page container (static-sites)
           - http://192.168.86.131:8080    # Piboard
           - http://192.168.86.136:80      # Klipper Ender 5 Pro (Mainsail)
           - http://192.168.86.138:80      # Klipper Ender 3 (Mainsail)
@@ -353,6 +356,7 @@ scrape_configs:
           - 192.168.86.44    # zigbee2mqtt
           - 192.168.86.45    # hermes
           - 192.168.86.48    # claude-code
+          - 192.168.86.51    # static-sites
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

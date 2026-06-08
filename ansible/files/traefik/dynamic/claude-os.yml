@@ -25,8 +25,9 @@ http:
       entryPoints:
         - websecure
       service: claude-os-api
-      # API is intentionally unauthenticated — consumed by code-forge MCP (local Claude Code session).
-      # If this is ever exposed beyond the local machine, add lan-only@file or authentik@file.
+      # API is restricted to LAN/VPN — consumed by code-forge MCP (local Claude Code session).
+      middlewares:
+        - lan-only@file
       tls:
         certResolver: cloudflare
         domains:

@@ -25,6 +25,7 @@
 - name: Deploy static sites to dedicated LXC
   hosts: lxc_services:&static-sites
   vars:
+    app_user: root
     app_dir: /opt/static-sites
     compose_src: "{{ playbook_dir }}/../files/static-sites/docker-compose.yml"
     sites:
@@ -111,25 +112,102 @@
         state: directory
         mode: "0755"
 
-    - name: Create site build directories
+    - name: Create site build context directories
       ansible.builtin.file:
-        path: "{{ app_dir }}/{{ item }}/build"
+        path: "{{ app_dir }}/{{ item }}/build/html"
         state: directory
         mode: "0755"
       loop: "{{ sites }}"
 
-    # --- Sync Static Site Build Artifacts from Monitoring LXC ---
-    # Copies pre-built site content from the monitoring LXC (source of truth)
-    # to the new static-sites LXC so both serve identical content during migration.
-    - name: Sync site build artifacts from monitoring-stack
-      ansible.builtin.shell:
-        cmd: |
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/id_ansible -o StrictHostKeyChecking=accept-new" \
-            root@192.168.86.25:/opt/monitoring/{{ item }}/build/ \
-            {{ app_dir }}/{{ item }}/build/
+    # --- Deploy Dockerfiles and Configurations ---
+    - name: Copy site Dockerfiles
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/static-sites/{{ item }}/Dockerfile"
+        dest: "{{ app_dir }}/{{ item }}/build/Dockerfile"
+        mode: "0644"
       loop: "{{ sites }}"
-      delegate_to: localhost
+
+    - name: Copy landing site nginx config
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/static-sites/landing-site/nginx.conf"
+        dest: "{{ app_dir }}/landing-site/build/nginx.conf"
+        mode: "0644"
+
+    - name: Copy V2MOM dashboard nginx config
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/static-sites/v2mom-site/nginx.conf"
+        dest: "{{ app_dir }}/v2mom-site/build/nginx.conf"
+        mode: "0644"
+
+    # --- Sync Site Build HTML Content from Local Workspace ---
+    - name: Sync docs-site pre-built HTML
+      ansible.builtin.synchronize:
+        src: "{{ playbook_dir }}/../../docs-site/build/"
+        dest: "{{ app_dir }}/docs-site/build/html/"
+        delete: true
+        use_ssh_args: true
+        rsync_opts:
+          - "--no-perms"
+      become: false
+
+    - name: Sync resume-site pre-built HTML
+      ansible.builtin.synchronize:
+        src: "{{ playbook_dir }}/../../resume-site/public/"
+        dest: "{{ app_dir }}/resume-site/build/html/"
+        delete: true
+        use_ssh_args: true
+        rsync_opts:
+          - "--no-perms"
+      become: false
+
+    - name: Sync landing-site static files
+      ansible.builtin.synchronize:
+        src: "{{ playbook_dir }}/../../landing-site/"
+        dest: "{{ app_dir }}/landing-site/build/html/"
+        delete: true
+        use_ssh_args: true
+        rsync_opts:
+          - "--no-perms"
+          - "--exclude=static/"
+      become: false
+
+    - name: Sync landing-site static assets
+      ansible.builtin.synchronize:
+        src: "{{ playbook_dir }}/../../landing-site/static/"
+        dest: "{{ app_dir }}/landing-site/build/html/"
+        use_ssh_args: true
+        rsync_opts:
+          - "--no-perms"
+      become: false
+
+    - name: Sync homelab-site pre-built HTML (homelab-in-a-claude)
+      ansible.builtin.synchronize:
+        src: "{{ playbook_dir }}/../../../homelab-in-a-claude/website/public/"
+        dest: "{{ app_dir }}/homelab-site/build/html/"
+        delete: true
+        use_ssh_args: true
+        rsync_opts:
+          - "--no-perms"
+      become: false
+
+    - name: Sync consulting-site pre-built HTML
+      ansible.builtin.synchronize:
+        src: "{{ playbook_dir }}/../../consulting-site/dist/"
+        dest: "{{ app_dir }}/consulting-site/build/html/"
+        delete: true
+        use_ssh_args: true
+        rsync_opts:
+          - "--no-perms"
+      become: false
+
+    - name: Sync v2mom-site dashboard HTML content
+      ansible.builtin.synchronize:
+        src: "{{ playbook_dir }}/../files/static-sites/v2mom-site/html/"
+        dest: "{{ app_dir }}/v2mom-site/build/html/"
+        delete: true
+        use_ssh_args: true
+        rsync_opts:
+          - "--no-perms"
       become: false
 
     # --- Docker Compose Deployment ---
@@ -147,12 +225,12 @@
         build: always
 
     # --- Traefik Route Migration ---
-    # Deploy the combined static-sites-routes.yml to Traefik, replacing the
+    # Deploy the combined static-sites.yml to Traefik, replacing the
     # individual per-site route files that currently point to monitoring (.25).
     - name: Deploy static-sites Traefik routes to traefik-gw
       ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../files/static-sites/traefik-routes.yml"
-        dest: /etc/traefik/dynamic/static-sites-routes.yml
+        src: "{{ playbook_dir }}/../files/traefik/dynamic/static-sites.yml"
+        dest: /etc/traefik/dynamic/static-sites.yml
         owner: traefik
         group: traefik
         mode: "0644"
