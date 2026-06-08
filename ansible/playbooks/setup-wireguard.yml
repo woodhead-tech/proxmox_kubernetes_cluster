@@ -25,7 +25,7 @@
 # and fetched to ansible/files/wireguard/clients/ locally.
 ---
 - name: Deploy WireGuard VPN tunnel
-  hosts: lxc_services:&wireguard
+  hosts: wireguard
   vars:
     # WireGuard network config
     wg_port: 51820

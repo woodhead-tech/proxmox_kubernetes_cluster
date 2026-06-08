@@ -75,7 +75,7 @@
 
 # --- Play 2: Deploy Zigbee2MQTT + Mosquitto in LXC ---
 - name: Deploy Zigbee2MQTT stack in LXC
-  hosts: lxc_services:&zigbee2mqtt
+  hosts: zigbee2mqtt
   tasks:
     - name: Install dependencies
       ansible.builtin.apt:

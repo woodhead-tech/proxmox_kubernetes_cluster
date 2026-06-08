@@ -17,7 +17,7 @@
 #   - Dev desktop: RDP to 192.168.86.48:3389, username bwoodwar
 ---
 - name: Deploy Apache Guacamole
-  hosts: lxc_services:&guacamole
+  hosts: guacamole
   vars:
     app_dir: /opt/guacamole
     guac_image: guacamole/guacamole:1.5.5

@@ -14,7 +14,7 @@
 #   make wireguard-shopstack
 
 - name: Set up ShopStack management hub (wg1)
-  hosts: lxc_services:&wireguard
+  hosts: wireguard
   vars:
     wg1_port: 51821
     wg1_subnet: "10.99.0.0/24"

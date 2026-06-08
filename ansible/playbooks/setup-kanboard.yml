@@ -15,7 +15,7 @@
 #   ansible-playbook playbooks/setup-kanboard.yml
 ---
 - name: Deploy Kanboard project management
-  hosts: lxc_services:&kanboard
+  hosts: kanboard
   vars:
     app_user: kanboard
     app_uid: 1000

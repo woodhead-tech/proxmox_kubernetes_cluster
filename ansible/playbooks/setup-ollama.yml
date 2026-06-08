@@ -45,7 +45,7 @@
 
 # --- Play 2: Install Ollama inside the LXC ---
 - name: Install Ollama
-  hosts: lxc_services:&ollama
+  hosts: ollama
   vars:
     ollama_model: "llama3"
 

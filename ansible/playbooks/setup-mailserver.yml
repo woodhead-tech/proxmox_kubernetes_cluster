@@ -19,7 +19,7 @@
 #     --extra-vars "mailcow_hostname=mail.woodhead.tech mailgun_user=postmaster@mg.woodhead.tech mailgun_password=<key>"
 ---
 - name: Deploy Mailcow email server
-  hosts: lxc_services:&mailserver
+  hosts: mailserver
   vars:
     app_dir: /opt/mailcow-dockerized
     mailcow_hostname: "mail.woodhead.tech"

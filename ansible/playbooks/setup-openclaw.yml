@@ -23,7 +23,7 @@
 #     --extra-vars "anthropic_api_key=sk-ant-... openai_api_key=sk-... gateway_token=my-token"
 ---
 - name: Deploy OpenClaw AI agent framework
-  hosts: lxc_services:&openclaw
+  hosts: openclaw
   vars:
     openclaw_user: openclaw
     openclaw_uid: 1000

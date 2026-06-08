@@ -86,7 +86,7 @@
 
 # --- Play 2: Deploy pwnagotchi in LXC ---
 - name: Deploy pwnagotchi in LXC
-  hosts: lxc_services:&pwnagotchi
+  hosts: pwnagotchi
   vars:
     pwnagotchi_dir: /opt/pwnagotchi
     handshakes_dir: /root/handshakes

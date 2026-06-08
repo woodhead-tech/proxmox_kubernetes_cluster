@@ -74,28 +74,28 @@
         cmd: docker image prune -f
       changed_when: false
 
-- name: Update Authelia Docker image
-  hosts: lxc_services:&authelia
+- name: Update Authentik Docker image
+  hosts: authentik
   become: true
   gather_facts: false
 
   tasks:
-    - name: Pull latest Authelia image
+    - name: Pull latest Authentik image
       ansible.builtin.command:
         cmd: docker compose pull
-        chdir: /opt/authelia
+        chdir: /opt/authentik
       register: pull_result
       changed_when: "'Pull complete' in pull_result.stderr or 'Downloaded' in pull_result.stderr"
 
-    - name: Recreate Authelia container with new image
+    - name: Recreate Authentik container with new image
       ansible.builtin.command:
         cmd: docker compose up -d --remove-orphans
-        chdir: /opt/authelia
+        chdir: /opt/authentik
       when: pull_result.changed
 
-    - name: Verify Authelia health
+    - name: Verify Authentik health
       ansible.builtin.uri:
-        url: "http://127.0.0.1:9091/api/health"
+        url: "http://127.0.0.1:9000/-/health/live/"
         status_code: 200
       retries: 5
       delay: 5
@@ -107,7 +107,7 @@
       changed_when: false
 
 - name: Update OpenClaw from source
-  hosts: lxc_services:&openclaw
+  hosts: openclaw
   become: true
   gather_facts: false
 

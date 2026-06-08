@@ -22,9 +22,25 @@
 
     - name: Build vmid→status lookup
       ansible.builtin.set_fact:
-        vm_status: "{{ dict(resources | map(attribute='vmid') | map('string') | zip(resources | map(attribute='status'))) }}"
+        vm_status: >-
+          {{
+            dict(all_vmids | zip(['unknown'] * (all_vmids | length)))
+            | combine(
+                dict(
+                  resources | map(attribute='vmid') | map('string') | list
+                  | zip(resources | map(attribute='status') | list)
+                )
+              )
+          }}
       vars:
         resources: "{{ cluster_raw.stdout | from_json }}"
+        all_vmids: >-
+          {{ service_groups.values()
+             | map(attribute='members')
+             | flatten
+             | map(attribute='vmid')
+             | map('string')
+             | list }}
 
     - name: Print group status
       ansible.builtin.debug:

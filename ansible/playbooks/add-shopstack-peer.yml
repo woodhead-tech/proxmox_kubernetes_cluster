@@ -15,7 +15,7 @@
 #   ~/Workspace/shopstack/ansible/spoke/peers/<peer_name>.yml
 
 - name: Register ShopStack customer peer on wg1
-  hosts: lxc_services:&wireguard
+  hosts: wireguard
   vars:
     wg1_config_dir: /etc/wireguard
     wg1_peers_file: /etc/wireguard/shopstack-peers.yml

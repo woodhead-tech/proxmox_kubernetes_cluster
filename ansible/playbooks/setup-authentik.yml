@@ -20,7 +20,7 @@
 #   https://auth.woodhead.tech/if/flow/initial-setup/
 ---
 - name: Deploy Authentik identity provider
-  hosts: lxc_services:&authentik
+  hosts: authentik
   vars:
     auth_base_dir: /opt/authentik
     compose_src: "{{ playbook_dir }}/../files/authentik/docker-compose.yml"
