@@ -135,6 +135,7 @@
         - overseerr
         - sabnzbd
         - gluetun
+        - whisparr
 
     # --- Media Mount ---
     # Local directory as fallback when NAS isn't available yet
@@ -219,11 +220,13 @@
           - "  Bazarr:    http://{{ ansible_host }}:6767"
           - "  Overseerr: http://{{ ansible_host }}:5055"
           - "  SABnzbd:   http://{{ ansible_host }}:8080"
+          - "  Whisparr:  http://{{ ansible_host }}:6969"
           - ""
           - "After Traefik is configured:"
           - "  Overseerr: https://requests.woodhead.tech"
           - "  Sonarr:    https://sonarr.woodhead.tech"
           - "  Radarr:    https://radarr.woodhead.tech"
+          - "  Whisparr:  https://whisparr.woodhead.tech"
           - ""
           - "NEXT STEPS:"
           - "  1. Open Prowlarr and add indexers"
