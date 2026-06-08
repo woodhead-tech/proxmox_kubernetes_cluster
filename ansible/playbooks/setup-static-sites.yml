@@ -1,0 +1,198 @@
+# setup-static-sites.yml - Deploy static web sites to dedicated LXC
+#
+# Migrates 6 static sites from monitoring-stack to a dedicated LXC (192.168.86.51).
+# After this runs:
+#   1. Verify each site is reachable (make traefik to pick up new routes)
+#   2. Remove docs-site, resume-site, landing-site, homelab-site, consulting-site,
+#      v2mom-site from ansible/files/monitoring/docker-compose.yml
+#   3. make monitoring  (redeploys monitoring stack without static sites)
+#
+# Sites moved (ports retained, backend IP changes from .25 → .51):
+#   docs.woodhead.tech        (8081)
+#   resume.woodhead.tech      (8082)
+#   lab.woodhead.tech         (8083)
+#   homelab.woodhead.tech     (8084)
+#   consulting.woodhead.tech  (8085)
+#   v2mom.woodhead.tech       (8087)
+#
+# Prerequisites:
+#   - static-sites LXC provisioned via Terraform (make apply)
+#   - SSH access to 192.168.86.51 (key: id_ansible)
+#
+# Usage:
+#   ansible-playbook playbooks/setup-static-sites.yml
+---
+- name: Deploy static sites to dedicated LXC
+  hosts: lxc_services:&static-sites
+  vars:
+    app_dir: /opt/static-sites
+    compose_src: "{{ playbook_dir }}/../files/static-sites/docker-compose.yml"
+    sites:
+      - docs-site
+      - resume-site
+      - landing-site
+      - homelab-site
+      - consulting-site
+      - v2mom-site
+
+  tasks:
+    # --- SSH Socket Activation Fix ---
+    - name: Disable SSH socket activation
+      ansible.builtin.systemd:
+        name: ssh.socket
+        enabled: false
+        state: stopped
+      failed_when: false
+
+    - name: Ensure SSH listens on IPv4
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^#?ListenAddress "
+        line: "ListenAddress 0.0.0.0"
+        create: false
+
+    # --- System Setup ---
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+
+    # --- Docker Installation ---
+    - name: Create Docker keyring directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Add Docker GPG key
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        creates: /etc/apt/keyrings/docker.gpg
+
+    - name: Set permissions on Docker GPG key
+      ansible.builtin.file:
+        path: /etc/apt/keyrings/docker.gpg
+        mode: "0644"
+
+    - name: Add Docker repository
+      ansible.builtin.copy:
+        content: |
+          deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable
+        dest: /etc/apt/sources.list.d/docker.list
+        mode: "0644"
+
+    - name: Install Docker CE
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+
+    - name: Enable and start Docker
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    # --- Directory Setup ---
+    - name: Create app directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Create site build directories
+      ansible.builtin.file:
+        path: "{{ app_dir }}/{{ item }}/build"
+        state: directory
+        mode: "0755"
+      loop: "{{ sites }}"
+
+    # --- Sync Static Site Build Artifacts from Monitoring LXC ---
+    # Copies pre-built site content from the monitoring LXC (source of truth)
+    # to the new static-sites LXC so both serve identical content during migration.
+    - name: Sync site build artifacts from monitoring-stack
+      ansible.builtin.shell:
+        cmd: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/id_ansible -o StrictHostKeyChecking=accept-new" \
+            root@192.168.86.25:/opt/monitoring/{{ item }}/build/ \
+            {{ app_dir }}/{{ item }}/build/
+      loop: "{{ sites }}"
+      delegate_to: localhost
+      become: false
+
+    # --- Docker Compose Deployment ---
+    - name: Copy docker-compose.yml
+      ansible.builtin.copy:
+        src: "{{ compose_src }}"
+        dest: "{{ app_dir }}/docker-compose.yml"
+        mode: "0644"
+
+    - name: Build and start static sites stack
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        state: present
+        pull: never
+        build: always
+
+    # --- Traefik Route Migration ---
+    # Deploy the combined static-sites-routes.yml to Traefik, replacing the
+    # individual per-site route files that currently point to monitoring (.25).
+    - name: Deploy static-sites Traefik routes to traefik-gw
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/static-sites/traefik-routes.yml"
+        dest: /etc/traefik/dynamic/static-sites-routes.yml
+        owner: traefik
+        group: traefik
+        mode: "0644"
+      delegate_to: traefik
+
+    - name: Remove old per-file static site routes from traefik-gw
+      ansible.builtin.file:
+        path: "/etc/traefik/dynamic/{{ item }}"
+        state: absent
+      loop:
+        - docs-site.yml
+        - resume-site.yml
+        - landing-site.yml
+        - homelab-site.yml
+        - consulting-site.yml
+        - v2mom.yml
+      delegate_to: traefik
+
+    - name: Reload Traefik (file provider hot-reloads, but signal to be safe)
+      ansible.builtin.systemd:
+        name: traefik
+        state: reloaded
+      delegate_to: traefik
+
+    # --- Verification ---
+    - name: Verify all site containers are running
+      ansible.builtin.command:
+        cmd: docker compose ps --format json
+        chdir: "{{ app_dir }}"
+      register: compose_ps
+      changed_when: false
+
+    - name: Print deployment summary
+      ansible.builtin.debug:
+        msg:
+          - "Static sites deployed to 192.168.86.51"
+          - "Traefik routes updated — .25 routes removed, .51 routes active"
+          - ""
+          - "Next steps:"
+          - "  1. Verify: curl -H 'Host: docs.woodhead.tech' http://192.168.86.51:8081"
+          - "  2. Remove static site services from ansible/files/monitoring/docker-compose.yml"
+          - "  3. make monitoring  (redeploy monitoring without static sites)"
+          - "  4. Add static-sites (VMID 227) to service_groups.yml apps group"
