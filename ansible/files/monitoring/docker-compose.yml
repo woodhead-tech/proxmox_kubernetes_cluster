@@ -171,47 +171,6 @@ services:
     restart: unless-stopped
 
   # --- Docs Site: Docusaurus Static Site ---
-  # Pre-built Docusaurus output served by nginx. Build context is
-  # copied to the LXC by the monitoring playbook (html/ directory).
-  docs-site:
-    build:
-      context: /opt/monitoring/docs-site/build
-    container_name: docs-site
-    ports:
-      - "8081:80"
-    restart: unless-stopped
-
-  # --- Resume Site: Hugo Static Site ---
-  # Pre-built Hugo output served by nginx. Build context is
-  # copied to the LXC by the monitoring playbook (html/ directory).
-  resume-site:
-    build:
-      context: /opt/monitoring/resume-site/build
-    container_name: resume-site
-    ports:
-      - "8082:80"
-    restart: unless-stopped
-
-  # --- Landing Site: Service Link Tree ---
-  # Static HTML landing page served by nginx. Lists all homelab services
-  # with search filtering. Accessible at woodhead.tech (root domain).
-  landing-site:
-    build:
-      context: /opt/monitoring/landing-site/build
-    container_name: landing-site
-    ports:
-      - "8083:80"
-    restart: unless-stopped
-
-  # --- Homelab in a Claude: Hugo documentation site ---
-  homelab-site:
-    build:
-      context: /opt/monitoring/homelab-site/build
-    container_name: homelab-site
-    ports:
-      - "8084:80"
-    restart: unless-stopped
-
   # --- alertmind: AI-powered alert triage ---
   # Receives Alertmanager webhooks, triages via Claude API, posts to Slack/Discord.
   # Built from source on the LXC via multi-stage Dockerfile (Go -> scratch).
@@ -223,26 +182,6 @@ services:
       - "8086:8080"
     env_file:
       - alertmind.env
-    restart: unless-stopped
-
-  # --- Consulting Site: Astro Static Site ---
-  # Pre-built Astro output served by nginx. Accessible at consulting.woodhead.tech.
-  consulting-site:
-    build:
-      context: /opt/monitoring/consulting-site/build
-    container_name: consulting-site
-    ports:
-      - "8085:80"
-    restart: unless-stopped
-
-  # --- V2MOM Dashboard: Internal Strategic Dashboard ---
-  # Static HTML dashboard served by nginx. Accessible at v2mom.woodhead.tech.
-  v2mom-site:
-    build:
-      context: /opt/monitoring/v2mom-site/build
-    container_name: v2mom-site
-    ports:
-      - "8087:80"
     restart: unless-stopped
 
   # --- NUT Exporter: UPS Metrics ---
