@@ -2,6 +2,29 @@
 
 Step-by-step guide to deploy the full Proxmox homelab infrastructure from scratch.
 
+## Required Environment Variables
+
+Collect these before starting a from-scratch deploy. Each is consumed by its `make` target.
+
+| Variable | Required By | Description |
+|----------|-------------|-------------|
+| `CF_API_TOKEN` | `make traefik` | Cloudflare API token for DNS-01 TLS cert challenge |
+| `WG_PRIVATE_KEY` | `make arr-stack` | WireGuard private key for gluetun VPN tunnel |
+| `DISCORD_WEBHOOK` | `make monitoring`, `make libby-alert`, `make watchdog`, `make alertmind` | Discord channel webhook URL for alerts |
+| `GRAFANA_PASSWORD` | `make monitoring` | Admin password for Grafana |
+| `PVE_PASSWORD` | `make monitoring` | Proxmox API token value for Prometheus PVE exporter |
+| `VAULTWARDEN_ADMIN_TOKEN` | `make vaultwarden` | Admin token for Vaultwarden web vault |
+| `SMTP_USER` | `make vaultwarden`, `make mailserver` | SMTP username for outbound email |
+| `SMTP_PASSWORD` | `make vaultwarden`, `make mailserver` | SMTP password |
+| `ANTHROPIC_API_KEY` | `make alertmind` | Anthropic API key for alertmind AI triage |
+| `BW_SESSION` | `make certs-push`, `make certs-pull` | Bitwarden session token — run: `export BW_SESSION=$(bw unlock --raw)` |
+| `CLUSTER_VIP` | `make bootstrap`, `make recover-k8s` | K8s API VIP — `192.168.86.100` |
+| `CONTROLPLANE_IPS` | `make bootstrap`, `make recover-k8s` | Control plane IPs — `192.168.86.101` |
+| `WORKER_IPS` | `make bootstrap`, `make recover-k8s` | Worker IPs — `192.168.86.111,192.168.86.112,192.168.86.113` |
+
+> **Note:** `make alertmind` is **not** included in `make monitoring` and must be run separately.
+> `make certs-push` / `make certs-pull` require the vaultwarden LXC to be running at `192.168.86.43`.
+
 ## Prerequisites
 
 Install these on your local machine (Mac):

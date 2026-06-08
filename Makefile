@@ -317,6 +317,14 @@ consulting-build: ## Build the Astro consulting site (static output in consultin
 consulting: ## Deploy consulting site to monitoring LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-consulting-site.yml
 
+static-sites: ## Migrate static sites (docs/resume/homelab/consulting/landing/v2mom) from monitoring-stack to dedicated LXC at 192.168.86.51
+	@echo "Migrating static sites from monitoring-stack (.25) to static-sites LXC (.51)"
+	@echo "Prerequisite: static-sites LXC (VMID 227) must be provisioned via: make apply"
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-static-sites.yml
+	@echo ""
+	@echo "Migration complete. Next: remove static site services from"
+	@echo "ansible/files/monitoring/docker-compose.yml, then run: make monitoring"
+
 watchdog: ## Deploy homelab watchdog (DISCORD_WEBHOOK=)
 	@if [ -z "$(DISCORD_WEBHOOK)" ]; then \
 		echo "Error: DISCORD_WEBHOOK is required"; \
@@ -326,7 +334,7 @@ watchdog: ## Deploy homelab watchdog (DISCORD_WEBHOOK=)
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-watchdog.yml \
 		--extra-vars "discord_webhook=$(DISCORD_WEBHOOK)"
 
-alertmind: ## Deploy alertmind AI alert triage (ANTHROPIC_API_KEY= DISCORD_WEBHOOK= SLACK_WEBHOOK= TWILIO_ACCOUNT_SID= TWILIO_AUTH_TOKEN= WHATSAPP_FROM= WHATSAPP_TO=)
+alertmind: ## Deploy alertmind AI alert triage — NOT included in 'make monitoring'; must be run separately (ANTHROPIC_API_KEY= DISCORD_WEBHOOK= SLACK_WEBHOOK= TWILIO_ACCOUNT_SID= TWILIO_AUTH_TOKEN= WHATSAPP_FROM= WHATSAPP_TO=)
 	@if [ -z "$(ANTHROPIC_API_KEY)" ]; then \
 		echo "Error: ANTHROPIC_API_KEY is required"; \
 		echo "Usage: make alertmind ANTHROPIC_API_KEY=sk-ant-... DISCORD_WEBHOOK=https://..."; \
@@ -419,12 +427,12 @@ recover-k8s: ## Re-bootstrap cluster after cert mismatch (resets all Talos VMs v
 	CLUSTER_VIP=$(CLUSTER_VIP) CONTROLPLANE_IPS=$(CONTROLPLANE_IPS) WORKER_IPS=$(WORKER_IPS) \
 	  ./$(SCRIPTS_DIR)/recover-k8s.sh
 
-certs-push: ## Push talosconfig + kubeconfig to Vaultwarden (requires BW_SESSION)
+certs-push: ## Push talosconfig + kubeconfig to Vaultwarden (requires BW_SESSION; vaultwarden LXC must be running at 192.168.86.43)
 	@[ -n "$(BW_SESSION)" ] || (echo "ERROR: Run: export BW_SESSION=\$$(bw unlock --raw)"; exit 1)
 	chmod +x $(SCRIPTS_DIR)/certs-vault.sh
 	BW_SESSION=$(BW_SESSION) ./$(SCRIPTS_DIR)/certs-vault.sh push
 
-certs-pull: ## Pull talosconfig + kubeconfig from Vaultwarden into talos/_out/
+certs-pull: ## Pull talosconfig + kubeconfig from Vaultwarden into talos/_out/ (requires BW_SESSION; vaultwarden LXC must be running at 192.168.86.43)
 	@[ -n "$(BW_SESSION)" ] || (echo "ERROR: Run: export BW_SESSION=\$$(bw unlock --raw)"; exit 1)
 	chmod +x $(SCRIPTS_DIR)/certs-vault.sh
 	BW_SESSION=$(BW_SESSION) ./$(SCRIPTS_DIR)/certs-vault.sh pull

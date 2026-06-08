@@ -1,52 +1,51 @@
-# setup-consulting-site.yml - Deploy the Astro consulting site to the monitoring LXC
+# setup-consulting-site.yml - Deploy the Astro consulting site to the static-sites LXC
 #
-# Syncs the pre-built Astro dist/ output to the monitoring LXC and rebuilds
+# Syncs the pre-built Astro dist/ output to the static-sites LXC and rebuilds
 # the Docker container. Site is served on port 8085 and routed via Traefik
 # to consulting.woodhead.tech.
 #
 # Prerequisites:
-#   - Monitoring LXC running (make monitoring already run)
+#   - static-sites LXC running (make apply already run)
 #   - Astro site built locally: make consulting-build
 #
 # Usage:
 #   make consulting-build && make consulting
 ---
 - name: Deploy consulting site
-  hosts: lxc_services:&monitoring
+  hosts: lxc_services:&static-sites
   vars:
-    mon_user: monitoring
-    mon_base_dir: /opt/monitoring
-    consulting_src: "{{ playbook_dir }}/../files/monitoring/consulting-site"
+    app_user: root
+    app_dir: /opt/static-sites
 
   tasks:
-    - name: Sync docker-compose.yml (adds consulting-site service)
+    - name: Sync docker-compose.yml
       ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../files/monitoring/docker-compose.yml"
-        dest: "{{ mon_base_dir }}/docker-compose.yml"
-        owner: "{{ mon_user }}"
-        group: "{{ mon_user }}"
+        src: "{{ playbook_dir }}/../files/static-sites/docker-compose.yml"
+        dest: "{{ app_dir }}/docker-compose.yml"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
         mode: "0644"
 
     - name: Create consulting site build context directory
       ansible.builtin.file:
-        path: "{{ mon_base_dir }}/consulting-site/build/html"
+        path: "{{ app_dir }}/consulting-site/build/html"
         state: directory
-        owner: "{{ mon_user }}"
-        group: "{{ mon_user }}"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
         mode: "0755"
 
     - name: Copy consulting site Dockerfile
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/../../consulting-site/Dockerfile"
-        dest: "{{ mon_base_dir }}/consulting-site/build/Dockerfile"
-        owner: "{{ mon_user }}"
-        group: "{{ mon_user }}"
+        dest: "{{ app_dir }}/consulting-site/build/Dockerfile"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
         mode: "0644"
 
     - name: Sync consulting site pre-built HTML
       ansible.builtin.synchronize:
         src: "{{ playbook_dir }}/../../consulting-site/dist/"
-        dest: "{{ mon_base_dir }}/consulting-site/build/html/"
+        dest: "{{ app_dir }}/consulting-site/build/html/"
         delete: true
         use_ssh_args: true
         rsync_opts:
@@ -56,13 +55,13 @@
     - name: Rebuild consulting site container
       ansible.builtin.command:
         cmd: docker compose up -d --build consulting-site
-        chdir: "{{ mon_base_dir }}"
+        chdir: "{{ app_dir }}"
       changed_when: true
 
     - name: Verify container is running
       ansible.builtin.command:
-        cmd: docker inspect --format='{{"{{"}}{{".State.Status"}}{{"}}"}}' consulting-site
-        chdir: "{{ mon_base_dir }}"
+        cmd: docker inspect --format='{{.State.Status}}' consulting-site
+        chdir: "{{ app_dir }}"
       register: container_status
       changed_when: false
       failed_when: container_status.stdout != "running"
@@ -71,6 +70,6 @@
       ansible.builtin.debug:
         msg:
           - "Consulting site deployed"
-          - "Internal: http://192.168.86.25:8085"
+          - "Internal: http://192.168.86.51:8085"
           - "External: https://consulting.woodhead.tech"
-          - "Traefik route: ansible/files/traefik/dynamic/consulting-site.yml"
+          - "Traefik route: ansible/files/traefik/dynamic/static-sites.yml"

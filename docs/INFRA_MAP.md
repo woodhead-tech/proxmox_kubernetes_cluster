@@ -60,7 +60,7 @@ Ranked by cross-file reference count.
 | 7 | **wireguard** (192.168.86.39) | 4 | core group (always_on); gluetun in arr-stack routes downloads through it; WG_PRIVATE_KEY required by arr-stack deploy |
 | 8 | **Makefile** | — | Every deployment operation goes through it; 50+ targets; entry point for the entire repo |
 | 9 | **talos/_out/** | 5 | bootstrap.sh, recover-k8s.sh, certs-vault.sh, certs-check, kubeconfig target all read/write here |
-| 10 | **adguard** (192.168.86.35) | 3 | DNS for all woodhead.tech subdomains; shares IP 192.168.86.35 with pxe-server in inventory |
+| 10 | **adguard** (192.168.86.35) | 3 | DNS for all woodhead.tech subdomains |
 
 ---
 
@@ -355,9 +355,9 @@ All routes terminate TLS via Cloudflare DNS-01. All traffic enters through traef
    `ansible/vars/service_groups.yml`
    These services exist (inventory, Makefile targets, Traefik routes) but are invisible to `make group-status/start/stop`. They must be managed individually via Ansible or SSH.
 
-7. **adguard IP (.35) conflicts with pxe-server IP in inventory**
+7. **[RESOLVED] adguard IP (.35) conflicts with pxe-server IP in inventory**
    `ansible/inventory/hosts.yml` lines for adguard (.35) and pxe-server (.35)
-   Both adguard and pxe-server are assigned 192.168.86.35 in hosts.yml. One IP can only serve one LXC.
+   Both adguard and pxe-server were assigned 192.168.86.35 in hosts.yml. This has been resolved by moving pxe-server to .50.
 
 8. **authentik (security group) required_by media AND apps groups, but authentik is not always_on**
    `ansible/vars/service_groups.yml`

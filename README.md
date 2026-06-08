@@ -22,10 +22,12 @@ ISP Modem/ONT
     |       +-- SDR Scanner LXC (192.168.86.32) -- Trunk Recorder + rdio-scanner
     |       +-- Kanboard LXC (192.168.86.33) -- project management
     |       +-- Mailserver LXC (192.168.86.34) -- Mailcow email server
-    |       +-- PXE Boot Server LXC (192.168.86.35) -- proxy-DHCP + TFTP + HTTP
-    |       +-- Zigbee2MQTT LXC (192.168.86.36) -- Zigbee USB bridge for Home Assistant
+    |       +-- step-ca LXC (192.168.86.36) -- SSH certificate authority
     |       +-- Claude OS LXC (192.168.86.37) -- AI memory system (claude-os.woodhead.tech)
     |       +-- pwnagotchi LXC (192.168.86.38) -- WiFi learning device (pwnagotchi.woodhead.tech)
+    |       +-- Zigbee2MQTT LXC (192.168.86.44) -- Zigbee USB bridge for Home Assistant
+    |       +-- PXE Boot Server LXC (192.168.86.50) -- proxy-DHCP + TFTP + HTTP
+    |       +-- static-sites LXC (192.168.86.51) -- static web properties (docs, resume, consulting, etc.)
     |       +-- K8s VIP (192.168.86.100)
     |
     +-- WireGuard LXC (192.168.86.39) -- VPN tunnel (UDP 51820)

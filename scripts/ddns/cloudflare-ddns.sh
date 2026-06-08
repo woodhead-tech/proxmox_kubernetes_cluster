@@ -65,34 +65,36 @@ get_public_ip() {
   fi
 }
 
-# --- Get DNS record ID by name ---
-get_record_id() {
+# --- Get DNS record ID and current proxied state by name ---
+# Outputs: "<id> <proxied>" e.g. "abc123 true"
+get_record() {
   local name="$1"
   curl -s --max-time 10 \
     -H "Authorization: Bearer ${CF_API_TOKEN}" \
     -H "Content-Type: application/json" \
     "${CF_API_BASE}/zones/${CF_ZONE_ID}/dns_records?type=A&name=${name}" \
-    | jq -r '.result[0].id // empty'
+    | jq -r '(.result[0].id // "") + " " + (.result[0].proxied | tostring)'
 }
 
-# --- Update a DNS record ---
+# --- Update a DNS record, preserving its current proxied state ---
 update_record() {
   local record_id="$1"
   local name="$2"
   local ip="$3"
+  local proxied="${4:-false}"  # preserve whatever was set; default to false for safety
 
   local response
   response=$(curl -s --max-time 10 \
     -X PUT \
     -H "Authorization: Bearer ${CF_API_TOKEN}" \
     -H "Content-Type: application/json" \
-    --data "{\"type\":\"A\",\"name\":\"${name}\",\"content\":\"${ip}\",\"ttl\":300,\"proxied\":false}" \
+    --data "{\"type\":\"A\",\"name\":\"${name}\",\"content\":\"${ip}\",\"ttl\":300,\"proxied\":${proxied}}" \
     "${CF_API_BASE}/zones/${CF_ZONE_ID}/dns_records/${record_id}")
 
   local success
   success=$(echo "${response}" | jq -r '.success')
   if [[ "${success}" == "true" ]]; then
-    log "Updated ${name} -> ${ip}"
+    log "Updated ${name} -> ${ip} (proxied=${proxied})"
   else
     log "ERROR: Failed to update ${name}: $(echo "${response}" | jq -r '.errors')"
     return 1
@@ -129,15 +131,15 @@ for name in "${RECORDS[@]}"; do
   name=$(echo "${name}" | xargs)  # Trim whitespace
   debug "Looking up record ID for ${name}"
 
-  record_id=$(get_record_id "${name}")
+  read -r record_id proxied <<< "$(get_record "${name}")"
   if [[ -z "${record_id}" ]]; then
     log "ERROR: No A record found for ${name} -- create it in Cloudflare first"
     ((errors++))
     continue
   fi
 
-  debug "Record ID for ${name}: ${record_id}"
-  update_record "${record_id}" "${name}" "${current_ip}" || ((errors++))
+  debug "Record ID for ${name}: ${record_id} (proxied=${proxied})"
+  update_record "${record_id}" "${name}" "${current_ip}" "${proxied}" || ((errors++))
 done
 
 # Save new IP to state file if all updates succeeded

@@ -140,11 +140,14 @@ and resource allocation.
 | 192.168.86.32 | sdr | LXC | 210 | SDR scanner (Trunk Recorder + rdio-scanner) |
 | 192.168.86.33 | kanboard | LXC | 211 | Kanboard project management + ClawBot agent |
 | 192.168.86.34 | mailserver | LXC | 212 | Mailcow email server (Mailgun relay) |
-| 192.168.86.35 | pxe-server | LXC | 213 | PXE boot server (proxy-DHCP + TFTP + HTTP) |
-| 192.168.86.36 | zigbee2mqtt | LXC | 214 | Zigbee2MQTT + Mosquitto (on zotac) |
+| 192.168.86.35 | adguard | LXC | 221 | DNS (AdGuard Home) |
+| 192.168.86.36 | step-ca | LXC | 222 | Step-CA SSH certificate authority |
 | 192.168.86.37 | claude-os | LXC | 215 | Claude OS AI memory/MCP server |
 | 192.168.86.38 | pwnagotchi | LXC | 216 | Pwnagotchi passive WiFi capture (pve3, RTL8188EUS) |
 | 192.168.86.39 | wireguard | LXC | 208 | WireGuard VPN tunnel (UDP 51820) |
+| 192.168.86.44 | zigbee2mqtt | LXC | 214 | Zigbee2MQTT + Mosquitto (on zotac) |
+| 192.168.86.50 | pxe-server | LXC | 213 | PXE boot server (proxy-DHCP + TFTP + HTTP) |
+| 192.168.86.51 | static-sites | LXC | 227 | Static web properties (docs, resume, consulting, etc.) |
 | 192.168.86.40 | truenas | VM | 300 | NAS, ZFS, NFS/SMB shares |
 | 192.168.86.41 | homeassistant | VM | 301 | Home Assistant OS, smart home |
 | 192.168.86.131 | piboard | Pi | -- | Raspberry Pi 3B monitoring dashboard |

@@ -1,0 +1,21 @@
+# middlewares.yml - Reusable Traefik middleware definitions
+#
+# Reference any middleware here with the @file suffix, e.g. lan-only@file
+# Middlewares defined here are available to all dynamic route configs.
+
+http:
+  middlewares:
+    # lan-only: restrict access to LAN and WireGuard VPN clients only.
+    # Blocks public internet access while allowing:
+    #   - Devices on the local network (192.168.86.0/24)
+    #   - WireGuard VPN clients (10.0.0.0/8)
+    #   - Docker bridge networks (172.16.0.0/12)
+    # Used by services that should never be publicly accessible:
+    # pwnagotchi, step-ca
+    lan-only:
+      ipAllowList:
+        sourceRange:
+          - "192.168.86.0/24"
+          - "10.0.0.0/8"
+          - "172.16.0.0/12"
+          - "127.0.0.1/32"

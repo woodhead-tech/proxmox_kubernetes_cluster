@@ -1,7 +1,7 @@
 # claude-os.yml - Traefik route for Claude OS
 #
-# Frontend (React/Vite) at claude-os.woodhead.tech
-# API docs accessible at claude-os.woodhead.tech/api-docs
+# Frontend (React/Vite) at claude-os.woodhead.tech — protected by Authentik SSO
+# API at claude-os-api.woodhead.tech — open (used by code-forge MCP server on local machine)
 #
 # LXC 215, IP 192.168.86.37
 # Frontend: port 5173 | API: port 8051
@@ -13,6 +13,8 @@ http:
       entryPoints:
         - websecure
       service: claude-os-frontend
+      middlewares:
+        - authentik@file
       tls:
         certResolver: cloudflare
         domains:
@@ -23,6 +25,9 @@ http:
       entryPoints:
         - websecure
       service: claude-os-api
+      # API is restricted to LAN/VPN — consumed by code-forge MCP (local Claude Code session).
+      middlewares:
+        - lan-only@file
       tls:
         certResolver: cloudflare
         domains:

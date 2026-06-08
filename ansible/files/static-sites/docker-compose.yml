@@ -1,0 +1,64 @@
+# docker-compose.yml - Static web sites LXC
+#
+# Hosts all public-facing static properties, migrated from monitoring-stack
+# to reduce blast radius. A monitoring redeploy no longer takes down these sites.
+#
+# Deployment path: /opt/static-sites/
+# Build contexts are pre-built artifacts copied to the LXC by setup-static-sites.yml.
+#
+# After deploying this stack:
+#   1. Verify each site is reachable on its port
+#   2. Redeploy Traefik (make traefik) — new routes in dynamic/static-sites-routes.yml
+#      will take effect, routing traffic to 192.168.86.51 instead of 192.168.86.25
+#   3. Remove docs-site, resume-site, landing-site, homelab-site, consulting-site,
+#      v2mom-site from ansible/files/monitoring/docker-compose.yml
+#   4. make monitoring  (deploys cleaned-up monitoring stack)
+
+services:
+  docs-site:
+    build:
+      context: /opt/static-sites/docs-site/build
+    container_name: docs-site
+    ports:
+      - "8081:80"
+    restart: unless-stopped
+
+  resume-site:
+    build:
+      context: /opt/static-sites/resume-site/build
+    container_name: resume-site
+    ports:
+      - "8082:80"
+    restart: unless-stopped
+
+  landing-site:
+    build:
+      context: /opt/static-sites/landing-site/build
+    container_name: landing-site
+    ports:
+      - "8083:80"
+    restart: unless-stopped
+
+  homelab-site:
+    build:
+      context: /opt/static-sites/homelab-site/build
+    container_name: homelab-site
+    ports:
+      - "8084:80"
+    restart: unless-stopped
+
+  consulting-site:
+    build:
+      context: /opt/static-sites/consulting-site/build
+    container_name: consulting-site
+    ports:
+      - "8085:80"
+    restart: unless-stopped
+
+  v2mom-site:
+    build:
+      context: /opt/static-sites/v2mom-site/build
+    container_name: v2mom-site
+    ports:
+      - "8087:80"
+    restart: unless-stopped

@@ -1,5 +1,8 @@
 # step-ca.yml - Traefik route for Smallstep step-ca API
-# Exposes step-ca.woodhead.tech to the public internet for SSH SSO login.
+#
+# Restricted to LAN + WireGuard VPN only via lan-only@file middleware.
+# All users (Brandon) connect via WireGuard when remote, so LAN restriction is safe.
+# If external SSH cert issuance is ever needed without VPN, remove lan-only@file.
 
 http:
   routers:
@@ -8,6 +11,8 @@ http:
       entryPoints:
         - websecure
       service: step-ca
+      middlewares:
+        - lan-only@file
       tls:
         certResolver: cloudflare
 

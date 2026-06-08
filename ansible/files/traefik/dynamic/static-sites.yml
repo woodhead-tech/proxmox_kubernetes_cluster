@@ -1,0 +1,103 @@
+# traefik-routes.yml - Traefik routes for static-sites LXC (192.168.86.51)
+#
+# MIGRATION ROUTES: These replace the monitoring-stack-based routes once
+# the static-sites LXC (VMID 227) is provisioned and the docker-compose is running.
+#
+# Deployed by setup-static-sites.yml to /etc/traefik/dynamic/ on traefik-gw.
+# After deployment, the old per-file routes (docs-site.yml, resume-site.yml, etc.)
+# should be removed from /etc/traefik/dynamic/ to avoid duplicate router conflicts.
+
+http:
+  routers:
+    docs-site:
+      rule: "Host(`docs.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: docs-site
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
+    resume-site:
+      rule: "Host(`resume.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: resume-site
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
+    landing-site:
+      rule: "Host(`lab.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: landing-site
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
+    homelab-site:
+      rule: "Host(`homelab.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: homelab-site
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
+    consulting-site:
+      rule: "Host(`consulting.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: consulting-site
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
+    v2mom-site:
+      rule: "Host(`v2mom.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: v2mom-site
+      middlewares:
+        - authentik@file
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
+  services:
+    docs-site:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.51:8081"
+
+    resume-site:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.51:8082"
+
+    landing-site:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.51:8083"
+
+    homelab-site:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.51:8084"
+
+    consulting-site:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.51:8085"
+
+    v2mom-site:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.51:8087"
