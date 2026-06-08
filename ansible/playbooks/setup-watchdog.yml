@@ -40,6 +40,14 @@
         - "{{ maintenance_dir }}"
         - "{{ log_dir }}"
 
+    - name: Deploy SSH key for watchdog remote checks
+      ansible.builtin.copy:
+        src: "~/.ssh/id_ansible"
+        dest: "/root/.ssh/id_ansible"
+        mode: "0600"
+        owner: root
+        group: root
+
     - name: Copy watchdog scripts
       ansible.builtin.copy:
         src: "../../watchdog/{{ item }}"

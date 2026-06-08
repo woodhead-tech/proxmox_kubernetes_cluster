@@ -30,7 +30,7 @@
         certs-push certs-pull certs-check approve-csrs \
         patch-proxmox patch-lxc patch-docker patch-pi destroy clean help \
         docs-build docs-dev resume-build consulting-build consulting alertmind booth \
-        group-status group-start group-stop
+        group-status group-start group-stop watchdog
 
 TERRAFORM_DIR := terraform
 TALOS_DIR := talos
