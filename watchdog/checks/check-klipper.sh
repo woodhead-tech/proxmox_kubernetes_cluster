@@ -13,11 +13,18 @@ PRINTERS=(
     "ender5pro:${KLIPPER_ENDER5PRO_IP}:7125"
 )
 
+MAINTENANCE_DIR="$(dirname "$SCRIPT_DIR")/maintenance"
+
 for entry in "${PRINTERS[@]}"; do
     name="${entry%%:*}"
     rest="${entry#*:}"
     ip="${rest%%:*}"
     port="${rest##*:}"
+
+    if [[ -f "$MAINTENANCE_DIR/$name" ]]; then
+        log "check-klipper: $name — in maintenance mode, skipping"
+        continue
+    fi
 
     # Get printer state from Moonraker
     response=$(curl -s --max-time 10 "http://${ip}:${port}/printer/info" 2>/dev/null || echo "CURL_FAIL")
