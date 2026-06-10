@@ -71,17 +71,3 @@ nodes:
           - network: 0.0.0.0/0
             gateway: 192.168.86.1
 
-  - hostname: talos-proxmox-worker-2
-    ipAddress: 192.168.86.113
-    controlPlane: false
-    installDiskSelector:
-      size: ">= 40GB"
-    networkInterfaces:
-      - deviceSelector:
-          driver: virtio_net
-        dhcp: false
-        addresses:
-          - 192.168.86.113/24
-        routes:
-          - network: 0.0.0.0/0
-            gateway: 192.168.86.1

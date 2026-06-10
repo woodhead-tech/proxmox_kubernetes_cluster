@@ -52,12 +52,11 @@ service_groups:
       - { vmid: 209, name: libby-alert, type: lxc }
 
   media:
-    description: "ARR stack, Plex, Jellyfin"
+    description: "ARR stack, Plex"
     depends_on: [core, storage]
     members:
       - { vmid: 202, name: arr-stack, type: lxc }
       - { vmid: 203, name: plex, type: lxc }
-      - { vmid: 204, name: jellyfin, type: lxc }
 
   observability:
     description: "Prometheus, Grafana, Alertmanager"
@@ -98,4 +97,3 @@ service_groups:
       - { vmid: 400, name: talos-cp-0, type: vm, role: control_plane }
       - { vmid: 410, name: talos-worker-0, type: vm, role: worker }
       - { vmid: 411, name: talos-worker-1, type: vm, role: worker }
-      - { vmid: 412, name: talos-worker-2, type: vm, role: worker }

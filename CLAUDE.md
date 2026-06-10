@@ -39,7 +39,7 @@ make ddns       # Deploy Cloudflare DDNS updater
 # Set env vars before bootstrapping:
 export CLUSTER_VIP="192.168.86.100"
 export CONTROLPLANE_IPS="192.168.86.101"
-export WORKER_IPS="192.168.86.111,192.168.86.112,192.168.86.113"
+export WORKER_IPS="192.168.86.111,192.168.86.112"
 
 make bootstrap      # Generate Talos configs + init cluster (destructive, one-time)
 make kubeconfig     # Fetch kubeconfig to talos/_out/kubeconfig
@@ -83,7 +83,7 @@ Traefik must be running before any HTTP/HTTPS service is reachable. The K8s clus
 - Traefik LXC: `.20` (single ingress for all services)
 - Service LXCs: `.21`–`.26`, `.28`, `.32`, `.39` (ARR stack, Plex, Jellyfin, monitoring, Authelia, OpenClaw, SDR scanner, WireGuard)
 - TrueNAS VM: `.40` (on tower1, 16GB RAM) | Home Assistant VM: `.41`
-- K8s VIP: `.100` | control plane: `.101` (tower1) | workers: `.111` (thinkcentre2), `.112` (thinkcentre3), `.113` (zotac)
+- K8s VIP: `.100` | control plane: `.101` (tower1) | workers: `.111` (thinkcentre2), `.112` (thinkcentre3)
 - Piboard (Pi 3B): `.131` (standalone monitoring dashboard, not Proxmox-managed)
 - Klipper Ender 5 Pro (Pi 3B): `.136` (MainsailOS, 3D printer control, WiFi)
 - MetalLB pool: `.150`–`.199`
