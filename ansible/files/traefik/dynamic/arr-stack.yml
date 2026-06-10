@@ -101,6 +101,18 @@ http:
       middlewares:
         - authentik@file
 
+    flaresolverr:
+      rule: "Host(`flaresolverr.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: flaresolverr
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+      middlewares:
+        - authentik@file
+
   services:
     overseerr:
       loadBalancer:
@@ -141,3 +153,8 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.86.22:8090"
+
+    flaresolverr:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.22:8191"
