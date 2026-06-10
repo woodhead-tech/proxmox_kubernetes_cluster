@@ -134,6 +134,9 @@ and resource allocation.
     |  bazarr.*     +---> 192.168.86.22:6767
     |  requests.*   +---> 192.168.86.22:5055
     |  sabnzbd.*    +---> 192.168.86.22:8080
+    |  whisparr.*   +---> 192.168.86.22:6969
+    |  qbittorrent.*+--> 192.168.86.22:8090
+    |  flaresolverr.+--> 192.168.86.22:8191
     |  nas.*        +---> 192.168.86.40:443
     |  home.*       +---> 192.168.86.41:8123
     |  claw.*       +---> 192.168.86.26:18789
@@ -702,6 +705,9 @@ Certificates are wildcard (`*.woodhead.tech`) via Let's Encrypt DNS-01.
 | bazarr.woodhead.tech   | 192.168.86.22        | 6767  | arr-stack.yml         | Active (Authentik SSO) |
 | requests.woodhead.tech | 192.168.86.22        | 5055  | arr-stack.yml         | Active (Authentik SSO) |
 | sabnzbd.woodhead.tech  | 192.168.86.22        | 8080  | arr-stack.yml         | Active (Authentik SSO) |
+| whisparr.woodhead.tech | 192.168.86.22        | 6969  | arr-stack.yml         | Active (Authentik SSO) |
+| qbittorrent.woodhead.tech | 192.168.86.22     | 8090  | arr-stack.yml         | Active (Authentik SSO) |
+| flaresolverr.woodhead.tech | 192.168.86.22    | 8191  | arr-stack.yml         | Active (Authentik SSO) |
 | plex.woodhead.tech     | 192.168.86.23        | 32400 | media-stack.yml       | Active    |
 | jellyfin.woodhead.tech | 192.168.86.24        | 8096  | media-stack.yml       | Active    |
 | nas.woodhead.tech      | 192.168.86.40        | 443   | media-stack.yml       | Active (Authentik SSO) |
@@ -747,54 +753,61 @@ All ARR services run as Docker containers inside a single LXC (192.168.86.22).
 They communicate via Docker's internal DNS (container names).
 
 ```
-+-- ARR Stack LXC (192.168.86.22) -------------------------------+
-|                                                                 |
-|  Docker Compose Network (bridge)                                |
-|                                                                 |
-|  +----------+  +---------+  +---------+  +---------+           |
-|  | Prowlarr |  | Sonarr  |  | Radarr  |  | Bazarr  |           |
-|  | :9696    |  | :8989   |  | :7878   |  | :6767   |           |
-|  +----+-----+  +----+----+  +----+----+  +----+----+           |
-|       |              |            |            |                 |
-|       +----- Prowlarr syncs indexers to Sonarr/Radarr           |
-|              Bazarr connects to Sonarr/Radarr for subs          |
-|                                                                 |
-|  +-----------+                                                  |
-|  | Overseerr |  User-facing request portal                      |
-|  | :5055     |  Connects to Sonarr + Radarr APIs                |
-|  +-----------+                                                  |
-|                                                                 |
-|  +----------+     +----------+                                  |
-|  | Gluetun  |<--->| SABnzbd  |  SABnzbd uses Gluetun's network |
-|  | (VPN)    |     | :8080    |  All download traffic goes       |
-|  | :8080    |     |          |  through the VPN tunnel           |
-|  +----------+     +----------+                                  |
-|       |                |                                        |
-|       +--- VPN tunnel to provider (Mullvad, NordVPN, etc.)      |
-|                                                                 |
-|  Shared volume: /media (NFS from TrueNAS 192.168.86.40)        |
-|  +------------------------------------------------------+      |
-|  | /media/downloads/complete    <-- SABnzbd output       |      |
-|  | /media/downloads/incomplete  <-- SABnzbd temp         |      |
-|  | /media/movies/               <-- Radarr library       |      |
-|  | /media/tv/                   <-- Sonarr library       |      |
-|  | /media/music/                <-- Lidarr (future)      |      |
-|  | /media/books/                <-- Readarr (future)     |      |
-|  +------------------------------------------------------+      |
-|                                                                 |
-|  All containers run as PUID=1000, PGID=1000 (arrstack user)    |
-|  LinuxServer.io images, TZ=America/Chicago                      |
-+-----------------------------------------------------------------+
++-- ARR Stack LXC (192.168.86.22) ----------------------------------------+
+|                                                                           |
+|  Docker Compose Network (bridge)                                          |
+|                                                                           |
+|  +----------+  +---------+  +---------+  +---------+  +----------+      |
+|  | Prowlarr |  | Sonarr  |  | Radarr  |  | Bazarr  |  | Whisparr |      |
+|  | :9696    |  | :8989   |  | :7878   |  | :6767   |  | :6969    |      |
+|  +----+-----+  +----+----+  +----+----+  +----+----+  +----+-----+      |
+|       |              |            |            |             |            |
+|       +--- Prowlarr syncs indexers to Sonarr/Radarr/Whisparr             |
+|            Bazarr connects to Sonarr/Radarr for subtitles                 |
+|                                                                           |
+|  +-----------+   +-------------+                                          |
+|  | Overseerr |   | FlareSolverr|  Cloudflare bypass proxy                 |
+|  | :5055     |   | :8191       |  Used by Prowlarr for CF-protected        |
+|  | request   |   |             |  indexers (e.g., XXXClub)                |
+|  | portal    |   +-------------+                                          |
+|  +-----------+                                                            |
+|                                                                           |
+|  +----------+     +----------+  +-------------+                          |
+|  | Gluetun  |<--->| SABnzbd  |  | qBittorrent |                          |
+|  | (VPN)    |     | :8080    |  | :8090       |  Both share Gluetun's    |
+|  | :8080    |     |          |  |             |  network namespace.       |
+|  | :8090    |     +----------+  +-------------+  All torrent + usenet    |
+|  +----------+                                     traffic exits via VPN.  |
+|       |                                                                   |
+|       +--- PrivadoVPN WireGuard (WIREGUARD_ENDPOINT_IP=45.38.15.158)     |
+|            Private key in /opt/arr/gluetun/wireguard_private_key (never  |
+|            committed to git)                                              |
+|                                                                           |
+|  Shared volume: /media (NFS from TrueNAS 192.168.86.40)                 |
+|  +----------------------------------------------------------+            |
+|  | /media/downloads/complete    <-- SABnzbd/qBittorrent out  |            |
+|  | /media/downloads/incomplete  <-- in-progress downloads    |            |
+|  | /media/movies/               <-- Radarr library           |            |
+|  | /media/tv/                   <-- Sonarr library           |            |
+|  | /media/adult/                <-- Whisparr library         |            |
+|  | /media/music/                <-- Lidarr (future)          |            |
+|  | /media/books/                <-- Readarr (future)         |            |
+|  +----------------------------------------------------------+            |
+|                                                                           |
+|  All containers run as PUID=1000, PGID=1000 (arrstack user)             |
+|  LinuxServer.io images (except Whisparr: hotio), TZ=America/Chicago      |
++---------------------------------------------------------------------------+
 ```
 
 **Service configuration order:**
-1. Prowlarr -- Add indexers (Usenet, torrent)
-2. SABnzbd -- Configure Usenet server credentials
+1. Prowlarr -- Add indexers (Usenet + torrent); add FlareSolverr proxy for CF-protected indexers
+2. SABnzbd -- Configure Usenet server credentials; add category `whisparr`
 3. Sonarr -- Connect to Prowlarr + SABnzbd, add TV libraries
 4. Radarr -- Connect to Prowlarr + SABnzbd, add movie libraries
 5. Bazarr -- Connect to Sonarr + Radarr for subtitle downloads
 6. Overseerr -- Connect to Sonarr + Radarr for user requests
-7. Gluetun -- Configure VPN provider credentials
+7. Whisparr -- Connect to Prowlarr (fullSync), SABnzbd + qBittorrent; root folder `/media/adult`
+8. Gluetun -- Configure VPN provider credentials (PrivadoVPN WireGuard)
 
 ---
 
