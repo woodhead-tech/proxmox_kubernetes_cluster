@@ -15,7 +15,9 @@
 #   Radarr:    http://<ip>:7878  (connect to Prowlarr + SABnzbd)
 #   Bazarr:    http://<ip>:6767  (connect to Sonarr + Radarr)
 #   Overseerr: http://<ip>:5055  (connect to Sonarr + Radarr)
-#   SABnzbd:   http://<ip>:8080  (set up Usenet server)
+#   SABnzbd:      http://<ip>:8080  (set up Usenet server)
+#   qBittorrent:  http://<ip>:8090  (torrent client, routed through gluetun VPN)
+#   FlareSolverr: http://<ip>:8191  (Cloudflare bypass proxy for Prowlarr)
 
 services:
 
@@ -124,11 +126,12 @@ services:
       - WIREGUARD_ENDPOINT_IP=45.38.15.158
       - WIREGUARD_ENDPOINT_PORT=51820
       - TZ=America/Chicago
-      - FIREWALL_INPUT_PORTS=8080
+      - FIREWALL_INPUT_PORTS=8080,8090
     volumes:
       - /opt/arr/gluetun/wireguard_private_key:/run/secrets/wireguard_private_key:ro
     ports:
       - "8080:8080"  # SABnzbd port exposed through gluetun's network
+      - "8090:8090"  # qBittorrent web UI exposed through gluetun's network
     restart: unless-stopped
 
   # --- SABnzbd: Usenet Downloader ---
@@ -147,6 +150,38 @@ services:
       - /media/downloads:/downloads
     mem_limit: 2g
     memswap_limit: 2g
+    restart: unless-stopped
+
+  # --- qBittorrent: Torrent Downloader ---
+  # Routes all torrent traffic through gluetun VPN (same killswitch as SABnzbd).
+  # Web UI on port 8090. Default credentials: admin/adminadmin (change on first login).
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    network_mode: "service:gluetun"
+    depends_on:
+      - gluetun
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+      - WEBUI_PORT=8090
+    volumes:
+      - /opt/arr/qbittorrent/config:/config
+      - /media/downloads:/downloads
+    restart: unless-stopped
+
+  # --- FlareSolverr: Cloudflare bypass proxy ---
+  # Used by Prowlarr to access indexers protected by Cloudflare DDoS challenges.
+  # Prowlarr proxies requests through this service via its settings.
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=info
+      - TZ=America/Chicago
+    ports:
+      - "8191:8191"
     restart: unless-stopped
 
   # --- Whisparr: Adult Movie Management ---
