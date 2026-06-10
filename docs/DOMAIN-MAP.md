@@ -52,6 +52,9 @@ via Let's Encrypt DNS-01 (Cloudflare).
 | `bazarr.woodhead.tech` | 192.168.86.22 | 6767 | SSO | Bazarr (subtitles) |
 | `prowlarr.woodhead.tech` | 192.168.86.22 | 9696 | SSO | Prowlarr (indexers) |
 | `sabnzbd.woodhead.tech` | 192.168.86.22 | 8080 | SSO | SABnzbd (usenet; via Gluetun) |
+| `whisparr.woodhead.tech` | 192.168.86.22 | 6969 | SSO | Whisparr (adult movies) |
+| `qbittorrent.woodhead.tech` | 192.168.86.22 | 8090 | SSO | qBittorrent (torrent; via Gluetun) |
+| `flaresolverr.woodhead.tech` | 192.168.86.22 | 8191 | SSO | FlareSolverr (Cloudflare bypass proxy) |
 
 ## Apps
 
