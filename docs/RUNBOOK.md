@@ -413,7 +413,8 @@ cd ansible && ansible-playbook playbooks/setup-arr-stack.yml \
 
 ### 6.1 Deploy
 
-The ARR stack requires a PrivadoVPN WireGuard private key for the SABnzbd VPN killswitch.
+The ARR stack requires a PrivadoVPN WireGuard private key for the gluetun VPN killswitch.
+SABnzbd (Usenet) and qBittorrent (torrent) both run inside gluetun's network namespace.
 Download a WireGuard `.conf` from my.privado.io and copy the `PrivateKey` value:
 
 ```bash
@@ -431,37 +432,85 @@ cd ansible && ansible-playbook playbooks/setup-arr-stack.yml \
 ### 6.2 Configure Services
 
 Access each service via its web UI:
-| Service   | URL                             | First step                      |
-|-----------|---------------------------------|---------------------------------|
-| Prowlarr  | `http://192.168.86.22:9696`     | Add indexers                    |
-| SABnzbd   | `http://192.168.86.22:8080`     | Configure Usenet server         |
-| Sonarr    | `http://192.168.86.22:8989`     | Connect to Prowlarr + SABnzbd  |
-| Radarr    | `http://192.168.86.22:7878`     | Connect to Prowlarr + SABnzbd  |
-| Bazarr    | `http://192.168.86.22:6767`     | Connect to Sonarr + Radarr     |
-| Seerr     | `http://192.168.86.22:5055`     | Connect to Sonarr + Radarr     |
+| Service       | URL                             | First step                                     |
+|---------------|---------------------------------|------------------------------------------------|
+| Prowlarr      | `http://192.168.86.22:9696`     | Add indexers; configure FlareSolverr proxy     |
+| SABnzbd       | `http://192.168.86.22:8080`     | Configure Usenet server                        |
+| qBittorrent   | `http://192.168.86.22:8090`     | Change default password on first login         |
+| FlareSolverr  | `http://192.168.86.22:8191`     | No config needed; used automatically by Prowlarr |
+| Sonarr        | `http://192.168.86.22:8989`     | Connect to Prowlarr + SABnzbd                 |
+| Radarr        | `http://192.168.86.22:7878`     | Connect to Prowlarr + SABnzbd                 |
+| Bazarr        | `http://192.168.86.22:6767`     | Connect to Sonarr + Radarr                    |
+| Seerr         | `http://192.168.86.22:5055`     | Connect to Sonarr + Radarr                    |
+| Whisparr      | `http://192.168.86.22:6969`     | See section 6.4                               |
 
 ### 6.3 Gluetun VPN Killswitch
 
-SABnzbd runs inside gluetun's network namespace (PrivadoVPN WireGuard). If the VPN drops, SABnzbd loses connectivity — intentional killswitch behavior.
+Both SABnzbd (Usenet) and qBittorrent (torrent) run inside gluetun's network namespace
+(PrivadoVPN WireGuard). If the VPN drops, both lose connectivity — intentional killswitch behavior.
 
-**Always recreate both containers together** when restarting gluetun, or SABnzbd's network namespace goes stale:
+**Always recreate all three containers together** when restarting gluetun, or the shared
+network namespace goes stale:
 ```bash
-cd /opt/arr && docker compose up -d --force-recreate gluetun sabnzbd
+cd /opt/arr && docker compose up -d --force-recreate gluetun sabnzbd qbittorrent
 ```
 
 To rotate the WireGuard key:
 ```bash
 printf '%s' 'NEW_PRIVATE_KEY' > /opt/arr/gluetun/wireguard_private_key
-docker compose up -d --force-recreate gluetun sabnzbd
+docker compose up -d --force-recreate gluetun sabnzbd qbittorrent
 ```
 
-### 6.5 Enable Traefik Routes (Optional)
+### 6.4 Whisparr Post-Deploy Configuration
 
-To expose ARR services externally, uncomment the routes in
-`ansible/files/traefik/dynamic/arr-stack.yml` and redeploy:
+Whisparr is an adult movie manager (Radarr fork). After `make arr-stack`, configure it via API
+or web UI at `http://192.168.86.22:6969`:
+
+**Root folder:** Create `/media/adult` on the NFS mount, then add it in Whisparr
+(Settings > Media Management > Root Folders).
+
+**Quality profile:** `HD - 720p/1080p` (built-in, ID 6) is the recommended default.
+Use `VR` (ID 7) for VR content with a separate root folder if desired.
+
+**Prowlarr integration:** In Prowlarr, add Whisparr as an Application
+(Settings > Apps > +) with `syncLevel: fullSync`. Prowlarr will push all
+XXX-category-capable indexers to Whisparr automatically.
+
+**FlareSolverr:** Required for the XXXClub torrent indexer (Cloudflare-protected).
+In Prowlarr, add a FlareSolverr proxy (Settings > Indexers > Proxies):
+- Host: `http://flaresolverr:8191/`
+- Create a tag (e.g. `flaresolverr`) and assign it to both the proxy and the XXXClub indexer.
+
+**Download clients:** Add both SABnzbd (Usenet) and qBittorrent (torrent):
+- SABnzbd: host `192.168.86.22`, port `8080`, category `whisparr`
+- qBittorrent: host `192.168.86.22`, port `8090`, no credentials needed
+  (subnet whitelist covers `192.168.86.0/24` and `172.16.0.0/12`)
+
+**qBittorrent auth note:** qBittorrent 5.x generates a random temporary password on
+first start (visible in `docker logs qbittorrent`). Set a permanent password on first
+login, or rely on the subnet whitelist for internal arr-stack connections.
+
+### 6.5 Traefik Routes
+
+All ARR services have routes in `ansible/files/traefik/dynamic/arr-stack.yml`.
+Deploy after `make arr-stack`:
 ```bash
 make traefik
 ```
+
+| Service      | URL                                    |
+|--------------|----------------------------------------|
+| Overseerr    | `https://requests.woodhead.tech`       |
+| Prowlarr     | `https://prowlarr.woodhead.tech`       |
+| Sonarr       | `https://sonarr.woodhead.tech`         |
+| Radarr       | `https://radarr.woodhead.tech`         |
+| Bazarr       | `https://bazarr.woodhead.tech`         |
+| SABnzbd      | `https://sabnzbd.woodhead.tech`        |
+| Whisparr     | `https://whisparr.woodhead.tech`       |
+| qBittorrent  | `https://qbittorrent.woodhead.tech`    |
+| FlareSolverr | `https://flaresolverr.woodhead.tech`   |
+
+All routes are behind Authentik SSO.
 
 ---
 
