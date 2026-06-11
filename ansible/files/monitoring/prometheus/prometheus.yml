@@ -117,7 +117,6 @@ scrape_configs:
           - 192.168.86.30    # pve2 (thinkcentre2)
           - 192.168.86.31    # pve3 (thinkcentre3)
           - 192.168.86.130   # tower1
-          - 192.168.86.147   # zotac
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -180,9 +179,6 @@ scrape_configs:
       - targets: ["192.168.86.25:9198"]
         labels:
           instance: "ups-tower1"
-      - targets: ["192.168.86.25:9197"]
-        labels:
-          instance: "ups-zotac"
 
   # ===== Dexcom Glucose Monitoring =====
 
@@ -334,7 +330,6 @@ scrape_configs:
           - 192.168.86.30    # thinkcentre2 (pve2)
           - 192.168.86.31    # thinkcentre3 (pve3)
           - 192.168.86.130   # tower1 (pve4)
-          - 192.168.86.147   # zotac (pve5)
           - 192.168.86.40    # TrueNAS
           - 192.168.86.41    # Home Assistant VM
           - 192.168.86.131   # Piboard
@@ -353,7 +348,6 @@ scrape_configs:
           - 192.168.86.35    # adguard
           - 192.168.86.36    # step-ca
           - 192.168.86.39    # wireguard
-          - 192.168.86.44    # zigbee2mqtt
           - 192.168.86.45    # hermes
           - 192.168.86.48    # claude-code
           - 192.168.86.51    # static-sites

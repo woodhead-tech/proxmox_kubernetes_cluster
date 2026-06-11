@@ -59,8 +59,6 @@ proxmox_nodes:
     id: "node/thinkcentre3"
   - name: "tower1"
     id: "node/tower1"
-  - name: "zotac"
-    id: "node/zotac"
 
 # Response time threshold (seconds) for "degraded" (amber) status
 degraded_threshold_seconds: 3.0

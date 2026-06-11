@@ -47,7 +47,6 @@ service_groups:
     description: "Smart home automation"
     members:
       - { vmid: 301, name: homeassistant, type: vm }
-      - { vmid: 214, name: zigbee2mqtt, type: lxc }
       - { vmid: 209, name: libby-alert, type: lxc }
 
   media:
