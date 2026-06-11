@@ -7,7 +7,6 @@ proxmox_node_map:
   thinkcentre2: pve2
   thinkcentre3: pve3
   tower1: tower1
-  zotac: zotac
 
 
 #
