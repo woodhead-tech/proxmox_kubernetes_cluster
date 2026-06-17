@@ -25,7 +25,7 @@
 
 .PHONY: setup prepare prepare-truenas ddns init plan apply \
         apply-truenas apply-homeassistant apply-lxc plan-lxc \
-        traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi vaultwarden \
+        traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi vaultwarden immich \
         bootstrap recover-k8s kubeconfig health k8s-base check-iso rejoin-worker harden \
         certs-push certs-pull certs-check approve-csrs \
         patch-proxmox patch-lxc patch-docker patch-pi destroy clean help \
@@ -246,6 +246,9 @@ kanboard: ## Deploy Kanboard project management into its LXC
 
 drawio: ## Deploy draw.io self-hosted diagramming app into its LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-drawio.yml
+
+immich: ## Deploy Immich self-hosted photo/video library into its LXC (photos.woodhead.tech)
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-immich.yml
 
 omada: ## Deploy TP-Link Omada WiFi Controller into its LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-omada.yml

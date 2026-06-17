@@ -22,6 +22,7 @@ talos_iso    = "local:iso/talos-amd64.iso"
 #   jellyfin    = "pve3"
 #   openclaw    = "pve3"
 #   authelia    = "pve1"
+#   immich      = "tower1"   # tower1 has most RAM — required for ML inference
 # }
 
 # --- Network ---
@@ -144,6 +145,11 @@ libby_alert_ip   = "192.168.86.27"
 # Vaultwarden password manager
 vaultwarden_vmid = 226
 vaultwarden_ip   = "192.168.86.43"
+
+# Immich self-hosted photo/video library (4 cores, 6GB RAM, 32GB disk — ML-heavy)
+immich_vmid          = 230
+immich_ip            = "192.168.86.55"
+immich_root_password = "ChangeMe!"
 
 # --- Domain ---
 domain     = "woodhead.tech"

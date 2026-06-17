@@ -539,3 +539,23 @@ variable "drawio_root_password" {
   default     = ""
   sensitive   = true
 }
+
+# --- Immich LXC ---
+variable "immich_vmid" {
+  description = "VM ID for the Immich photo/video library LXC"
+  type        = number
+  default     = 230
+}
+
+variable "immich_ip" {
+  description = "Static IP for the Immich LXC"
+  type        = string
+  default     = "192.168.86.55"
+}
+
+variable "immich_root_password" {
+  description = "Temporary root password for console access during initial setup"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
