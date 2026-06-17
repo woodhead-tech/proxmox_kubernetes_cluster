@@ -72,6 +72,7 @@ service_groups:
       - { vmid: 228, name: static-sites, type: lxc }
       - { vmid: 224, name: hermes, type: lxc }
       - { vmid: 229, name: drawio, type: lxc }
+      - { vmid: 230, name: immich, type: lxc }
 
   infra:
     description: "Email, DNS, backups, SSH CA, secrets"
