@@ -8,7 +8,7 @@
 #
 # Prerequisites:
 #   - PXE LXC created via Terraform (make apply)
-#   - SSH access to 192.168.86.50
+#   - SSH access to 192.168.86.54
 #
 # Usage:
 #   ansible-playbook playbooks/setup-pxe.yml

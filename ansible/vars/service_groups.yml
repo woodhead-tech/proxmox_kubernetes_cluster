@@ -76,6 +76,7 @@ service_groups:
   infra:
     description: "Email, DNS, backups, SSH CA, secrets"
     members:
+      - { vmid: 213, name: pxe, type: lxc }
       - { vmid: 212, name: mailserver, type: lxc }
       - { vmid: 221, name: adguard, type: lxc }
       - { vmid: 222, name: step-ca, type: lxc }

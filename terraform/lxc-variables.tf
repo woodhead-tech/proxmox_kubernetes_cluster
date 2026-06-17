@@ -314,7 +314,7 @@ variable "pxe_vmid" {
 variable "pxe_ip" {
   description = "Static IP for the PXE boot server LXC"
   type        = string
-  default     = "192.168.86.50"
+  default     = "192.168.86.54"
 }
 
 variable "pxe_cores" {
