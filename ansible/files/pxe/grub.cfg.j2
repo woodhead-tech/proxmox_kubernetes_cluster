@@ -1,11 +1,39 @@
 set default=0
-set timeout=15
+set timeout=30
 
 menuentry "CachyOS Handheld 2026-04-26 (Network Boot)" {
-    linuxefi /cachyos/vmlinuz-linux-cachyos-deckify \
+    linuxefi /cachyos-handheld/vmlinuz \
         archisobasedir=arch \
-        archiso_http_srv=http://{{ ansible_host }}/ \
+        archiso_http_srv=http://{{ ansible_host }}/cachyos-handheld/ \
         copytoram \
         ip=dhcp
-    initrdefi /cachyos/initramfs-linux-cachyos-deckify.img
+    initrdefi /cachyos-handheld/initrd.img
+}
+
+menuentry "CachyOS Desktop 2026-04-26 (Network Boot)" {
+    linuxefi /cachyos-desktop/vmlinuz \
+        archisobasedir=arch \
+        archiso_http_srv=http://{{ ansible_host }}/cachyos-desktop/ \
+        copytoram \
+        ip=dhcp
+    initrdefi /cachyos-desktop/initrd.img
+}
+
+menuentry "Ubuntu 24.04.2 LTS Server Installer (Network Boot)" {
+    linuxefi /ubuntu/vmlinuz \
+        ip=dhcp \
+        url=http://{{ ansible_host }}/ubuntu/ubuntu-24.04.2-live-server-amd64.iso
+    initrdefi /ubuntu/initrd
+}
+
+menuentry "Debian 12 Bookworm Installer (Network Boot)" {
+    linuxefi /debian/vmlinuz
+    initrdefi /debian/initrd.gz
+}
+
+menuentry "Fedora 42 Server Installer (Network Boot)" {
+    linuxefi /fedora/vmlinuz \
+        inst.repo=https://dl.fedoraproject.org/pub/fedora/linux/releases/42/Server/x86_64/os/ \
+        inst.text
+    initrdefi /fedora/initrd.img
 }

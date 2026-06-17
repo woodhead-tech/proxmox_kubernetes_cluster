@@ -1,29 +1,31 @@
 # setup-pxe.yml - PXE boot server (dnsmasq proxy-DHCP + TFTP, nginx HTTP)
 #
-# Sets up a permanent network boot server on the LAN. Devices boot via PXE,
-# receive the GRUB EFI binary over TFTP, then load the kernel + initramfs
-# from TFTP and fetch the root filesystem over HTTP.
+# Multi-distro network boot server. Devices receive grubx64.efi over TFTP,
+# then boot the kernel/initrd also from TFTP. Airootfs and large ISOs are
+# served over HTTP from the NAS bind mount at /srv/pxe.
 #
-# Currently serves: CachyOS Handheld 2026-04-26
+# Distros served:
+#   - Debian 12 Bookworm (netboot, fetches packages from internet)
+#   - Fedora 42 Server   (netboot, fetches packages from internet)
+#   - Ubuntu 24.04.2 LTS Server (ISO via HTTP, full offline install)
+#   - CachyOS Handheld 260426   (airootfs via HTTP from NAS)
+#   - CachyOS Desktop 260426    (airootfs via HTTP from NAS)
 #
 # Prerequisites:
 #   - PXE LXC created via Terraform (make apply)
+#   - NAS bind mount active: /mnt/truenas-media/pxe -> /srv/pxe (NFS-backed)
 #   - SSH access to 192.168.86.54
 #
 # Usage:
 #   ansible-playbook playbooks/setup-pxe.yml
-#
-# To add a new ISO later, re-run with:
-#   ansible-playbook playbooks/setup-pxe.yml -e "iso_url=https://... iso_name=distro"
 ---
 - name: Deploy PXE boot server
   hosts: lxc_services:&pxe
   vars:
+    # TFTP root: small kernel/initrd files, local disk
     tftp_root: /srv/tftp
+    # HTTP root: large ISOs and airootfs, NAS bind mount
     http_root: /srv/pxe
-    iso_url: "https://cdn77.cachyos.org/ISO/handheld/260426/cachyos-handheld-linux-260426.iso"
-    iso_dest: /tmp/cachyos-handheld.iso
-    iso_label: COS_202604
 
   tasks:
     - name: Install packages
@@ -34,8 +36,11 @@
           - libarchive-tools
           - grub-efi-amd64-bin
           - curl
+          - xz-utils
         state: present
         update_cache: true
+
+    # ── Directory structure ────────────────────────────────────────────────────
 
     - name: Create TFTP directory structure
       file:
@@ -44,53 +49,215 @@
         mode: "0755"
       loop:
         - "{{ tftp_root }}/EFI/BOOT"
-        - "{{ tftp_root }}/cachyos"
-        - "{{ http_root }}/arch/x86_64"
+        - "{{ tftp_root }}/debian"
+        - "{{ tftp_root }}/fedora"
+        - "{{ tftp_root }}/ubuntu"
+        - "{{ tftp_root }}/cachyos-handheld"
+        - "{{ tftp_root }}/cachyos-desktop"
 
-    - name: Download CachyOS handheld ISO
+    - name: Create NAS HTTP directory structure
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ http_root }}/isos"
+        - "{{ http_root }}/cachyos-handheld/arch/x86_64"
+        - "{{ http_root }}/cachyos-desktop/arch/x86_64"
+        - "{{ http_root }}/ubuntu"
+
+    # ── Debian 12 Bookworm ────────────────────────────────────────────────────
+
+    - name: Download Debian 12 netboot archive
       get_url:
-        url: "{{ iso_url }}"
-        dest: "{{ iso_dest }}"
-        timeout: 3600
+        url: https://ftp.debian.org/debian/dists/bookworm/main/installer-amd64/current/images/netboot/netboot.tar.gz
+        dest: /tmp/debian-netboot.tar.gz
+        timeout: 300
         mode: "0644"
         force: false
 
-    - name: Extract kernel from ISO
+    - name: Extract Debian vmlinuz from netboot archive
       shell: >
-        bsdtar -O -xf {{ iso_dest }} arch/boot/x86_64/vmlinuz-linux-cachyos-deckify
-        > {{ tftp_root }}/cachyos/vmlinuz-linux-cachyos-deckify
+        bsdtar -O -xf /tmp/debian-netboot.tar.gz
+        ./debian-installer/amd64/linux
+        > {{ tftp_root }}/debian/vmlinuz
       args:
-        creates: "{{ tftp_root }}/cachyos/vmlinuz-linux-cachyos-deckify"
+        creates: "{{ tftp_root }}/debian/vmlinuz"
 
-    - name: Extract initramfs from ISO
+    - name: Extract Debian initrd.gz from netboot archive
       shell: >
-        bsdtar -O -xf {{ iso_dest }} arch/boot/x86_64/initramfs-linux-cachyos-deckify.img
-        > {{ tftp_root }}/cachyos/initramfs-linux-cachyos-deckify.img
+        bsdtar -O -xf /tmp/debian-netboot.tar.gz
+        ./debian-installer/amd64/initrd.gz
+        > {{ tftp_root }}/debian/initrd.gz
       args:
-        creates: "{{ tftp_root }}/cachyos/initramfs-linux-cachyos-deckify.img"
+        creates: "{{ tftp_root }}/debian/initrd.gz"
 
-    - name: Extract airootfs (erofs) from ISO
-      shell: >
-        bsdtar -O -xf {{ iso_dest }} arch/x86_64/airootfs.erofs
-        > {{ http_root }}/arch/x86_64/airootfs.erofs
-      args:
-        creates: "{{ http_root }}/arch/x86_64/airootfs.erofs"
-      register: erofs_result
-      failed_when: false
-
-    - name: Extract airootfs (sfs fallback) from ISO
-      shell: >
-        bsdtar -O -xf {{ iso_dest }} arch/x86_64/airootfs.sfs
-        > {{ http_root }}/arch/x86_64/airootfs.sfs
-      args:
-        creates: "{{ http_root }}/arch/x86_64/airootfs.sfs"
-      when: erofs_result is failed or erofs_result.rc | default(0) != 0
-      failed_when: false
-
-    - name: Remove ISO after extraction
+    - name: Remove Debian netboot archive
       file:
-        path: "{{ iso_dest }}"
+        path: /tmp/debian-netboot.tar.gz
         state: absent
+
+    # ── Fedora 42 Server ──────────────────────────────────────────────────────
+
+    - name: Download Fedora 42 vmlinuz
+      get_url:
+        url: https://dl.fedoraproject.org/pub/fedora/linux/releases/42/Server/x86_64/os/images/pxeboot/vmlinuz
+        dest: "{{ tftp_root }}/fedora/vmlinuz"
+        timeout: 300
+        mode: "0644"
+        force: false
+
+    - name: Download Fedora 42 initrd.img
+      get_url:
+        url: https://dl.fedoraproject.org/pub/fedora/linux/releases/42/Server/x86_64/os/images/pxeboot/initrd.img
+        dest: "{{ tftp_root }}/fedora/initrd.img"
+        timeout: 1800
+        mode: "0644"
+        force: false
+
+    # ── Ubuntu 24.04.2 LTS Server ─────────────────────────────────────────────
+
+    # Use curl to write directly to NAS — get_url stages via /tmp (local disk) which is too small
+    - name: Download Ubuntu 24.04.2 ISO to NAS
+      shell: |
+        curl -fL --retry 3 --retry-delay 5 \
+          -o {{ http_root }}/ubuntu/ubuntu-24.04.2-live-server-amd64.iso \
+          https://releases.ubuntu.com/24.04.2/ubuntu-24.04.2-live-server-amd64.iso
+      args:
+        creates: "{{ http_root }}/ubuntu/ubuntu-24.04.2-live-server-amd64.iso"
+
+    - name: Extract Ubuntu vmlinuz from ISO
+      shell: >
+        bsdtar -O -xf {{ http_root }}/ubuntu/ubuntu-24.04.2-live-server-amd64.iso
+        casper/vmlinuz
+        > {{ tftp_root }}/ubuntu/vmlinuz
+      args:
+        creates: "{{ tftp_root }}/ubuntu/vmlinuz"
+
+    - name: Extract Ubuntu initrd from ISO
+      shell: >
+        bsdtar -O -xf {{ http_root }}/ubuntu/ubuntu-24.04.2-live-server-amd64.iso
+        casper/initrd
+        > {{ tftp_root }}/ubuntu/initrd
+      args:
+        creates: "{{ tftp_root }}/ubuntu/initrd"
+
+    # ── CachyOS Handheld 260426 ───────────────────────────────────────────────
+
+    - name: Download CachyOS Handheld ISO to NAS
+      shell: |
+        curl -fL --retry 3 --retry-delay 5 \
+          -o {{ http_root }}/isos/cachyos-handheld-linux-260426.iso \
+          https://cdn77.cachyos.org/ISO/handheld/260426/cachyos-handheld-linux-260426.iso
+      args:
+        creates: "{{ http_root }}/isos/cachyos-handheld-linux-260426.iso"
+
+    - name: Extract CachyOS Handheld vmlinuz
+      shell: >
+        bsdtar -O -xf {{ http_root }}/isos/cachyos-handheld-linux-260426.iso
+        arch/boot/x86_64/vmlinuz-linux-cachyos-deckify
+        > {{ tftp_root }}/cachyos-handheld/vmlinuz
+      args:
+        creates: "{{ tftp_root }}/cachyos-handheld/vmlinuz"
+
+    - name: Extract CachyOS Handheld initramfs
+      shell: >
+        bsdtar -O -xf {{ http_root }}/isos/cachyos-handheld-linux-260426.iso
+        arch/boot/x86_64/initramfs-linux-cachyos-deckify.img
+        > {{ tftp_root }}/cachyos-handheld/initrd.img
+      args:
+        creates: "{{ tftp_root }}/cachyos-handheld/initrd.img"
+
+    - name: Extract CachyOS Handheld airootfs (erofs)
+      shell: >
+        bsdtar -O -xf {{ http_root }}/isos/cachyos-handheld-linux-260426.iso
+        arch/x86_64/airootfs.erofs
+        > {{ http_root }}/cachyos-handheld/arch/x86_64/airootfs.erofs
+      args:
+        creates: "{{ http_root }}/cachyos-handheld/arch/x86_64/airootfs.erofs"
+      register: handheld_erofs
+      failed_when: false
+
+    - name: Extract CachyOS Handheld airootfs (sfs fallback)
+      shell: >
+        bsdtar -O -xf {{ http_root }}/isos/cachyos-handheld-linux-260426.iso
+        arch/x86_64/airootfs.sfs
+        > {{ http_root }}/cachyos-handheld/arch/x86_64/airootfs.sfs
+      args:
+        creates: "{{ http_root }}/cachyos-handheld/arch/x86_64/airootfs.sfs"
+      when: handheld_erofs is failed or (handheld_erofs.rc | default(0)) != 0
+      failed_when: false
+
+    # ── CachyOS Desktop 260426 ────────────────────────────────────────────────
+
+    - name: Download CachyOS Desktop ISO to NAS
+      shell: |
+        curl -fL --retry 3 --retry-delay 5 \
+          -o {{ http_root }}/isos/cachyos-desktop-linux-260426.iso \
+          https://cdn77.cachyos.org/ISO/desktop/260426/cachyos-desktop-linux-260426.iso
+      args:
+        creates: "{{ http_root }}/isos/cachyos-desktop-linux-260426.iso"
+
+    # Detect actual vmlinuz/initramfs names since they vary by kernel variant
+    - name: Detect CachyOS Desktop vmlinuz path in ISO
+      shell: |
+        bsdtar tf {{ http_root }}/isos/cachyos-desktop-linux-260426.iso | grep 'arch/boot/x86_64/vmlinuz' | head -1
+      register: cachy_desktop_vmlinuz_path
+      changed_when: false
+
+    - name: Detect CachyOS Desktop initramfs path in ISO
+      shell: |
+        bsdtar tf {{ http_root }}/isos/cachyos-desktop-linux-260426.iso | grep 'arch/boot/x86_64/initramfs.*\.img' | head -1
+      register: cachy_desktop_initrd_path
+      changed_when: false
+
+    - name: Extract CachyOS Desktop vmlinuz
+      shell: |
+        bsdtar -O -xf {{ http_root }}/isos/cachyos-desktop-linux-260426.iso \
+          "{{ cachy_desktop_vmlinuz_path.stdout | trim }}" \
+          > {{ tftp_root }}/cachyos-desktop/vmlinuz
+      args:
+        creates: "{{ tftp_root }}/cachyos-desktop/vmlinuz"
+      when: cachy_desktop_vmlinuz_path.stdout != ""
+
+    - name: Extract CachyOS Desktop initramfs
+      shell: |
+        bsdtar -O -xf {{ http_root }}/isos/cachyos-desktop-linux-260426.iso \
+          "{{ cachy_desktop_initrd_path.stdout | trim }}" \
+          > {{ tftp_root }}/cachyos-desktop/initrd.img
+      args:
+        creates: "{{ tftp_root }}/cachyos-desktop/initrd.img"
+      when: cachy_desktop_initrd_path.stdout != ""
+
+    - name: Extract CachyOS Desktop airootfs (erofs)
+      shell: >
+        bsdtar -O -xf {{ http_root }}/isos/cachyos-desktop-linux-260426.iso
+        arch/x86_64/airootfs.erofs
+        > {{ http_root }}/cachyos-desktop/arch/x86_64/airootfs.erofs
+      args:
+        creates: "{{ http_root }}/cachyos-desktop/arch/x86_64/airootfs.erofs"
+      register: desktop_erofs
+      failed_when: false
+
+    - name: Extract CachyOS Desktop airootfs (sfs fallback)
+      shell: >
+        bsdtar -O -xf {{ http_root }}/isos/cachyos-desktop-linux-260426.iso
+        arch/x86_64/airootfs.sfs
+        > {{ http_root }}/cachyos-desktop/arch/x86_64/airootfs.sfs
+      args:
+        creates: "{{ http_root }}/cachyos-desktop/arch/x86_64/airootfs.sfs"
+      when: desktop_erofs is failed or (desktop_erofs.rc | default(0)) != 0
+      failed_when: false
+
+    # ── Cleanup old paths ─────────────────────────────────────────────────────
+
+    # Old single-distro TFTP path from initial handheld deployment
+    - name: Remove old CachyOS TFTP path (pre-refactor)
+      file:
+        path: "{{ tftp_root }}/cachyos"
+        state: absent
+
+    # ── GRUB ──────────────────────────────────────────────────────────────────
 
     - name: Deploy grub.cfg template
       template:
@@ -98,27 +265,15 @@
         dest: /etc/pxe-grub.cfg
         mode: "0644"
 
+    # Always rebuild so menu changes take effect without manual cleanup
     - name: Build standalone GRUB EFI with embedded config
       command: >
         grub-mkstandalone
         --format=x86_64-efi
         --output={{ tftp_root }}/EFI/BOOT/grubx64.efi
         boot/grub/grub.cfg=/etc/pxe-grub.cfg
-      args:
-        creates: "{{ tftp_root }}/EFI/BOOT/grubx64.efi"
 
-    - name: Deploy dnsmasq config
-      template:
-        src: "{{ playbook_dir }}/../files/pxe/dnsmasq.conf.j2"
-        dest: /etc/dnsmasq.d/pxe.conf
-        mode: "0644"
-      notify: Restart dnsmasq
-
-    - name: Remove default dnsmasq config to prevent conflicts
-      file:
-        path: /etc/dnsmasq.conf
-        state: absent
-      notify: Restart dnsmasq
+    # ── nginx ─────────────────────────────────────────────────────────────────
 
     - name: Deploy nginx config
       copy:
@@ -140,6 +295,21 @@
         state: absent
       notify: Restart nginx
 
+    # ── dnsmasq ───────────────────────────────────────────────────────────────
+
+    - name: Deploy dnsmasq config
+      template:
+        src: "{{ playbook_dir }}/../files/pxe/dnsmasq.conf.j2"
+        dest: /etc/dnsmasq.d/pxe.conf
+        mode: "0644"
+      notify: Restart dnsmasq
+
+    - name: Remove default dnsmasq config to prevent conflicts
+      file:
+        path: /etc/dnsmasq.conf
+        state: absent
+      notify: Restart dnsmasq
+
     - name: Enable and start dnsmasq
       systemd:
         name: dnsmasq
@@ -152,16 +322,20 @@
         enabled: true
         state: started
 
-    - name: Verify TFTP files present
+    # ── Verify ────────────────────────────────────────────────────────────────
+
+    - name: Verify core TFTP files present
       stat:
         path: "{{ item }}"
       register: tftp_files
       loop:
         - "{{ tftp_root }}/EFI/BOOT/grubx64.efi"
-        - "{{ tftp_root }}/cachyos/vmlinuz-linux-cachyos-deckify"
-        - "{{ tftp_root }}/cachyos/initramfs-linux-cachyos-deckify.img"
+        - "{{ tftp_root }}/debian/vmlinuz"
+        - "{{ tftp_root }}/fedora/vmlinuz"
+        - "{{ tftp_root }}/ubuntu/vmlinuz"
+        - "{{ tftp_root }}/cachyos-handheld/vmlinuz"
 
-    - name: Assert TFTP files exist
+    - name: Assert core TFTP files exist
       assert:
         that: item.stat.exists
         fail_msg: "Missing TFTP file: {{ item.item }}"

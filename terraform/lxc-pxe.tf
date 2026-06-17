@@ -37,6 +37,14 @@ resource "proxmox_virtual_environment_container" "pxe" {
     size         = var.pxe_disk_size
   }
 
+  # NAS bind mount for large files (ISOs, airootfs). TFTP kernel/initrd stay on local disk.
+  # NFS path on host must be owned by UID 100000 (maps to container root in unprivileged LXC).
+  mount_point {
+    volume = "/mnt/truenas-media/pxe"
+    path   = "/srv/pxe"
+    shared = true
+  }
+
   network_interface {
     name   = "eth0"
     bridge = var.network_bridge
