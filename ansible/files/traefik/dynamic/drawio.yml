@@ -1,0 +1,24 @@
+# drawio.yml - draw.io self-hosted diagramming app route
+#
+# Routes draw.woodhead.tech to the drawio LXC.
+# Protected by Authentik SSO.
+
+http:
+  routers:
+    drawio:
+      rule: "Host(`draw.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: drawio
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+      middlewares:
+        - authentik@file
+
+  services:
+    drawio:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.53:8080"

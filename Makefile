@@ -244,6 +244,9 @@ step-ca: ## Deploy Smallstep step-ca SSH Certificate Authority into its LXC
 kanboard: ## Deploy Kanboard project management into its LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-kanboard.yml
 
+drawio: ## Deploy draw.io self-hosted diagramming app into its LXC
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-drawio.yml
+
 omada: ## Deploy TP-Link Omada WiFi Controller into its LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-omada.yml
 

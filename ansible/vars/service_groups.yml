@@ -70,6 +70,8 @@ service_groups:
       - { vmid: 219, name: guacamole, type: lxc }
       - { vmid: 220, name: dev-desktop, type: lxc }
       - { vmid: 228, name: static-sites, type: lxc }
+      - { vmid: 224, name: hermes, type: lxc }
+      - { vmid: 229, name: drawio, type: lxc }
 
   infra:
     description: "Email, DNS, backups, SSH CA, secrets"

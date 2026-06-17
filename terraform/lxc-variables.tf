@@ -507,3 +507,35 @@ variable "static_sites_root_password" {
   default     = ""
   sensitive   = true
 }
+
+variable "hermes_vmid" {
+  description = "VMID for Hermes agent LXC"
+  type        = number
+  default     = 224
+}
+
+variable "hermes_ip" {
+  description = "IP address for Hermes agent LXC"
+  type        = string
+  default     = "192.168.86.52"
+}
+
+# --- draw.io LXC ---
+variable "drawio_vmid" {
+  description = "VM ID for the draw.io diagramming app LXC"
+  type        = number
+  default     = 229
+}
+
+variable "drawio_ip" {
+  description = "Static IP for the draw.io LXC"
+  type        = string
+  default     = "192.168.86.53"
+}
+
+variable "drawio_root_password" {
+  description = "Temporary root password for console access during initial setup"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
