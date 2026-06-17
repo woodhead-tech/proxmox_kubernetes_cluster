@@ -320,6 +320,17 @@ consulting-build: ## Build the Astro consulting site (static output in consultin
 consulting: ## Deploy consulting site to monitoring LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-consulting-site.yml
 
+landing-site: ## Deploy landing page (lab.woodhead.tech) to monitoring-stack LXC — rsync + docker rebuild
+	rsync -az --checksum -e 'ssh -i ~/.ssh/id_ansible' \
+		landing-site/index.html \
+		root@192.168.86.25:/opt/monitoring/landing-site/build/html/index.html
+	ssh -i ~/.ssh/id_ansible root@192.168.86.25 \
+		'cd /opt/monitoring && docker compose build landing-site && docker compose up -d landing-site'
+	@HTTP=$$(curl -s -o /dev/null -w "%{http_code}" http://192.168.86.25:8083); \
+	if [ "$$HTTP" != "200" ]; then \
+		echo "FAIL: landing-site returned HTTP $$HTTP"; exit 1; \
+	fi; echo "landing-site OK (HTTP $$HTTP) — https://lab.woodhead.tech"
+
 static-sites: ## Migrate static sites (docs/resume/homelab/consulting/landing/v2mom) from monitoring-stack to dedicated LXC at 192.168.86.51
 	@echo "Migrating static sites from monitoring-stack (.25) to static-sites LXC (.51)"
 	@echo "Prerequisite: static-sites LXC (VMID 228) must be provisioned via: make apply"
