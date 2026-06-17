@@ -109,15 +109,12 @@
         group: root
         mode: "0755"
 
-    - name: Create photos library directory
-      # Bind-mounted into immich-server at /usr/src/app/upload
-      # Store all photo/video originals here; survives container replacement.
-      ansible.builtin.file:
-        path: "{{ app_dir }}/photos"
-        state: directory
-        owner: root
-        group: root
-        mode: "0755"
+    - name: Verify NAS photos mount is active
+      # /opt/immich/photos is a NAS bind mount (TrueNAS NFS via Proxmox).
+      # Fails here if mount_point wasn't applied or NAS is unreachable.
+      ansible.builtin.command:
+        cmd: mountpoint -q /opt/immich/photos
+      changed_when: false
 
     - name: Create ML model cache directory
       # Persists downloaded CLIP + face detection models (~1–3GB).

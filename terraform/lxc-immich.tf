@@ -4,8 +4,14 @@
 #   immich-server, immich-machine-learning, redis, postgres (pgvecto-rs)
 #
 # Machine learning inference is CPU-heavy; 4 cores + 6GB RAM is the minimum.
-# Photos/videos are stored at /opt/immich/photos (bind mount, not Docker volume).
+# Photos/videos live on the NAS bind mount (/opt/immich/photos -> TrueNAS NFS).
+# ML model cache and postgres data stay on local disk.
 # Place on tower1 — it has the most available RAM in the cluster.
+#
+# NAS prerequisite (run once on tower1 before first terraform apply):
+#   mkdir -p /mnt/truenas-media/immich
+#   chown 100000:100000 /mnt/truenas-media/immich
+# UID 100000 = container root in unprivileged LXC.
 #
 # Nesting enabled for Docker-in-LXC support.
 # Deploy after terraform apply: make immich
@@ -37,8 +43,17 @@ resource "proxmox_virtual_environment_container" "immich" {
 
   disk {
     datastore_id = var.lxc_storage
-    # 32GB: OS + Docker images + model cache (~3GB for ML models) + metadata
-    size = 32
+    # 16GB: OS + Docker images + ML model cache (~3GB) + postgres data
+    # Photo/video library lives on NAS bind mount, not local disk.
+    size = 16
+  }
+
+  # NAS bind mount for photo/video storage.
+  # Host path must be owned by UID 100000 (unprivileged LXC root).
+  mount_point {
+    volume = "/mnt/truenas-media/immich"
+    path   = "/opt/immich/photos"
+    shared = true
   }
 
   network_interface {
