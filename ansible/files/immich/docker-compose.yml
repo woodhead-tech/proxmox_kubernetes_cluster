@@ -21,7 +21,6 @@ services:
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
     container_name: immich_server
     restart: unless-stopped
-    command: ["start.sh", "immich"]
     volumes:
       # Photo/video library — bind mount so files survive container replacement
       - /opt/immich/photos:/usr/src/app/upload
@@ -36,12 +35,13 @@ services:
       REDIS_HOSTNAME: immich_redis
     ports:
       # Bind to all interfaces so Traefik (192.168.86.20) can reach us.
-      - "2283:3001"
+      # v2.x listens on port 2283 (not 3001 as in v1.x)
+      - "2283:2283"
     depends_on:
       - redis
       - database
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/api/server-info/ping"]
+      test: ["CMD-SHELL", "curl -f http://localhost:2283/api/server/ping || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -59,7 +59,8 @@ services:
     env_file:
       - .env
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3003/ping"]
+      # ML container does not have curl; use python3 socket check
+      test: ["CMD", "python3", "-c", "import socket; s=socket.socket(); s.settimeout(5); s.connect(('localhost', 3003)); s.close()"]
       interval: 30s
       timeout: 10s
       retries: 5
