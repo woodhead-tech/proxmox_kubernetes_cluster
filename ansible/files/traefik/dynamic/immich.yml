@@ -1,18 +1,14 @@
 # immich.yml - Immich photo/video library route
 #
-# Routes photos.woodhead.tech to the Immich LXC at 192.168.86.55:2283.
+# Routes immich.woodhead.tech to the Immich LXC at 192.168.86.55:2283.
 # Protected by Authentik forward-auth middleware — SSO login required.
 #
-# To deploy this route after Traefik is running:
-#   scp -i ~/.ssh/id_ansible \
-#       ansible/files/traefik/dynamic/immich.yml \
-#       root@192.168.86.20:/etc/traefik/dynamic/immich.yml
-# Traefik watches the dynamic/ directory and reloads automatically.
+# photos.woodhead.tech is reserved for the graduation photos app (192.168.86.45).
 
 http:
   routers:
     immich:
-      rule: "Host(`photos.woodhead.tech`)"
+      rule: "Host(`immich.woodhead.tech`)"
       entryPoints:
         - websecure
       service: immich
