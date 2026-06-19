@@ -1,0 +1,109 @@
+# upgrade-plex.yml - Upgrade Plex Media Server to latest available version
+#
+# Checks the plex.tv downloads API for the latest amd64 .deb, compares it to
+# the installed version, and performs a in-place package upgrade if a newer
+# version is available. Skips gracefully if already up to date.
+#
+# Usage:
+#   ansible-playbook playbooks/upgrade-plex.yml
+#
+# To force reinstall even if versions match:
+#   ansible-playbook playbooks/upgrade-plex.yml --extra-vars "force_upgrade=true"
+
+---
+- name: Upgrade Plex Media Server
+  hosts: lxc_services:&plex
+  gather_facts: false
+
+  vars:
+    force_upgrade: false
+    plex_api_url: "https://plex.tv/api/downloads/5.json"
+    plex_deb_tmp: "/tmp/plexmediaserver-upgrade.deb"
+
+  tasks:
+    - name: Get current installed Plex version
+      ansible.builtin.command:
+        cmd: dpkg-query -W -f='${Version}' plexmediaserver
+      register: installed_version
+      changed_when: false
+      failed_when: installed_version.rc != 0
+
+    - name: Fetch latest version info from plex.tv
+      ansible.builtin.uri:
+        url: "{{ plex_api_url }}"
+        return_content: true
+        timeout: 30
+      register: plex_api_response
+      delegate_to: localhost
+
+    - name: Parse latest version and download URL
+      ansible.builtin.set_fact:
+        latest_version: "{{ (plex_api_response.content | from_json).computer.Linux.version }}"
+        latest_deb_url: "{{ (plex_api_response.content | from_json).computer.Linux.releases
+                           | selectattr('url', 'search', 'amd64\\.deb$')
+                           | map(attribute='url') | first }}"
+
+    - name: Report version status
+      ansible.builtin.debug:
+        msg:
+          - "Installed : {{ installed_version.stdout }}"
+          - "Available : {{ latest_version }}"
+          - "Action    : {{ 'upgrade' if (installed_version.stdout != latest_version or force_upgrade) else 'skip (already up to date)' }}"
+
+    - name: Skip if already up to date
+      ansible.builtin.meta: end_host
+      when: installed_version.stdout == latest_version and not force_upgrade | bool
+
+    - name: Stop Plex before upgrade
+      ansible.builtin.systemd:
+        name: plexmediaserver
+        state: stopped
+
+    - name: Download latest Plex .deb
+      ansible.builtin.get_url:
+        url: "{{ latest_deb_url }}"
+        dest: "{{ plex_deb_tmp }}"
+        mode: "0644"
+        timeout: 120
+      register: deb_download
+
+    - name: Install Plex package
+      ansible.builtin.apt:
+        deb: "{{ plex_deb_tmp }}"
+      register: dpkg_result
+
+    - name: Remove downloaded .deb
+      ansible.builtin.file:
+        path: "{{ plex_deb_tmp }}"
+        state: absent
+
+    - name: Start Plex after upgrade
+      ansible.builtin.systemd:
+        name: plexmediaserver
+        state: started
+        enabled: true
+
+    - name: Wait for Plex to initialize
+      ansible.builtin.pause:
+        seconds: 10
+
+    - name: Verify Plex is running
+      ansible.builtin.command:
+        cmd: systemctl is-active plexmediaserver
+      register: plex_status
+      changed_when: false
+      failed_when: plex_status.stdout != 'active'
+
+    - name: Confirm new version
+      ansible.builtin.command:
+        cmd: dpkg-query -W -f='${Version}' plexmediaserver
+      register: new_version
+      changed_when: false
+
+    - name: Upgrade summary
+      ansible.builtin.debug:
+        msg:
+          - "Plex upgraded successfully"
+          - "Previous : {{ installed_version.stdout }}"
+          - "Current  : {{ new_version.stdout }}"
+          - "Status   : {{ plex_status.stdout }}"

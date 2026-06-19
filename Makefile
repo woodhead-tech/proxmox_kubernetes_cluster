@@ -28,7 +28,9 @@
         traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi vaultwarden immich \
         bootstrap recover-k8s kubeconfig health k8s-base check-iso rejoin-worker harden \
         certs-push certs-pull certs-check approve-csrs \
-        patch-proxmox patch-lxc patch-docker patch-pi destroy clean help \
+        patch-proxmox patch-lxc patch-docker patch-docker-monday patch-docker-tuesday \
+        patch-docker-wednesday patch-docker-thursday patch-docker-friday \
+        patch-pi upgrade-plex destroy clean help \
         docs-build docs-dev resume-build consulting-build consulting alertmind booth \
         group-status group-start group-stop watchdog
 
@@ -503,8 +505,26 @@ patch-lxc: ## Patch Debian packages on all LXC containers
 patch-docker: ## Pull latest Docker images and restart all stacks
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/patch-docker.yml
 
+patch-docker-monday: ## Monday 2am: security — authentik
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/patch-docker.yml --limit authentik
+
+patch-docker-tuesday: ## Tuesday 2am: media — arr-stack
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/patch-docker.yml --limit arr-stack
+
+patch-docker-wednesday: ## Wednesday 2am: apps — drawio, immich, kanboard
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/patch-docker.yml --limit drawio,immich,kanboard
+
+patch-docker-thursday: ## Thursday 2am: infra — mailserver, vaultwarden
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/patch-docker.yml --limit mailserver,vaultwarden
+
+patch-docker-friday: ## Friday 2am: observability — monitoring-stack (includes booth)
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/patch-docker.yml --limit monitoring-stack
+
 patch-pi: ## Patch Raspberry Pi devices (piboard dashboard, etc.)
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/patch-pi.yml
+
+upgrade-plex: ## Upgrade Plex to latest version (checks plex.tv API, skips if current)
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/upgrade-plex.yml
 
 # ===== Phase 5: Security =====
 

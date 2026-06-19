@@ -1,93 +1,37 @@
 # patch-docker.yml - Update Docker Compose stacks
 #
-# Pulls latest images and recreates containers for all Docker-based
-# LXC services (ARR stack, monitoring, OpenClaw, Authelia).
-#
-# OpenClaw is built from source, so it gets a git pull + docker build
-# instead of a docker compose pull.
+# Pulls latest images and recreates containers for all Docker-based LXC services.
+# Each service is a separate play so --limit targets specific hosts cleanly.
 #
 # Usage:
-#   cd ansible && ansible-playbook playbooks/patch-docker.yml
-#   cd ansible && ansible-playbook playbooks/patch-docker.yml --limit arr
-#   cd ansible && ansible-playbook playbooks/patch-docker.yml --limit monitoring
+#   cd ansible && ansible-playbook playbooks/patch-docker.yml          # all
+#   cd ansible && ansible-playbook playbooks/patch-docker.yml --limit arr-stack
+#   cd ansible && ansible-playbook playbooks/patch-docker.yml --limit authentik,wireguard
+#
+# Staggered daily maintenance targets (see Makefile):
+#   make patch-docker-monday     # security:     authentik
+#   make patch-docker-tuesday    # media:        arr-stack, jellyfin-server
+#   make patch-docker-wednesday  # apps:         drawio, immich, kanboard
+#   make patch-docker-thursday   # infra:        mailserver, vaultwarden
+#   make patch-docker-friday     # observability: monitoring-stack
 
 ---
-- name: Update ARR stack Docker images
-  hosts: lxc_services:&arr
-  become: true
-  gather_facts: false
+# ===== Monday: Security =====
 
-  tasks:
-    - name: Pull latest ARR stack images
-      ansible.builtin.command:
-        cmd: docker compose pull
-        chdir: /opt/arr-stack
-      register: pull_result
-      changed_when: "'Pull complete' in pull_result.stderr or 'Downloaded' in pull_result.stderr"
-
-    - name: Recreate ARR stack containers with new images
-      ansible.builtin.command:
-        cmd: docker compose up -d --remove-orphans
-        chdir: /opt/arr-stack
-      when: pull_result.changed
-
-    - name: Verify ARR stack containers
-      ansible.builtin.command:
-        cmd: docker compose ps --format json
-        chdir: /opt/arr-stack
-      register: ps_result
-      changed_when: false
-
-    - name: Clean up old Docker images
-      ansible.builtin.command:
-        cmd: docker image prune -f
-      changed_when: false
-
-- name: Update monitoring stack Docker images
-  hosts: lxc_services:&monitoring
-  become: true
-  gather_facts: false
-
-  tasks:
-    - name: Pull latest monitoring images
-      ansible.builtin.command:
-        cmd: docker compose pull
-        chdir: /opt/monitoring
-      register: pull_result
-      changed_when: "'Pull complete' in pull_result.stderr or 'Downloaded' in pull_result.stderr"
-
-    - name: Recreate monitoring containers with new images
-      ansible.builtin.command:
-        cmd: docker compose up -d --remove-orphans
-        chdir: /opt/monitoring
-      when: pull_result.changed
-
-    - name: Verify monitoring containers
-      ansible.builtin.command:
-        cmd: docker compose ps --format json
-        chdir: /opt/monitoring
-      register: ps_result
-      changed_when: false
-
-    - name: Clean up old Docker images
-      ansible.builtin.command:
-        cmd: docker image prune -f
-      changed_when: false
-
-- name: Update Authentik Docker image
+- name: Update Authentik Docker images
   hosts: authentik
   become: true
   gather_facts: false
 
   tasks:
-    - name: Pull latest Authentik image
+    - name: Pull latest Authentik images
       ansible.builtin.command:
         cmd: docker compose pull
         chdir: /opt/authentik
       register: pull_result
       changed_when: "'Pull complete' in pull_result.stderr or 'Downloaded' in pull_result.stderr"
 
-    - name: Recreate Authentik container with new image
+    - name: Recreate Authentik containers with new images
       ansible.builtin.command:
         cmd: docker compose up -d --remove-orphans
         chdir: /opt/authentik
@@ -106,39 +50,227 @@
         cmd: docker image prune -f
       changed_when: false
 
-- name: Update OpenClaw from source
-  hosts: openclaw
+# ===== Tuesday: Media =====
+
+- name: Update ARR stack Docker images
+  hosts: arr-stack
   become: true
   gather_facts: false
 
   tasks:
-    - name: Pull latest OpenClaw source
-      ansible.builtin.git:
-        repo: https://github.com/openclaw/openclaw.git
-        dest: /opt/openclaw/src
-        version: main
-        force: false
-      register: git_result
-
-    - name: Rebuild OpenClaw Docker image
+    - name: Pull latest ARR stack images
       ansible.builtin.command:
-        cmd: docker build -t openclaw:local .
-        chdir: /opt/openclaw/src
-      when: git_result.changed
+        cmd: docker compose pull
+        chdir: /opt/arr
+      register: pull_result
+      changed_when: "'Pull complete' in pull_result.stderr or 'Downloaded' in pull_result.stderr"
 
-    - name: Recreate OpenClaw containers with new image
+    - name: Recreate ARR stack containers with new images
       ansible.builtin.command:
         cmd: docker compose up -d --remove-orphans
-        chdir: /opt/openclaw
-      when: git_result.changed
+        chdir: /opt/arr
+      when: pull_result.changed
 
-    - name: Verify OpenClaw health
+    - name: Verify ARR stack containers
+      ansible.builtin.command:
+        cmd: docker compose ps --format json
+        chdir: /opt/arr
+      register: ps_result
+      changed_when: false
+
+    - name: Clean up old Docker images
+      ansible.builtin.command:
+        cmd: docker image prune -f
+      changed_when: false
+
+# ===== Wednesday: Apps =====
+
+- name: Update draw.io Docker images
+  hosts: drawio
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Pull latest draw.io images
+      ansible.builtin.command:
+        cmd: docker compose pull
+        chdir: /opt/drawio
+      register: pull_result
+      changed_when: "'Pull complete' in pull_result.stderr or 'Downloaded' in pull_result.stderr"
+
+    - name: Recreate draw.io containers with new images
+      ansible.builtin.command:
+        cmd: docker compose up -d --remove-orphans
+        chdir: /opt/drawio
+      when: pull_result.changed
+
+    - name: Clean up old Docker images
+      ansible.builtin.command:
+        cmd: docker image prune -f
+      changed_when: false
+
+- name: Update Immich Docker images
+  hosts: immich
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Pull latest Immich images
+      ansible.builtin.command:
+        cmd: docker compose pull
+        chdir: /opt/immich
+      register: pull_result
+      changed_when: "'Pull complete' in pull_result.stderr or 'Downloaded' in pull_result.stderr"
+
+    - name: Recreate Immich containers with new images
+      ansible.builtin.command:
+        cmd: docker compose up -d --remove-orphans
+        chdir: /opt/immich
+      when: pull_result.changed
+
+    - name: Verify Immich health
       ansible.builtin.uri:
-        url: "http://127.0.0.1:18789/healthz"
+        url: "http://127.0.0.1:2283/api/server/ping"
+        status_code: 200
+      retries: 10
+      delay: 6
+      when: pull_result.changed
+
+    - name: Clean up old Docker images
+      ansible.builtin.command:
+        cmd: docker image prune -f
+      changed_when: false
+
+- name: Update Kanboard Docker images
+  hosts: kanboard
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Pull latest Kanboard images
+      ansible.builtin.command:
+        cmd: docker compose pull
+        chdir: /opt/kanboard
+      register: pull_result
+      changed_when: "'Pull complete' in pull_result.stderr or 'Downloaded' in pull_result.stderr"
+
+    - name: Recreate Kanboard containers with new images
+      ansible.builtin.command:
+        cmd: docker compose up -d --remove-orphans
+        chdir: /opt/kanboard
+      when: pull_result.changed
+
+    - name: Clean up old Docker images
+      ansible.builtin.command:
+        cmd: docker image prune -f
+      changed_when: false
+
+# ===== Thursday: Infra =====
+
+- name: Update Mailcow Docker images
+  hosts: mailserver
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Pull latest Mailcow images
+      ansible.builtin.command:
+        cmd: docker compose pull
+        chdir: /opt/mailcow-dockerized
+      register: pull_result
+      changed_when: "'Pull complete' in pull_result.stderr or 'Downloaded' in pull_result.stderr"
+
+    - name: Recreate Mailcow containers with new images
+      ansible.builtin.command:
+        cmd: docker compose up -d --remove-orphans
+        chdir: /opt/mailcow-dockerized
+      when: pull_result.changed
+
+    - name: Verify Mailcow SMTP port is listening
+      ansible.builtin.wait_for:
+        port: 25
+        host: 127.0.0.1
+        timeout: 30
+      when: pull_result.changed
+
+    - name: Clean up old Docker images
+      ansible.builtin.command:
+        cmd: docker image prune -f
+      changed_when: false
+
+- name: Update Vaultwarden Docker images
+  hosts: vaultwarden
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Pull latest Vaultwarden images
+      ansible.builtin.command:
+        cmd: docker compose pull
+        chdir: /opt/vaultwarden
+      register: pull_result
+      changed_when: "'Pull complete' in pull_result.stderr or 'Downloaded' in pull_result.stderr"
+
+    - name: Recreate Vaultwarden containers with new images
+      ansible.builtin.command:
+        cmd: docker compose up -d --remove-orphans
+        chdir: /opt/vaultwarden
+      when: pull_result.changed
+
+    - name: Verify Vaultwarden health
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:80/alive"
         status_code: 200
       retries: 5
       delay: 5
-      when: git_result.changed
+      when: pull_result.changed
+
+    - name: Clean up old Docker images
+      ansible.builtin.command:
+        cmd: docker image prune -f
+      changed_when: false
+
+# ===== Friday: Observability =====
+
+- name: Update monitoring stack Docker images
+  hosts: monitoring-stack
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Pull latest monitoring images
+      ansible.builtin.command:
+        cmd: docker compose pull
+        chdir: /opt/monitoring
+      register: pull_result
+      changed_when: "'Pull complete' in pull_result.stderr or 'Downloaded' in pull_result.stderr"
+
+    - name: Recreate monitoring containers with new images
+      ansible.builtin.command:
+        cmd: docker compose up -d --remove-orphans
+        chdir: /opt/monitoring
+      when: pull_result.changed
+
+    - name: Verify Grafana health
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:3000/api/health"
+        status_code: 200
+      retries: 5
+      delay: 5
+      when: pull_result.changed
+
+    - name: Pull latest booth images
+      ansible.builtin.command:
+        cmd: docker compose pull
+        chdir: /opt/booth
+      register: booth_pull
+      changed_when: "'Pull complete' in booth_pull.stderr or 'Downloaded' in booth_pull.stderr"
+
+    - name: Recreate booth containers with new images
+      ansible.builtin.command:
+        cmd: docker compose up -d --remove-orphans
+        chdir: /opt/booth
+      when: booth_pull.changed
 
     - name: Clean up old Docker images
       ansible.builtin.command:

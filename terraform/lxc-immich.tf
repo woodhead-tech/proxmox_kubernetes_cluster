@@ -48,13 +48,10 @@ resource "proxmox_virtual_environment_container" "immich" {
     size = 16
   }
 
-  # NAS bind mount for photo/video storage.
-  # Host path must be owned by UID 100000 (unprivileged LXC root).
-  mount_point {
-    volume = "/mnt/truenas-media/immich"
-    path   = "/opt/immich/photos"
-    shared = true
-  }
+  # NAS bind mount is applied manually after creation (Proxmox API blocks bind mounts):
+  #   pct set 230 -mp0 /mnt/truenas-media/immich,mp=/opt/immich/photos,shared=1
+  # Host dir must be owned by UID 100000: chown 100000:100000 /mnt/truenas-media/immich
+  # mount_point { volume = "/mnt/truenas-media/immich" path = "/opt/immich/photos" shared = true }
 
   network_interface {
     name   = "eth0"
