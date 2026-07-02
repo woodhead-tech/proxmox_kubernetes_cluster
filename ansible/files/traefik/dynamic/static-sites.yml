@@ -71,6 +71,17 @@ http:
         domains:
           - main: "*.woodhead.tech"
 
+    # ShopStack customer help docs — public (no authentik middleware)
+    help-site:
+      rule: "Host(`help.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: help-site
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
   services:
     docs-site:
       loadBalancer:
@@ -101,3 +112,8 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.86.51:8087"
+
+    help-site:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.51:8086"

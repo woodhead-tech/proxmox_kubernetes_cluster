@@ -62,3 +62,12 @@ services:
     ports:
       - "8087:80"
     restart: unless-stopped
+
+  # ShopStack customer help docs (Docusaurus) — help.woodhead.tech
+  help-site:
+    build:
+      context: /opt/static-sites/help-site/build
+    container_name: help-site
+    ports:
+      - "8086:80"
+    restart: unless-stopped
