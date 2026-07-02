@@ -89,7 +89,7 @@ service_groups:
     hardware_bound: true
     description: "USB passthrough + WiFi hardware services (excluded from bulk ops)"
     members:
-      - { vmid: 210, name: sdr-scanner, type: lxc }
+      - { vmid: 210, name: sdr-scanner, type: lxc, disabled: true }  # decommissioned/offline — excluded from status
       - { vmid: 216, name: pwnagotchi, type: lxc }
       - { vmid: 227, name: ragnar, type: lxc }
 
