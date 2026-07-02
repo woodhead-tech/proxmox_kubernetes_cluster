@@ -35,6 +35,7 @@
       - homelab-site
       - consulting-site
       - v2mom-site
+      - help-site
 
   tasks:
     # --- SSH Socket Activation Fix ---
@@ -215,6 +216,18 @@
       ansible.builtin.synchronize:
         src: "{{ playbook_dir }}/../files/static-sites/v2mom-site/html/"
         dest: "{{ app_dir }}/v2mom-site/build/html/"
+        delete: true
+        use_ssh_args: true
+        rsync_opts:
+          - "--no-perms"
+      become: false
+
+    # ShopStack help site is a Docusaurus build; sync its build/ output.
+    # Rebuild first with: (cd help-site && npm ci && npm run build)
+    - name: Sync help-site pre-built HTML (Docusaurus)
+      ansible.builtin.synchronize:
+        src: "{{ playbook_dir }}/../../help-site/build/"
+        dest: "{{ app_dir }}/help-site/build/html/"
         delete: true
         use_ssh_args: true
         rsync_opts:

@@ -46,15 +46,17 @@
       ansible.builtin.debug:
         msg: |
           [{{ overall }}] {{ item.key }}  ({{ item.value.description | default('') }}){% for flag in flags %}  [{{ flag }}]{% endfor %}
-          {% for m in item.value.members %}  {{ '%-22s' | format(m.name + '(' + m.vmid | string + ')') }}  {{ vm_status[m.vmid | string] | default('not found') }}
+          {% for m in item.value.members %}  {{ '%-22s' | format(m.name + '(' + m.vmid | string + ')') }}  {{ 'disabled' if m.disabled | default(false) else vm_status[m.vmid | string] | default('not found') }}
           {% endfor %}
       loop: "{{ service_groups | dict2items }}"
       loop_control:
         label: "{{ item.key }}"
       vars:
-        member_statuses: "{{ item.value.members | map(attribute='vmid') | map('string') | map('extract', vm_status) | list }}"
+        # disabled members (e.g. decommissioned hardware) are excluded from the RUNNING/PARTIAL/STOPPED roll-up
+        active_members: "{{ item.value.members | rejectattr('disabled', 'defined') | list }}"
+        member_statuses: "{{ active_members | map(attribute='vmid') | map('string') | map('extract', vm_status) | list }}"
         running_count: "{{ member_statuses | select('equalto', 'running') | list | length | int }}"
-        total: "{{ item.value.members | length | int }}"
+        total: "{{ active_members | length | int }}"
         overall: >-
           {%- if running_count | int == total | int -%}RUNNING
           {%- elif running_count | int == 0 -%}STOPPED
