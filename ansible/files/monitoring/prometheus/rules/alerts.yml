@@ -117,9 +117,11 @@ groups:
           summary: "Container restart loop: {{ $labels.name }}"
           description: "Container {{ $labels.name }} has restarted {{ $value }} times in the last 10 minutes."
 
-      # Container using >90% of its memory limit
+      # Container using >90% of its memory limit.
+      # Guard denominator with `> 0` so containers WITHOUT a memory limit
+      # (limit reported as 0 -> ratio +Inf, always firing) are excluded.
       - alert: ContainerHighMemory
-        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100 > 90
+        expr: (container_memory_usage_bytes / (container_spec_memory_limit_bytes > 0)) * 100 > 90
         for: 5m
         labels:
           severity: warning
