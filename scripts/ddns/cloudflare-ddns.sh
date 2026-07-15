@@ -73,7 +73,7 @@ get_record() {
     -H "Authorization: Bearer ${CF_API_TOKEN}" \
     -H "Content-Type: application/json" \
     "${CF_API_BASE}/zones/${CF_ZONE_ID}/dns_records?type=A&name=${name}" \
-    | jq -r '(.result[0].id // "") + " " + (.result[0].proxied | tostring)'
+    | jq -r 'if (.result | length) > 0 then (.result[0].id + " " + (.result[0].proxied | tostring)) else "" end'
 }
 
 # --- Update a DNS record, preserving its current proxied state ---
@@ -132,14 +132,14 @@ for name in "${RECORDS[@]}"; do
   debug "Looking up record ID for ${name}"
 
   read -r record_id proxied <<< "$(get_record "${name}")"
-  if [[ -z "${record_id}" ]]; then
+  if [[ -z "${record_id}" || "${record_id}" == "null" ]]; then
     log "ERROR: No A record found for ${name} -- create it in Cloudflare first"
-    ((errors++))
+    errors=$((errors + 1))
     continue
   fi
 
   debug "Record ID for ${name}: ${record_id} (proxied=${proxied})"
-  update_record "${record_id}" "${name}" "${current_ip}" "${proxied}" || ((errors++))
+  update_record "${record_id}" "${name}" "${current_ip}" "${proxied}" || errors=$((errors + 1))
 done
 
 # Save new IP to state file if all updates succeeded
