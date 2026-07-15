@@ -1,0 +1,127 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// Gallery drawn from real shop photos.
+const gallery = [
+  { src: '/images/custom-engraving.jpg', alt: 'SOG Trident folder laser-engraved with BEST DAD EVER and hearts', cap: 'Custom engraving — “Best Dad Ever”' },
+  { src: '/images/collector-tigerstripe.jpg', alt: 'Collector SOG folder with tiger-stripe camo blade in a hard case', cap: 'SOG 35th Anniversary tiger-stripe' },
+  { src: '/images/terminus-lineup.jpg', alt: 'A colorful row of SOG Terminus XR folding knives', cap: 'Terminus XR — full color lineup' },
+  { src: '/images/collector-case.jpg', alt: 'Limited-edition SOG knife with a challenge coin in a hard case', cap: 'Limited editions & challenge coins' },
+  { src: '/images/aegis-stand.jpg', alt: 'Four SOG Aegis AT folders on a display stand', cap: 'SOG Aegis AT — the everyday carry' },
+  { src: '/images/case-folders.jpg', alt: 'A lit glass case full of SOG folding knives', cap: 'The case — deepest SOG selection around' },
+  { src: '/images/logo-blade.jpg', alt: 'Black blade laser-etched with the NorthWest Tactical Knives gold compass logo', cap: 'House-etched compass mark' },
+  { src: '/images/heritage-wall.jpg', alt: 'A wall of SOG products beside vintage knife magazine covers', cap: 'On the wall — years of SOG' },
+  { src: '/images/product-wall.jpg', alt: 'SOG tactical gear, packs, and tomahawks on the shop wall', cap: 'Packs, hawks & hard use gear' },
+];
+---
+<Layout title="Custom Work & Gallery" description="Custom laser engraving, custom serrations, and knife repair at NorthWest Tactical Knives — plus a gallery of SOG blades, collectors, and custom work.">
+
+  <section class="phead">
+    <div class="container">
+      <span class="eyebrow">Custom work &amp; gallery</span>
+      <h1 class="phead-title">Make it<br /><span class="accent">yours.</span></h1>
+      <p class="lead phead-lead">
+        A knife is personal. Put a name on it, cut serrations to your own grind, or bring
+        back a favorite that's seen better days. As an authorized SOG repair dealer, the
+        gear you already trust gets fixed right — not replaced.
+      </p>
+    </div>
+  </section>
+
+  <!-- Custom services strip -->
+  <section class="section">
+    <div class="container">
+      <div class="cs-grid">
+        <div class="cs card">
+          <h3>Engraving</h3>
+          <p>Laser engraving for names, dates, logos, and gifts. A clean personal touch that lasts as long as the blade does.</p>
+          <div class="spec-row"><span class="spec">Name $15</span><span class="spec">Custom project $25</span></div>
+        </div>
+        <div class="cs card">
+          <h3>Custom serrations</h3>
+          <p>Serrations cut to match your blade profile and how you actually use it — rope, webbing, hard field work.</p>
+          <div class="spec-row"><span class="spec">By quote</span><span class="spec">Any brand</span></div>
+        </div>
+        <div class="cs card">
+          <h3>Repairs</h3>
+          <p>Authorized SOG repair dealer. Loose pivots, chipped tips, worn detents — diagnosed and fixed by someone who carries them.</p>
+          <div class="spec-row"><span class="spec">By quote</span><span class="spec">SOG authorized</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="edge-rule" />
+
+  <!-- Gallery -->
+  <section class="section">
+    <div class="container">
+      <div class="block-head">
+        <span class="eyebrow">From the shop</span>
+        <h2 class="section-title">The gallery.</h2>
+      </div>
+      <div class="masonry">
+        {gallery.map((g) => (
+          <figure class="tile">
+            <img src={g.src} alt={g.alt} loading="lazy" />
+            <figcaption>{g.cap}</figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="visit">
+    <div class="container visit-inner">
+      <h2 class="visit-title">Have something in mind?</h2>
+      <p class="visit-sub">Bring the blade and the idea. We'll tell you what's possible and what it runs.</p>
+      <a href="/contact" class="btn btn-primary">Start a custom job →</a>
+    </div>
+  </section>
+
+</Layout>
+
+<style>
+  .phead { padding: 4.5rem 0 3rem; }
+  .phead-title { font-size: clamp(2.75rem, 6.5vw, 4.75rem); line-height: 0.95; margin: 1rem 0 1.4rem; }
+  .phead-lead { max-width: 56ch; }
+
+  .cs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+  .cs { border-top: 2px solid var(--brass); display: flex; flex-direction: column; gap: 0.9rem; }
+  .cs h3 { font-size: 1.5rem; }
+  .cs p { font-size: 0.92rem; color: var(--dim); line-height: 1.65; flex: 1; }
+
+  .block-head { margin-bottom: 2.75rem; display: flex; flex-direction: column; gap: 0.85rem; }
+
+  /* Masonry via CSS columns */
+  .masonry { column-count: 3; column-gap: 0.85rem; }
+  .tile {
+    break-inside: avoid; margin: 0 0 0.85rem; position: relative;
+    border: 1px solid var(--line); border-radius: 3px; overflow: hidden;
+  }
+  .tile img { width: 100%; display: block; filter: saturate(0.92); transition: transform 0.45s, filter 0.3s; }
+  .tile:hover img { transform: scale(1.035); filter: saturate(1.05); }
+  .tile figcaption {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.02em;
+    color: var(--bone); padding: 1.4rem 0.85rem 0.7rem;
+    background: linear-gradient(transparent, rgba(11,14,16,0.92));
+    opacity: 0; transform: translateY(6px); transition: opacity 0.25s, transform 0.25s;
+  }
+  .tile:hover figcaption { opacity: 1; transform: translateY(0); }
+
+  .visit { background: var(--ink2); border-top: 1px solid var(--line); }
+  .visit-inner { padding: 4.5rem 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1.1rem; }
+  .visit-title { font-size: clamp(2rem, 4.5vw, 3.25rem); }
+  .visit-sub { color: var(--muted); font-size: 1rem; max-width: 46ch; }
+
+  @media (max-width: 900px) {
+    .cs-grid { grid-template-columns: 1fr; }
+    .masonry { column-count: 2; }
+  }
+  @media (max-width: 560px) {
+    .masonry { column-count: 1; }
+    .tile figcaption { opacity: 1; transform: none; }
+  }
+</style>
