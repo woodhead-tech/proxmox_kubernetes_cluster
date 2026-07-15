@@ -1,0 +1,130 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="The Shop" description="NorthWest Tactical Knives is a full-service knife shop in Lynnwood, WA and the largest SOG authorized dealer in the Northwest — owned and run by master sharpener Gio Guajardo.">
+
+  <section class="phead">
+    <div class="container">
+      <span class="eyebrow">The shop</span>
+      <h1 class="phead-title">A real knife shop,<br /><span class="accent">run by a real sharpener.</span></h1>
+    </div>
+  </section>
+
+  <!-- Story -->
+  <section class="section">
+    <div class="container story-grid">
+      <div class="story-media">
+        <img src="/images/owner-gio.jpg" alt="Gio Guajardo behind the counter at NorthWest Tactical Knives in Lynnwood, WA" width="1200" height="900" loading="lazy" />
+        <span class="story-tag spec">Gio Guajardo · Owner &amp; sharpener</span>
+      </div>
+      <div class="story-text">
+        <p class="lead">
+          NorthWest Tactical Knives is a full-service knife store in Lynnwood, Washington —
+          tactical, outdoor, and everyday blades, backed by more than a decade of hands-on
+          sharpening and repair.
+        </p>
+        <p>
+          Owner Gio Guajardo built the shop around a simple idea: a knife is only as good as
+          its edge, and most people have never felt what their blade is actually capable of.
+          So every knife that crosses the counter — a $20 pocket folder or a collector-grade
+          fixed blade — gets the same careful factory edge, set by hand.
+        </p>
+        <p>
+          Along the way the shop became the largest SOG authorized dealer in the Northwest,
+          with the deepest selection of folders, fixed blades, tomahawks, tools, and gear in
+          the region — plus authorized SOG repair and custom engraving under the same roof.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stat strip -->
+  <section class="stat-band">
+    <div class="container stat-grid">
+      <div class="stat"><span class="stat-num">10+</span><span class="stat-label">Years sharpening &amp; repairing</span></div>
+      <div class="stat"><span class="stat-num">#1</span><span class="stat-label">SOG dealer in the Northwest</span></div>
+      <div class="stat"><span class="stat-num">Every</span><span class="stat-label">Edge set by hand</span></div>
+      <div class="stat"><span class="stat-num">M–F</span><span class="stat-label">Open 10:00 – 5:30</span></div>
+    </div>
+  </section>
+
+  <!-- Storefront + values -->
+  <section class="section">
+    <div class="container values-grid">
+      <div class="values-media">
+        <img src="/images/storefront.jpg" alt="The NorthWest Tactical Knives storefront window — SOG Authorized Dealer" width="1200" height="900" loading="lazy" />
+      </div>
+      <div class="values-text">
+        <span class="eyebrow">What you can count on</span>
+        <h2 class="section-title">No counter theater.</h2>
+        <ul class="values-list">
+          <li><strong>Straight answers.</strong> The person selling you the knife is the one who sharpens and carries them. Ask anything.</li>
+          <li><strong>Honest edges.</strong> No over-grinding to look busy. Just a clean, correct edge that lasts.</li>
+          <li><strong>Fair pricing.</strong> Sharpening starts at $13. Most jobs are done while you shop.</li>
+          <li><strong>The real SOG lineup.</strong> Authorized dealer and repair — not a display of leftovers.</li>
+        </ul>
+        <a href="/contact" class="btn btn-outline">Come by the shop →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Visit CTA -->
+  <section class="visit">
+    <div class="container visit-inner">
+      <h2 class="visit-title">Stop in and say hey.</h2>
+      <p class="visit-sub">The shop recently moved — call or text before your first visit and Gio will point you to the door.</p>
+      <div class="visit-facts">
+        <div class="vf"><span class="vf-label">Hours</span><span class="vf-val">Mon–Fri · 10:00–5:30</span></div>
+        <div class="vf"><span class="vf-label">Call or text</span><a class="vf-val" href="tel:+14255990661">425-599-0661</a></div>
+        <div class="vf"><span class="vf-label">Where</span><span class="vf-val">Lynnwood, WA</span></div>
+      </div>
+      <a href="/contact" class="btn btn-primary">Hours, directions &amp; contact →</a>
+    </div>
+  </section>
+
+</Layout>
+
+<style>
+  .phead { padding: 4.5rem 0 3rem; }
+  .phead-title { font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 0.96; margin-top: 1rem; }
+
+  .story-grid { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 3.5rem; align-items: center; }
+  .story-media { position: relative; }
+  .story-media img { width: 100%; border: 1px solid var(--line-gold); border-radius: 3px; display: block; }
+  .story-tag { position: absolute; left: 0.9rem; bottom: 0.9rem; background: rgba(11,14,16,0.9); }
+  .story-text { display: flex; flex-direction: column; gap: 1.1rem; }
+  .story-text p:not(.lead) { color: var(--dim); font-size: 0.98rem; line-height: 1.75; }
+
+  .stat-band { background: var(--pine); border-top: 1px solid var(--line-gold); border-bottom: 1px solid var(--line-gold); }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; padding: 3rem 2rem; }
+  .stat { display: flex; flex-direction: column; gap: 0.5rem; text-align: center; }
+  .stat-num { font-family: var(--font-display); font-size: clamp(2.2rem, 4vw, 3rem); font-weight: 800; color: var(--brass); line-height: 1; letter-spacing: 0.01em; }
+  .stat-label { font-size: 0.82rem; color: var(--dim); letter-spacing: 0.02em; }
+
+  .values-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 3.5rem; align-items: center; }
+  .values-media img { width: 100%; border: 1px solid var(--line-gold); border-radius: 3px; display: block; }
+  .values-text { display: flex; flex-direction: column; align-items: flex-start; gap: 1.3rem; }
+  .values-list { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+  .values-list li { font-size: 0.95rem; color: var(--dim); line-height: 1.6; padding-left: 1.25rem; position: relative; }
+  .values-list li::before { content: ""; position: absolute; left: 0; top: 0.55em; width: 8px; height: 8px; background: var(--brass); transform: rotate(45deg); }
+  .values-list strong { color: var(--bone); font-weight: 600; }
+
+  .visit { background: var(--ink2); border-top: 1px solid var(--line); }
+  .visit-inner { padding: 4.5rem 2rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1.1rem; }
+  .visit-title { font-size: clamp(2rem, 4.5vw, 3.25rem); }
+  .visit-sub { color: var(--muted); font-size: 1rem; max-width: 50ch; }
+  .visit-facts { display: flex; gap: 2.5rem; flex-wrap: wrap; justify-content: center; margin: 1rem 0 1.5rem; }
+  .vf { display: flex; flex-direction: column; gap: 0.3rem; }
+  .vf-label { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--brass); }
+  .vf-val { font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--bone); text-decoration: none; }
+  a.vf-val:hover { color: var(--brass); }
+
+  @media (max-width: 900px) {
+    .story-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .story-media { order: -1; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 2rem 1rem; }
+    .values-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .values-media { order: -1; }
+    .visit-facts { gap: 1.75rem; }
+  }
+</style>

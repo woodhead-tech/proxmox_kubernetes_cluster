@@ -1,0 +1,144 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// Real services + pricing from the shop.
+const sharpening = [
+  { name: 'SOG knives', note: 'Factory edge on any SOG blade', price: '$13' },
+  { name: 'Other manufacturers', note: 'Folders, fixed blades, hunters, EDC', price: '$15' },
+  { name: 'Cutlery & kitchen', note: 'Per knife, priced by blade length', price: '$1 / in' },
+];
+const custom = [
+  { name: 'Engraving — name', note: 'Add a personal touch to any blade', price: '$15' },
+  { name: 'Engraving — custom project', note: 'Logos, art, dates, and multi-line work', price: '$25' },
+  { name: 'Custom serrations', note: 'Serrations cut to your blade and grind', price: 'By quote' },
+  { name: 'Repairs', note: 'Authorized SOG repair dealer', price: 'By quote' },
+];
+---
+<Layout title="Sharpening & Services" description="Factory-edge knife sharpening, custom serrations, engraving, and repairs at NorthWest Tactical Knives in Lynnwood, WA. SOG sharpening from $13.">
+
+  <!-- Page hero -->
+  <section class="phead">
+    <div class="container">
+      <span class="eyebrow">Services &amp; pricing</span>
+      <h1 class="phead-title">Sharpening,<br /><span class="accent">done right.</span></h1>
+      <p class="lead phead-lead">
+        A dull knife is a dangerous knife. Bring in anything with an edge — pocket folder,
+        hunting blade, kitchen block, or the tool you thought was past saving — and get it
+        back cutting the way it should. Every edge is set by hand, one blade at a time.
+      </p>
+    </div>
+  </section>
+
+  <hr class="edge-rule" />
+
+  <!-- Pricing -->
+  <section class="section">
+    <div class="container price-wrap">
+
+      <div class="price-block">
+        <div class="price-head">
+          <h2>Knife sharpening</h2>
+          <p class="price-desc">Factory-edge sharpening for every kind of blade you carry.</p>
+        </div>
+        <ul class="price-list">
+          {sharpening.map((s) => (
+            <li class="price-row">
+              <div class="price-name"><span>{s.name}</span><span class="price-note">{s.note}</span></div>
+              <span class="price-tag">{s.price}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="price-block">
+        <div class="price-head">
+          <h2>Custom &amp; repair</h2>
+          <p class="price-desc">Personalize it, fix it, or re-cut it to your grind.</p>
+        </div>
+        <ul class="price-list">
+          {custom.map((s) => (
+            <li class="price-row">
+              <div class="price-name"><span>{s.name}</span><span class="price-note">{s.note}</span></div>
+              <span class="price-tag">{s.price}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- What to expect -->
+  <section class="section expect">
+    <div class="container">
+      <div class="block-head">
+        <span class="eyebrow">How it works</span>
+        <h2 class="section-title">Drop it off. Leave sharp.</h2>
+      </div>
+      <ol class="steps">
+        <li class="step">
+          <span class="step-n">01</span>
+          <h3>Bring it in</h3>
+          <p>Walk in during shop hours with anything that needs an edge. Small jobs are usually done while you browse the case.</p>
+        </li>
+        <li class="step">
+          <span class="step-n">02</span>
+          <h3>We set the edge</h3>
+          <p>Gio assesses the steel and geometry, then re-profiles and hones by hand to a clean factory edge — no over-grinding, no burnt tips.</p>
+        </li>
+        <li class="step">
+          <span class="step-n">03</span>
+          <h3>Test &amp; go</h3>
+          <p>You feel the edge before you pay. Bigger batches, cutlery sets, or repairs? Call or text ahead and we'll schedule it.</p>
+        </li>
+      </ol>
+      <div class="expect-cta">
+        <a href="/contact" class="btn btn-primary">Plan your visit →</a>
+        <a href="tel:+14255990661" class="btn btn-outline">Call 425-599-0661</a>
+      </div>
+    </div>
+  </section>
+
+</Layout>
+
+<style>
+  .phead { padding: 4.5rem 0 3rem; }
+  .phead-title { font-size: clamp(2.75rem, 6.5vw, 4.75rem); line-height: 0.95; margin: 1rem 0 1.4rem; }
+  .phead-lead { max-width: 58ch; }
+
+  .price-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+  .price-head { margin-bottom: 1.5rem; }
+  .price-head h2 { font-size: 1.9rem; }
+  .price-desc { color: var(--muted); font-size: 0.92rem; margin-top: 0.5rem; }
+
+  .price-list { list-style: none; display: flex; flex-direction: column; }
+  .price-row {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem;
+    padding: 1.15rem 0; border-bottom: 1px solid var(--line);
+  }
+  .price-row:first-child { border-top: 1px solid var(--line-gold); }
+  .price-name { display: flex; flex-direction: column; gap: 0.25rem; }
+  .price-name > span:first-child {
+    font-family: var(--font-display); font-size: 1.2rem; font-weight: 600;
+    letter-spacing: 0.02em; text-transform: uppercase; color: var(--bone);
+  }
+  .price-note { font-size: 0.85rem; color: var(--muted); }
+  .price-tag {
+    font-family: var(--font-mono); font-size: 1.15rem; font-weight: 500;
+    color: var(--brass); white-space: nowrap;
+  }
+
+  .expect { background: var(--ink2); border-top: 1px solid var(--line); }
+  .block-head { margin-bottom: 2.75rem; display: flex; flex-direction: column; gap: 0.85rem; }
+  .steps { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+  .step { border: 1px solid var(--line); border-top: 2px solid var(--brass); border-radius: 3px; padding: 1.75rem; background: var(--panel); }
+  .step-n { font-family: var(--font-mono); font-size: 0.8rem; color: var(--brass); letter-spacing: 0.1em; }
+  .step h3 { font-size: 1.35rem; margin: 0.9rem 0 0.6rem; }
+  .step p { font-size: 0.9rem; color: var(--dim); line-height: 1.65; }
+  .expect-cta { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 2.25rem; }
+
+  @media (max-width: 820px) {
+    .price-wrap { grid-template-columns: 1fr; gap: 2.5rem; }
+    .steps { grid-template-columns: 1fr; }
+  }
+</style>
