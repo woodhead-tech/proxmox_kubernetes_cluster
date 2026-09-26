@@ -507,6 +507,13 @@ variable "hermes_ip" {
   default     = "192.168.86.52"
 }
 
+variable "hermes_root_password" {
+  description = "Root password for the Hermes LXC"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 # --- draw.io LXC ---
 variable "drawio_vmid" {
   description = "VM ID for the draw.io diagramming app LXC"

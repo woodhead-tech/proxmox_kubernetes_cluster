@@ -147,6 +147,11 @@ immich_vmid          = 230
 immich_ip            = "192.168.86.55"
 immich_root_password = "ChangeMe!"
 
+# Hermes autonomous AI agent
+hermes_vmid          = 224
+hermes_ip            = "192.168.86.52"
+hermes_root_password = "ChangeMe!"
+
 # --- Domain ---
 domain     = "woodhead.tech"
 acme_email = "admin@woodhead.tech"
