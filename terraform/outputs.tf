@@ -52,16 +52,6 @@ output "traefik_vmid" {
   value       = proxmox_virtual_environment_container.traefik.vm_id
 }
 
-output "recipe_site_ip" {
-  description = "Recipe site LXC IP"
-  value       = var.recipe_site_ip
-}
-
-output "recipe_site_vmid" {
-  description = "Recipe site LXC VM ID"
-  value       = proxmox_virtual_environment_container.recipe_site.vm_id
-}
-
 output "arr_ip" {
   description = "ARR stack LXC IP"
   value       = var.arr_ip

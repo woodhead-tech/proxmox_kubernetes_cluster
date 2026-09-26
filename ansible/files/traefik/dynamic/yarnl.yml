@@ -1,0 +1,24 @@
+# yarnl.yml - Yarnl crochet pattern/project tracker route
+#
+# Routes yarnl.woodhead.tech to the Yarnl LXC (port 80).
+# Protected by Authentik.
+
+http:
+  routers:
+    yarnl:
+      rule: "Host(`yarnl.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: yarnl
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+      middlewares:
+        - authentik@file
+
+  services:
+    yarnl:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.62:80"

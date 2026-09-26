@@ -10,7 +10,6 @@
 #   make init           - Initialize Terraform
 #   make apply          - Create all VMs + LXC containers
 #   make traefik        - Configure Traefik reverse proxy
-#   make recipe-site    - Deploy recipe site
 #   make arr-stack      - Deploy ARR media stack
 #   make monitoring     - Deploy monitoring stack
 #   make openclaw       - Deploy OpenClaw AI agent
@@ -25,7 +24,7 @@
 
 .PHONY: setup prepare prepare-truenas ddns init plan apply \
         apply-truenas apply-homeassistant apply-lxc plan-lxc \
-        traefik recipe-site arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi vaultwarden immich \
+        traefik arr-stack plex jellyfin monitoring openclaw ollama authentik wireguard homeassistant beardie truenas sdr pxe mailserver zigbee2mqtt claude-os pwnagotchi vaultwarden immich \
         bootstrap recover-k8s kubeconfig health k8s-base check-iso rejoin-worker harden \
         certs-push certs-pull certs-check approve-csrs \
         patch-proxmox patch-lxc patch-docker patch-docker-monday patch-docker-tuesday \
@@ -89,7 +88,6 @@ apply-homeassistant: ## Create Home Assistant VM (HAOS image must be pre-downloa
 plan-lxc: ## Preview LXC container changes only
 	cd $(TERRAFORM_DIR) && terraform plan \
 		-target=proxmox_virtual_environment_container.traefik \
-		-target=proxmox_virtual_environment_container.recipe_site \
 		-target=proxmox_virtual_environment_container.arr \
 		-target=proxmox_virtual_environment_container.plex \
 		-target=proxmox_virtual_environment_container.jellyfin \
@@ -111,7 +109,6 @@ plan-lxc: ## Preview LXC container changes only
 apply-lxc: ## Create/update LXC containers only
 	cd $(TERRAFORM_DIR) && terraform apply \
 		-target=proxmox_virtual_environment_container.traefik \
-		-target=proxmox_virtual_environment_container.recipe_site \
 		-target=proxmox_virtual_environment_container.arr \
 		-target=proxmox_virtual_environment_container.plex \
 		-target=proxmox_virtual_environment_container.jellyfin \
@@ -141,9 +138,6 @@ traefik: ## Configure Traefik reverse proxy in its LXC
 	. $(SCRIPTS_DIR)/ddns/cloudflare.env && cd $(ANSIBLE_DIR) && \
 		ansible-playbook playbooks/setup-traefik.yml \
 		--extra-vars "cf_api_token=$$CF_API_TOKEN acme_email=admin@woodhead.tech"
-
-recipe-site: ## Deploy recipe site into its LXC
-	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-recipe-site.yml
 
 arr-stack: ## Deploy ARR media stack (Sonarr, Radarr, Prowlarr, etc.) into its LXC
 	@if [ -z "$(WG_PRIVATE_KEY)" ]; then \

@@ -1,0 +1,26 @@
+# mealie.yml - Mealie recipe manager route
+#
+# Replaces the old recipe-site (decommissioned 2026-08-20, VMID 201/.21).
+# recipes.woodhead.tech now points here.
+#
+# Protected by Authentik.
+
+http:
+  routers:
+    mealie:
+      rule: "Host(`recipes.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: mealie
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+      middlewares:
+        - authentik@file
+
+  services:
+    mealie:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.61:80"

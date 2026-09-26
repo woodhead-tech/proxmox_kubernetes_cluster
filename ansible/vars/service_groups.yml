@@ -64,7 +64,6 @@ service_groups:
   apps:
     description: "Lightweight application services + remote access"
     members:
-      - { vmid: 201, name: recipe-site, type: lxc }
       - { vmid: 211, name: kanboard, type: lxc }
       - { vmid: 218, name: photos, type: lxc }
       - { vmid: 219, name: guacamole, type: lxc }
@@ -73,6 +72,9 @@ service_groups:
       - { vmid: 224, name: hermes, type: lxc }
       - { vmid: 229, name: drawio, type: lxc }
       - { vmid: 230, name: immich, type: lxc }
+      - { vmid: 231, name: wger, type: lxc }
+      - { vmid: 232, name: mealie, type: lxc }
+      - { vmid: 233, name: yarnl, type: lxc }
 
   infra:
     description: "Email, DNS, backups, SSH CA, secrets"

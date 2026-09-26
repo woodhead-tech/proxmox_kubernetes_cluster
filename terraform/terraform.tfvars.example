@@ -15,7 +15,6 @@ talos_iso    = "local:iso/talos-amd64.iso"
 # Omit or leave empty to deploy everything on proxmox_node.
 # node_assignments = {
 #   traefik     = "pve1"
-#   recipe_site = "pve1"
 #   arr         = "pve2"
 #   plex        = "pve2"
 #   monitoring  = "pve2"
@@ -69,9 +68,6 @@ ssh_public_key   = "ssh-ed25519 AAAA... your-key-here"
 traefik_vmid = 200
 traefik_ip   = "192.168.86.20"
 
-# Recipe site
-recipe_site_vmid = 201
-recipe_site_ip   = "192.168.86.21"
 
 # ARR media management stack (Sonarr, Radarr, Prowlarr, etc.)
 arr_vmid     = 202

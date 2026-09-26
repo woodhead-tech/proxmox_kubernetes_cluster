@@ -1,0 +1,24 @@
+# wger.yml - wger fitness/workout tracker route
+#
+# Routes wger.woodhead.tech to the wger LXC's nginx (port 80).
+# Protected by Authentik.
+
+http:
+  routers:
+    wger:
+      rule: "Host(`wger.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: wger
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+      middlewares:
+        - authentik@file
+
+  services:
+    wger:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.58:80"

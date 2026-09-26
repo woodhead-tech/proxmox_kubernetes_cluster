@@ -50,19 +50,6 @@ variable "traefik_ip" {
   default     = "192.168.86.20"
 }
 
-# --- Recipe Site LXC ---
-variable "recipe_site_vmid" {
-  description = "VM ID for the recipe site LXC"
-  type        = number
-  default     = 201
-}
-
-variable "recipe_site_ip" {
-  description = "Static IP for the recipe site LXC"
-  type        = string
-  default     = "192.168.86.21"
-}
-
 # --- ARR Stack LXC ---
 variable "arr_vmid" {
   description = "VM ID for the ARR media management stack LXC"
