@@ -1,6 +1,6 @@
 # Plex Won't Bind Port 32400 — Preferences.xml Zeroed by Thin-Pool Read-Only Event
 
-**Date:** 2026-07-01
+**Date:** 2026-07-01 (recurred 2026-09-27)
 **Severity:** medium
 **Affected:** plex (LXC 203, 192.168.86.23) on tower1
 
@@ -44,6 +44,43 @@ ssh -i ~/.ssh/id_ansible root@192.168.86.130 'qm status 300; mount | grep truena
 
 ## Fix
 
+**Preferred: restore the real Preferences.xml from a PBS backup** (keeps the
+account claim/token — no re-claim needed). Confirmed working 2026-09-27:
+
+```bash
+# 0. First clear the underlying thin-pool problem (see lvm-thin-pool-exhaustion.md)
+#    and if the LXC tripped emergency_ro, stop it, fsck, and restart before this step:
+ssh -i ~/.ssh/id_ansible root@192.168.86.130 'pct stop 203'
+ssh -i ~/.ssh/id_ansible root@192.168.86.130 'e2fsck -f -y /dev/pve/vm-203-disk-0'
+ssh -i ~/.ssh/id_ansible root@192.168.86.130 'pct start 203'
+# fsck clears the emergency_ro flag but does NOT un-zero an already-corrupted file —
+# Preferences.xml will still read as 0 non-null bytes after this.
+
+# 1. Find the most recent PBS backup for VMID 203
+ssh -i ~/.ssh/id_ansible root@192.168.86.130 'pvesm list pbs-tc3 --vmid 203'
+# NOTE: if the newest snapshot is more than a few days old, the backup job for this
+# LXC has silently stopped — file that as a separate issue, don't just accept a stale one.
+
+# 2. Mount the snapshot's pxar archive directly (no full pct restore needed)
+ssh -i ~/.ssh/id_ansible root@192.168.86.130 '
+  export PBS_PASSWORD=$(cat /etc/pve/priv/storage/pbs-tc3.pw)
+  export PBS_FINGERPRINT=$(grep fingerprint /etc/pve/storage.cfg | awk "{print \$2}")
+  mkdir -p /mnt/pbs-restore-203
+  proxmox-backup-client mount ct/203/<SNAPSHOT-TIMESTAMP> root.pxar /mnt/pbs-restore-203 \
+    --repository root@pam@192.168.86.49:main'
+
+# 3. Copy just Preferences.xml out and push it into the running container
+PD="/var/lib/plexmediaserver/Library/Application Support/Plex Media Server"
+ssh -i ~/.ssh/id_ansible root@192.168.86.130 \
+  "pct push 203 \"/mnt/pbs-restore-203$PD/Preferences.xml\" \"$PD/Preferences.xml\" --user plex --group plex --perms 0600"
+
+# 4. Unmount the PBS archive and restart Plex
+ssh -i ~/.ssh/id_ansible root@192.168.86.130 'umount /mnt/pbs-restore-203; rmdir /mnt/pbs-restore-203'
+ssh -i ~/.ssh/id_ansible root@192.168.86.23 'systemctl restart plexmediaserver'
+```
+
+**Fallback (no usable backup exists): let Plex regenerate and re-claim**
+
 ```bash
 PD="/var/lib/plexmediaserver/Library/Application Support/Plex Media Server"
 
@@ -77,6 +114,15 @@ curl -s -o /dev/null -w "%{http_code}\n" https://plex.woodhead.tech/web
 - **Root fix is the thin pool.** This corruption is a downstream symptom of tower1
   thin-pool exhaustion — see `runbooks/lvm-thin-pool-exhaustion.md`. Keep the pool
   below 80%.
+- **No rescue boot available right now?** You can still clear the pool's `D`
+  (degraded) flag live by migrating one running LXC's disk off `local-lvm` onto the
+  Ceph `vmdata` pool and deleting the freed source volume — no downtime for other
+  tenants, verify-before-delete. Confirmed 2026-09-27 (moved `drawio`, VMID 229,
+  8 GiB): `pct stop <vmid>`, `pct move-volume <vmid> rootfs vmdata` (rootfs moves
+  require the container stopped, unlike `qm move-disk` for VMs), `pct start <vmid>`,
+  verify the service actually serves, then `lvremove pve/vm-<vmid>-disk-0` on the
+  Proxmox node. This buys headroom but does NOT fix the underlying capacity deficit —
+  still schedule the rescue-boot root LV shrink.
 - **Keep a config backup** so recovery restores the real `Preferences.xml` (with the
   token) instead of forcing a re-claim:
   ```bash
@@ -95,3 +141,18 @@ curl -s -o /dev/null -w "%{http_code}\n" https://plex.woodhead.tech/web
 - `xxd` and `xmllint` are not installed in the Plex LXC; use `od -c` and `tr -d '\000'`.
 - Related: `runbooks/lvm-thin-pool-exhaustion.md`; tower1 thin-pool remediation is
   scheduled for the 2026-07-03 maintenance day (Kanboard #231).
+- **2026-09-27 recurrence:** Same root cause fired again — tower1's VG still had no
+  headroom (76 MiB free) three months after the first incident, so the rescue-boot
+  root LV shrink was apparently never completed. The presenting symptom this time
+  was Plex "file not accessible" playback errors, which turned out to be a *separate,
+  co-occurring* issue: Sonarr/Radarr had renamed the affected files (e.g.
+  `...1080p...` → `...WEBDL-720p...`) and Plex's library DB still pointed at the old
+  filenames. A full `/library/sections/<id>/refresh?force=1` is slow on a large
+  library and doesn't prioritize the folder you care about; use the scoped form
+  instead: `GET /library/sections/<id>/refresh?path=<url-encoded-folder>&X-Plex-Token=...`
+  to rescan just the affected show. Also found: LXC 203's PBS backups had silently
+  stopped after 2026-07-16 (only 23 total, none since) — the only backup available
+  for the Preferences.xml restore was 2.5 months stale. Investigate the backup
+  schedule for VMID 203 as a follow-up; a stale-but-present backup is still far
+  better than none (Preferences.xml itself changes rarely), but the gap should be
+  closed.
