@@ -24,7 +24,6 @@ Generated: 2026-06-08 from commit `2116a6a`
 | claude-os | 192.168.86.37 | 215 | apps | AI memory/knowledge system | no |
 | guacamole | 192.168.86.47 | 219 | apps | Browser-based remote desktop | no |
 | mailserver | 192.168.86.34 | 212 | infra | Mailcow email server | no |
-| adguard | 192.168.86.35 | 221 | infra | DNS (AdGuard Home) | no |
 | step-ca | 192.168.86.36 | 222 | infra | SSH certificate authority | no |
 | omada | 192.168.86.49 | 225 | infra | TP-Link Omada WiFi controller | no |
 | pbs | 192.168.86.49:8007 | 223 | infra | Proxmox Backup Server | no |
@@ -60,7 +59,6 @@ Ranked by cross-file reference count.
 | 7 | **wireguard** (192.168.86.39) | 4 | core group (always_on); gluetun in arr-stack routes downloads through it; WG_PRIVATE_KEY required by arr-stack deploy |
 | 8 | **Makefile** | — | Every deployment operation goes through it; 50+ targets; entry point for the entire repo |
 | 9 | **talos/_out/** | 5 | bootstrap.sh, recover-k8s.sh, certs-vault.sh, certs-check, kubeconfig target all read/write here |
-| 10 | **adguard** (192.168.86.35) | 3 | DNS for all woodhead.tech subdomains |
 
 ---
 
@@ -89,7 +87,7 @@ apps (depends_on: security implied by Authentik middleware)
   └─ recipe-site (.21), kanboard (.33), claude-os (.37), guacamole (.47)
 
 infra
-  └─ mailserver (.34), adguard (.35), step-ca (.36), omada (.49), pbs (.49:8007)
+  └─ mailserver (.34), step-ca (.36), omada (.49), pbs (.49:8007)
 
 special (hardware_bound — excluded from bulk ops)
   └─ pwnagotchi (.38)
@@ -122,7 +120,6 @@ media → security → storage → core
 | `homeassistant` | — | setup-homeassistant.yml | homeassistant (.41) | HA_TOKEN (optional) | no |
 | `truenas` | — | setup-truenas.yml | truenas (.40) | TRUENAS_* vars | no |
 | `libby-alert` | — | setup-libby-alert.yml | libby-alert (.27) | DISCORD_WEBHOOK and/or TWILIO_* | no |
-| `adguard` | — | setup-adguard.yml | adguard (.35) | — | no |
 | `step-ca` | — | setup-step-ca.yml | step-ca (.36) | — | no |
 | `kanboard` | — | setup-kanboard.yml | kanboard (.33) | — | no |
 | `mailserver` | — | setup-mailserver.yml | mailserver (.34) | SMTP_* | no |
@@ -158,7 +155,6 @@ All routes terminate TLS via Cloudflare DNS-01. All traffic enters through traef
 
 | Hostname | Backend | Auth (Authentik?) | Config File |
 |----------|---------|------------------|-------------|
-| adguard.woodhead.tech | 192.168.86.35:3000 | yes | adguard.yml |
 | alertmanager.woodhead.tech | 192.168.86.25:9093 | yes | monitoring.yml |
 | alertmind.woodhead.tech | 192.168.86.25:8086 | yes | alertmind.yml |
 | alert.woodhead.tech | 192.168.86.27:8080 | **no** | libby-alert.yml |
@@ -242,7 +238,6 @@ All routes terminate TLS via Cloudflare DNS-01. All traffic enters through traef
 | libby-alert | .27 | 8080 | 8080 | alert.woodhead.tech |
 | kanboard | .33 | 8000 | 80 | tasks.woodhead.tech |
 | mailserver (Mailcow) | .34 | 8080 | 8080 | mail.woodhead.tech admin |
-| adguard | .35 | 3000 | 3000 | DNS admin UI |
 | step-ca | .36 | 9000 | 9000 | SSH CA API |
 | rdio-scanner | .32 | 3000 | 3000 | scanner.woodhead.tech |
 | vaultwarden | .43 | 80 | 80 | vault.woodhead.tech |
@@ -280,7 +275,6 @@ All routes terminate TLS via Cloudflare DNS-01. All traffic enters through traef
 | setup-sdr.yml | sdr-scanner (.32) | Docker Compose: Trunk Recorder + rdio-scanner; RTL-SDR passthrough | ansible/files/sdr/ |
 | setup-kanboard.yml | kanboard (.33) | Docker Compose | ansible/files/kanboard/ |
 | setup-mailserver.yml | mailserver (.34) | Mailcow install + SMTP relay config | ansible/files/mailserver/ |
-| setup-adguard.yml | adguard (.35) | AdGuard Home install, DNS config | ansible/files/ |
 | setup-step-ca.yml | step-ca (.36) | Docker Compose, CA initialization | ansible/files/step-ca/ |
 | setup-claude-os.yml | claude-os (.37) | Python venv + Flask app + Ollama (optional) | ansible/files/ |
 | setup-pwnagotchi.yml | pwnagotchi (.38) | pwnagotchi install in venv + LXC thermal patch | ansible/files/ |

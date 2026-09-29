@@ -1,5 +1,7 @@
 # Router DNS Not Forwarding to AdGuard — LAN Clients Get "Connection Refused" on *.woodhead.tech
 
+> **Status 2026-09-29:** AdGuard (LXC 221) was decommissioned. This runbook is kept for history; the router-forwarding gap is now the permanent state until a replacement split-horizon resolver exists.
+
 **Date:** 2026-09-25
 **Severity:** low (workaround exists per-device; not a service outage)
 **Affected:** Any LAN client using the router (192.168.86.1) as its DNS server, for every `*.woodhead.tech` hostname

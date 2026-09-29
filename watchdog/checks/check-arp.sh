@@ -17,7 +17,6 @@ TRAEFIK_HOST="root@${TRAEFIK_IP}"
 CRITICAL_SERVICES=(
     "authentik:${AUTHENTIK_IP}:9000"
     "monitoring:${MONITORING_IP}:3000"
-    "adguard:${ADGUARD_IP}:3000"
 )
 
 issues=()

@@ -67,9 +67,6 @@ scrape_configs:
       - targets: ["192.168.86.34:9100"]
         labels:
           instance: "mailserver"
-      - targets: ["192.168.86.35:9100"]
-        labels:
-          instance: "adguard"
       - targets: ["192.168.86.36:9100"]
         labels:
           instance: "step-ca"
@@ -224,7 +221,6 @@ scrape_configs:
           - http://192.168.86.25:3000     # Grafana
           - http://192.168.86.27:8080/health  # Libby Alert
           - http://192.168.86.33:8000     # Kanboard
-          - http://192.168.86.35:3000     # AdGuard Home
           - http://192.168.86.41:8123     # Home Assistant
           - http://192.168.86.45:9119     # Hermes dashboard
           - http://192.168.86.48:7681     # Claude Code ttyd
@@ -345,7 +341,6 @@ scrape_configs:
           - 192.168.86.28    # authentik
           - 192.168.86.33    # kanboard
           - 192.168.86.34    # mailserver
-          - 192.168.86.35    # adguard
           - 192.168.86.36    # step-ca
           - 192.168.86.39    # wireguard
           - 192.168.86.45    # hermes

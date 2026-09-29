@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Infrastructure-as-Code for a homelab on Proxmox VE. It provisions a Talos Linux Kubernetes cluster, LXC containers, and VMs (TrueNAS, Home Assistant) with Traefik as the central reverse proxy, Cloudflare DDNS, and Authelia SSO. Domain: `woodhead.tech`.
+Infrastructure-as-Code for a homelab on Proxmox VE. It provisions a Talos Linux Kubernetes cluster, LXC containers, and VMs (TrueNAS, Home Assistant) with Traefik as the central reverse proxy, Cloudflare DDNS, and Authentik SSO (replaced the originally-planned Authelia). Domain: `woodhead.tech`.
 
 ## Key Commands
 
@@ -28,7 +28,6 @@ make monitoring DISCORD_WEBHOOK=... GRAFANA_PASSWORD=... PVE_PASSWORD=... DEXCOM
 make alertmind ANTHROPIC_API_KEY=sk-ant-... DISCORD_WEBHOOK=...
 make authelia AUTHELIA_ADMIN_PASSWORD=...
 make arr-stack
-make recipe-site
 make openclaw
 make wireguard
 make ddns       # Deploy Cloudflare DDNS updater
@@ -81,7 +80,7 @@ Traefik must be running before any HTTP/HTTPS service is reachable. The K8s clus
 **Network (192.168.86.0/24):**
 - Proxmox nodes: `.29` (thinkcentre1), `.30` (thinkcentre2), `.31` (thinkcentre3), `.130` (tower1) — 4-node cluster, shared Ceph
 - Traefik LXC: `.20` (single ingress for all services)
-- Service LXCs: `.21`–`.26`, `.28`, `.32`, `.39` (ARR stack, Plex, Jellyfin, monitoring, Authelia, OpenClaw, SDR scanner, WireGuard)
+- Service LXCs: `.21`–`.26`, `.28`, `.32`, `.39`, `.58`, `.61`, `.62` (ARR stack, Plex, Jellyfin, monitoring, Authentik, OpenClaw, SDR scanner, WireGuard, wger, Mealie, Yarnl)
 - TrueNAS VM: `.40` (on tower1, 16GB RAM) | Home Assistant VM: `.41`
 - K8s VIP: `.100` | control plane: `.101` (tower1) | workers: `.111` (thinkcentre2), `.112` (thinkcentre3)
 - Piboard (Pi 3B): `.131` (standalone monitoring dashboard, not Proxmox-managed)
@@ -90,7 +89,14 @@ Traefik must be running before any HTTP/HTTPS service is reachable. The K8s clus
 
 **Talos/K8s:** Immutable OS, API-driven. Config lives in `talos/talconfig.yaml` (reference) and `talos/patches/`. Generated secrets/configs go to `talos/_out/` (gitignored).
 
-**Traefik routing:** Static config in `ansible/files/traefik/traefik.yml`; per-service routes in `ansible/files/traefik/dynamic/*.yml`. TLS via Let's Encrypt + Cloudflare DNS challenge. Authelia `forwardAuth` middleware applied to protected routes.
+**Traefik routing:** Static config in `ansible/files/traefik/traefik.yml`; per-service routes in `ansible/files/traefik/dynamic/*.yml`. TLS via Let's Encrypt + Cloudflare DNS challenge. Authentik `forwardAuth` middleware applied to protected routes — check the specific service's `dynamic/*.yml` for its `middlewares:` list rather than assuming a service is public.
+
+## Homelab Ground Truth (read before debugging reachability)
+
+- **recipe-site is retired** (decommissioned 2026-08-20, was VMID 201/`.21`) — replaced by **Mealie** (`.61`, `recipes.woodhead.tech`), **wger** (`.58`), and **Yarnl** (`.62`). All three sit behind **Authentik** (`ansible/files/traefik/dynamic/{mealie,wger,yarnl}.yml`).
+- Before reasoning about whether a service exists, is public, or sits behind Authentik: check the live Traefik dynamic config and Ansible inventory — don't assume from memory or from other docs in this repo (`docs/RUNBOOK.md`, `ARCHITECTURE.md`, `INFRA_MAP.md` still describe the pre-2026-08-20 Authelia/recipe-site state and are stale; the dynamic Traefik configs and this file are ground truth).
+- **Split-horizon DNS**: none since AdGuard (LXC 221) was decommissioned 2026-09-29. `*.woodhead.tech` resolves to the public IP via the router; use an `/etc/hosts` override per machine until a replacement resolver exists (tracked in Kanboard). Old config is in PBS `ct/221`. See `docs/runbooks/router-dns-not-forwarding-to-adguard.md` for history.
+- **Debugging "site can't be reached"**: work down the layers in order and show evidence at each before moving to the next: (1) client DNS resolution (router, no split-horizon), (2) Traefik router match, (3) Authentik forward-auth, (4) backend container health via SSH/`docker compose ps`. Never bypass DNS (`curl --resolve`, `/etc/hosts`) to "prove" a layer works — that hides the actual failure.
 
 **Monitoring stack:** Prometheus + Grafana + Alertmanager deployed via Docker Compose on a dedicated LXC. Discord webhook alerts. PVE exporter for Proxmox metrics. Dexcom glucose exporter polls Dexcom Share API, alerts via Twilio SMS + Home Assistant Alexa. Dashboards auto-provisioned from `ansible/files/monitoring/`.
 

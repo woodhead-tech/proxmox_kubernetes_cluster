@@ -102,16 +102,6 @@ output "wireguard_vmid" {
   value       = proxmox_virtual_environment_container.wireguard.vm_id
 }
 
-output "adguard_ip" {
-  description = "AdGuard Home DNS LXC IP"
-  value       = var.adguard_ip
-}
-
-output "adguard_vmid" {
-  description = "AdGuard Home LXC VM ID"
-  value       = proxmox_virtual_environment_container.adguard.vm_id
-}
-
 output "step_ca_ip" {
   description = "Step-CA SSH CA LXC IP"
   value       = var.step_ca_ip
