@@ -1,0 +1,10 @@
+#!/bin/sh
+# initramfs-tools hook: resize2fs/tune2fs are not in the default Proxmox initramfs
+# (e2fsck, lvm and thin_check already are). Needed by the shrink-root premount script.
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "${1:-}" in prereqs) prereqs; exit 0 ;; esac
+. /usr/share/initramfs-tools/hook-functions
+copy_exec /usr/sbin/resize2fs
+copy_exec /usr/sbin/tune2fs
+exit 0
