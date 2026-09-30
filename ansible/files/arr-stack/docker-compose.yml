@@ -99,6 +99,10 @@ services:
       - TZ=America/Chicago
     volumes:
       - /opt/arr/overseerr/config:/app/config
+    # No split-horizon DNS (AdGuard decommissioned 2026-09-29) and the router does
+    # not hairpin NAT, so pin Authentik to Traefik's LAN IP for OIDC sign-in.
+    extra_hosts:
+      - "auth.woodhead.tech:192.168.86.20"
     ports:
       - "5055:5055"
     restart: unless-stopped
