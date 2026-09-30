@@ -39,7 +39,9 @@ Target: root 39.56 -> **24 GiB** (keeps ~9 GiB free), freeing ~15.5 GiB. Grow po
 
 - `arr-stack` (LXC 202) mounts `/media` from TrueNAS NFS (`192.168.86.40:/mnt/tank/media`).
   Stop it first or its containers hang on a dead NFS mount.
-- tower1 itself mounts the same export at `/mnt/truenas-media` (Plex bind mount).
+- tower1 itself mounts the same export at `/mnt/truenas-media`. **Both Plex (203) and immich (230)
+  bind-mount from it** (immich `mp0: /mnt/truenas-media/immich`). Stop BOTH before unmounting: unmounting
+  first left immich's stop hook hung in `umount.nfs` (D state) for 25 min until it was `kill -9`'d.
   **Stop Plex (203), then `umount /mnt/truenas-media` BEFORE stopping VM 300**, or host
   shutdown hangs on the NFS mount.
 - Order: arr-stack (202) -> plex (203) -> `umount /mnt/truenas-media` -> monitoring (205) ->
@@ -107,3 +109,15 @@ Move the big pool volumes to Ceph instead (stop the LXC, then
 `pct move-volume 205 rootfs vmdata --delete 1`, same for 203). Frees ~39 GiB of pool
 (-> ~20% used), only needs brief per-LXC downtime, no physical access, and `vmdata` is
 3% used / ~590 GiB free. Consider doing this even if the shrink also happens.
+
+## Result: executed 2026-09-29
+
+- Root 39.56 -> 24 GiB (fsck rc=0), `pve/data` 68.6 -> 82.6 GiB, pool 82.5% -> 68.55%, VG free 1.63 GiB.
+  Hook disarmed itself (`STATUS: OK` in `/root/pre-resize/RESULT.txt`). Reboot took ~2 min; the
+  initramfs shrink itself took seconds.
+- Things that did not go to plan: (1) immich mount ordering above; (2) TrueNAS (VM 300) did not
+  power down within 180 s and was force-terminated (NFS/ZFS came back fine); (3) after boot, CTs
+  203/205/230 failed autostart because they raced TrueNAS's NFS export (started ~60 s after it) and
+  had to be started by hand: consider `startup: order=2,up=90` on them; (4) arr-stack (202) is on
+  another node, so a host reboot does not restart it: start it manually after tower1 is back.
+- Still open: stale `local-lvm:vm-400-disk-0` (`unused1` on VM 400, ~2.5 GiB) not yet removed.
