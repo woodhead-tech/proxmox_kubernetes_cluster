@@ -11,7 +11,7 @@
 #   cd ansible && ansible-playbook playbooks/setup-node-exporter.yml --limit mealie
 
 - name: Install node-exporter on LXC containers
-  hosts: lxc_services:adguard:traefik
+  hosts: lxc_services:traefik
   become: true
   gather_facts: false
   ignore_unreachable: true

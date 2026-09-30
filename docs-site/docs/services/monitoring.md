@@ -61,7 +61,7 @@ Blackbox exporter uses four modules defined in `ansible/files/monitoring/blackbo
 | `https_insecure` | 200–299, skip TLS verify | Self-signed certs (TrueNAS, Step-CA) |
 | `icmp` | ICMP echo reply | Host reachability for Proxmox nodes + all LXCs |
 
-**HTTP probes (internal):** Recipe site, Overseerr, Sonarr, Radarr, Prowlarr, Bazarr, SABnzbd, Plex, Grafana, Libby Alert, Kanboard, AdGuard, Home Assistant, Hermes, tv-kiosk Kodi bridge, Claude Code, Piboard, Klipper ×2
+**HTTP probes (internal):** Recipe site, Overseerr, Sonarr, Radarr, Prowlarr, Bazarr, SABnzbd, Plex, Grafana, Libby Alert, Kanboard, Home Assistant, Hermes, tv-kiosk Kodi bridge, Claude Code, Piboard, Klipper ×2
 
 **HTTPS probes (external, 2xx):** resume.woodhead.tech, alert.woodhead.tech, scanner.woodhead.tech
 

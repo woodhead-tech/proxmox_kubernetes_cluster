@@ -140,7 +140,6 @@ and resource allocation.
 | 192.168.86.32 | sdr | LXC | 210 | SDR scanner (Trunk Recorder + rdio-scanner) |
 | 192.168.86.33 | kanboard | LXC | 211 | Kanboard project management + ClawBot agent |
 | 192.168.86.34 | mailserver | LXC | 212 | Mailcow email server (Mailgun relay) |
-| 192.168.86.35 | adguard | LXC | 221 | DNS (AdGuard Home) |
 | 192.168.86.36 | step-ca | LXC | 222 | Step-CA SSH certificate authority |
 | 192.168.86.37 | claude-os | LXC | 215 | Claude OS AI memory/MCP server |
 | 192.168.86.38 | pwnagotchi | LXC | 216 | Pwnagotchi passive WiFi capture (pve3, RTL8188EUS) |

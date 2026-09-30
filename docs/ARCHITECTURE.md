@@ -167,7 +167,6 @@ and resource allocation.
 | 192.168.86.130     | tower1           | Host   | --    | Proxmox node 4 (tower)              |
 | 192.168.86.147     | zotac            | Host   | --    | Proxmox node 5 (Zotac mini PC)      |
 | 192.168.86.20      | traefik          | LXC    | 200   | Reverse proxy, TLS termination      |
-| 192.168.86.35      | adguard          | LXC    | 221   | AdGuard Home DNS + ad blocking      |
 | 192.168.86.21      | recipe-site      | LXC    | 201   | Go + SQLite recipe app              |
 | 192.168.86.22      | arr-stack        | LXC    | 202   | Docker: Sonarr, Radarr, etc.        |
 | 192.168.86.23      | plex             | LXC    | 203   | Plex Media Server + iGPU            |
@@ -258,32 +257,14 @@ Configure via Google Home app > WiFi > Settings > Advanced Networking > Port Man
 
 ## Traffic Flow: Internal
 
-Internal clients resolve `*.woodhead.tech` via AdGuard Home (`192.168.86.35`),
-which has split-horizon DNS rewrites: `*.woodhead.tech` and `woodhead.tech`
-resolve directly to Traefik (`192.168.86.20`) without leaving the LAN.
-
-```
-1. CLIENT (192.168.86.x)   DNS query: recipes.woodhead.tech
-       |
-       v
-2. GOOGLE NEST DNS          Forwards to AdGuard (192.168.86.35)
-       |
-       v
-3. ADGUARD HOME             Rewrite: *.woodhead.tech -> 192.168.86.20
-       |                   (split-horizon; no WAN roundtrip)
-       v
-4. CLIENT                  Connects directly to 192.168.86.20:443
-       |
-       v
-5. TRAEFIK (192.168.86.20) Terminates TLS, routes to backend
-       |
-       v
-6. RECIPE SITE (192.168.86.21) Responds directly on LAN
-```
-
-Split-horizon rewrites live in `/opt/adguardhome/data/AdGuardHome.yaml`
-under `filtering.rewrites`. Internal services remain reachable during
-internet outages (DNS resolves locally; TLS certs are cached by Traefik).
+Internal clients resolve `*.woodhead.tech` via the `dns` LXC (dnsmasq,
+`192.168.86.35`, VMID 221), which answers `*.woodhead.tech` and the apex with
+Traefik (`192.168.86.20`) and forwards everything else to 1.1.1.1 / 8.8.8.8.
+It replaced AdGuard (decommissioned 2026-09-29). The router does not hairpin
+NAT, so clients that resolve to the public IP get "connection refused"; the
+router/DHCP DNS must point at `192.168.86.35`. Config: `ansible/playbooks/setup-dns.yml`.
+Single resolver today (no redundancy). `mail.woodhead.tech` also resolves to
+Traefik, which serves only the Mailcow web UI; IMAP/SMTP are direct to `.34`.
 
 ---
 
@@ -305,15 +286,13 @@ internet outages (DNS resolves locally; TLS certs are cached by Traefik).
                     +--------+----------+
                              |
                     +--------v----------+
-                    | Google Nest DNS   |  Forwards all queries to AdGuard
-                    |  (192.168.86.1:53)|
+                    | Router / DHCP     |  Hands out 192.168.86.35 as DNS
+                    |  (192.168.86.1)   |
                     +--------+----------+
                              |
                     +--------v----------+
-                    | AdGuard Home      |  Split-horizon rewrites:
-                    | (192.168.86.35)   |  *.woodhead.tech -> 192.168.86.20
-                    |                   |  Upstream: Cloudflare + Google DoH
-                    |                   |  (for non-rewritten queries)
+                    | dnsmasq (dns LXC) |  *.woodhead.tech -> 192.168.86.20
+                    | (192.168.86.35)   |  others -> 1.1.1.1 / 8.8.8.8
                     +-------------------+
 ```
 
@@ -321,8 +300,7 @@ internet outages (DNS resolves locally; TLS certs are cached by Traefik).
 - **Registrar:** Squarespace (nameservers pointed to Cloudflare)
 - **Authoritative DNS:** Cloudflare (free tier)
 - **DDNS updates:** Cron script on Proxmox node (every 5 min)
-- **Internal resolution:** AdGuard split-horizon rewrites `*.woodhead.tech` to `192.168.86.20` (Traefik)
-- **AdGuard upstreams:** `https://dns.cloudflare.com/dns-query` + `https://dns.google/dns-query` (DoH)
+- **Internal resolution:** dnsmasq split-horizon on the `dns` LXC (`192.168.86.35`) once the router/DHCP points at it
 
 ---
 
@@ -462,7 +440,6 @@ in parallel after the host is ready.
 | auto  | SDR Scanner LXC      | 210   | --     | Starts on boot, privileged, RTL-SDR USB     |
 | auto  | Kanboard LXC         | 211   | --     | Starts on boot, task queue for ClawBot      |
 | auto  | Mailserver LXC       | 212   | --     | Starts on boot, Mailcow email stack         |
-| auto  | AdGuard LXC          | 213   | --     | Starts on boot, AdGuard Home DNS + blocking |
 | auto  | Zigbee2MQTT LXC      | 214   | --     | Starts on boot, Zigbee bridge (on zotac)    |
 | auto  | Step-CA LXC          | --    | --     | Starts on boot, SSH certificate authority   |
 | auto  | UniFi LXC            | --    | --     | Starts on boot, UniFi Network Application   |
@@ -726,7 +703,6 @@ Certificates are wildcard (`*.woodhead.tech`) via Let's Encrypt DNS-01.
 | docs.woodhead.tech     | 192.168.86.25        | 3080  | docs-site.yml         | Active (Authentik SSO) |
 | resume.woodhead.tech   | 192.168.86.25        | 3081  | resume-site.yml       | Active (Authentik SSO) |
 | consulting.woodhead.tech | 192.168.86.25      | 8085  | consulting-site.yml   | Active    |
-| adguard.woodhead.tech  | 192.168.86.35        | 80    | adguard.yml           | Active (Authentik SSO) |
 | proxmox.woodhead.tech  | 192.168.86.29        | 8006  | proxmox.yml           | Active (Authentik SSO) |
 | traefik.woodhead.tech  | localhost (dashboard) | --    | dashboard.yml         | Active (Authentik SSO) |
 | guac.woodhead.tech     | 192.168.86.47        | 8080  | guacamole.yml         | Active (Authentik SSO) |
@@ -1031,7 +1007,7 @@ Services are organized into logical groups that can be started and stopped as a 
 | `media` | 202 (arr-stack), 203 (plex), 204 (jellyfin) | ~8GB | No | Depends on `core`, `storage` |
 | `observability` | 205 (monitoring) | ~4GB | No | Includes healer auto-remediation service |
 | `apps` | 201 (recipe-site), 211 (kanboard), 215 (claude-os), 220 (claude-code), 224 (hermes), 225 (tv-kiosk) | ~18GB | No | |
-| `infra` | 212 (mailserver), 213 (adguard) | ~3.5GB | No | |
+| `infra` | 212 (mailserver), 213 (pxe) | ~3.5GB | No | |
 | `sdr` | 210 (sdr) | ~2GB | No | RTL-SDR USB passthrough |
 | `special` | 216 (pwnagotchi) | ~1GB | No | Hardware-bound; excluded from bulk ops |
 | `k8s` | 400 (talos-cp-0), 410 (worker-0), 411 (worker-1), 412 (worker-2) | ~28GB | No | Drain workers before stop |

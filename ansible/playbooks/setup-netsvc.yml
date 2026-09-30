@@ -1,10 +1,8 @@
 # setup-netsvc.yml - Provision the standalone network-services box (netsvc1, .207)
 #
 # Roles on this box:
-#   1. Secondary AdGuard Home DNS - a byte-faithful MIRROR of the primary (.35).
-#      A systemd timer pulls the primary's live config via a restricted deploy
-#      key (forced `cat` command on the primary) and restarts AGH only on change,
-#      so both resolvers serve identical filtering/rewrites (no DNS poisoning).
+#   1. AdGuard Home DNS - now STANDALONE. The former primary (LXC 221, .35) was
+#      decommissioned 2026-09-29, so config is no longer mirrored; edit it in place.
 #   2. chrony - NTP server for the 192.168.86.0/24 LAN.
 #   3. prometheus-node-exporter - scraped by the monitoring stack.
 #
@@ -13,21 +11,18 @@
 # One-time prep done out-of-band (see network/x1026-style runbook in git log):
 #   - id_ansible key for root + bwoodwar, bwoodwar in sudo (NOPASSWD)
 #   - passwords rotated off the shared temp; sshd hardened to keys-only
-#   - mirror deploy key installed: private at /etc/adguard-mirror/id_mirror on
-#     netsvc1, restricted public key in the primary's /root/.ssh/authorized_keys
 #
 # Usage:
 #   ansible-playbook -i inventory/hosts.yml playbooks/setup-netsvc.yml --check --diff
 #   ansible-playbook -i inventory/hosts.yml playbooks/setup-netsvc.yml
 ---
-- name: Configure netsvc1 (secondary DNS mirror + NTP + node-exporter)
+- name: Configure netsvc1 (standalone DNS + NTP + node-exporter)
   hosts: netsvc
   become: true
   vars:
-    agh_version: "v0.107.57"          # MUST match the primary for config-schema parity
+    agh_version: "v0.107.57"          # pinned; bump deliberately (config schema changes)
     agh_dir: /opt/adguardhome
     agh_data: /opt/adguardhome/data
-    primary_dns: "192.168.86.35"
     lan_cidr: "192.168.86.0/24"
 
   tasks:
@@ -101,7 +96,7 @@
         mode: "0644"
         content: |
           [Unit]
-          Description=AdGuard Home (secondary, mirrored from {{ primary_dns }})
+          Description=AdGuard Home (standalone)
           After=network-online.target
           Wants=network-online.target
 
@@ -120,50 +115,13 @@
           WantedBy=multi-user.target
       notify: reload systemd
 
-    - name: Install AdGuard config mirror script
-      ansible.builtin.copy:
-        src: ../files/netsvc/agh-mirror.sh
-        dest: /usr/local/sbin/agh-mirror
-        mode: "0755"
-
-    - name: Deploy mirror timer + service
-      ansible.builtin.copy:
-        dest: "/etc/systemd/system/{{ item.name }}"
-        mode: "0644"
-        content: "{{ item.content }}"
-      loop:
-        - name: agh-mirror.service
-          content: |
-            [Unit]
-            Description=Mirror AdGuard config from primary ({{ primary_dns }})
-            After=network-online.target
-            [Service]
-            Type=oneshot
-            ExecStart=/usr/local/sbin/agh-mirror
-        - name: agh-mirror.timer
-          content: |
-            [Unit]
-            Description=Run AdGuard config mirror every 5 minutes
-            [Timer]
-            OnBootSec=2min
-            OnUnitActiveSec=5min
-            Persistent=true
-            [Install]
-            WantedBy=timers.target
-      notify: reload systemd
-
-    - name: Seed AdGuard config from primary (first run)
-      ansible.builtin.command: /usr/local/sbin/agh-mirror
-      args:
-        creates: "{{ agh_data }}/AdGuardHome.yaml"
-
-    - name: Enable AdGuard + mirror timer
+    - name: Enable AdGuard
       ansible.builtin.systemd:
         name: "{{ item }}"
         enabled: true
         state: started
         daemon_reload: true
-      loop: [adguardhome, agh-mirror.timer]
+      loop: [adguardhome]
 
     - name: Configure chrony as LAN NTP server
       ansible.builtin.copy:

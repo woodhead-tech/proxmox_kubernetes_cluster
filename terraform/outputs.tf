@@ -102,14 +102,14 @@ output "wireguard_vmid" {
   value       = proxmox_virtual_environment_container.wireguard.vm_id
 }
 
-output "adguard_ip" {
-  description = "AdGuard Home DNS LXC IP"
-  value       = var.adguard_ip
+output "dns_ip" {
+  description = "Split-horizon DNS LXC IP"
+  value       = var.dns_ip
 }
 
-output "adguard_vmid" {
-  description = "AdGuard Home LXC VM ID"
-  value       = proxmox_virtual_environment_container.adguard.vm_id
+output "dns_vmid" {
+  description = "Split-horizon DNS LXC VM ID"
+  value       = proxmox_virtual_environment_container.dns.vm_id
 }
 
 output "step_ca_ip" {
