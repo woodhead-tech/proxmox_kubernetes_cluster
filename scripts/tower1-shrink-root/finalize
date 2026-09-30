@@ -1,0 +1,54 @@
+#!/bin/bash
+# Runs once after the boot that executed the initramfs shrink (shrink-root-finalize.service).
+# 1) grows the thin pool online with the space the shrink freed (routine, safe when live)
+# 2) records what happened in RESULT.txt (kernel-log lines from the initramfs script + sizes)
+# 3) DISARMS the initramfs hook whether or not it worked, so this is strictly one-time
+# Env overrides exist only for test-loopback.sh.
+set -u
+VG="${VG:-pve}"; ROOT_LV="${ROOT_LV:-root}"; POOL_LV="${POOL_LV:-data}"
+TARGET="${TARGET_BYTES:-25769803776}"          # must match premount
+POOL_ADD="${POOL_ADD_BYTES:-15032385536}"      # +14 GiB
+RESERVE="${RESERVE_BYTES:-1610612736}"         # keep ~1.5 GiB free so autoextend can work
+MIN_ADD="${MIN_ADD_BYTES:-1073741824}"         # not worth extending by less than this
+RESULT="${RESULT_FILE:-/root/pre-resize/RESULT.txt}"
+DRY_RUN="${DRY_RUN:-0}"                        # 1 = do not touch initramfs/units
+
+mkdir -p "$(dirname "$RESULT")"
+exec >> "$RESULT" 2>&1
+echo "=== finalize $(date -Is) on $(hostname)"
+journalctl -k -b 0 --no-pager 2>/dev/null | grep 'shrink-root:' || echo "(no shrink-root kernel messages this boot)"
+
+bytes() { "$@" 2>/dev/null | sed 's/[^0-9]//g'; }
+root_sz=$(bytes lvs --noheadings --nosuffix --units b -o lv_size "$VG/$ROOT_LV")
+pool_sz=$(bytes lvs --noheadings --nosuffix --units b -o lv_size "$VG/$POOL_LV")
+echo "before: root=$root_sz pool=$pool_sz"
+
+status="FAILED (root not shrunk; hook disarmed, nothing else changed)"
+if [ -n "$root_sz" ] && [ "$root_sz" -le $((TARGET + 134217728)) ]; then
+    free=$(bytes vgs --noheadings --nosuffix --units b -o vg_free "$VG")
+    add=$POOL_ADD
+    [ $((free - RESERVE)) -lt "$add" ] && add=$((free - RESERVE))
+    if [ "$add" -ge "$MIN_ADD" ]; then
+        echo "extending $VG/$POOL_LV by $add bytes (vg free $free)"
+        if lvextend --yes -L "+${add}b" "$VG/$POOL_LV"; then
+            status="OK (root shrunk, pool extended by $add bytes)"
+        else
+            status="PARTIAL (root shrunk, pool extend FAILED - run: lvextend -L +14G $VG/$POOL_LV)"
+        fi
+    else
+        status="PARTIAL (root shrunk but only $free bytes free in VG)"
+    fi
+fi
+echo "after: $(lvs --noheadings --units g -o lv_name,lv_size,data_percent "$VG" 2>&1 | tr -s ' ' | tr '\n' ';')"
+echo "df /: $(df -h / | tail -1)"
+echo "STATUS: $status"
+
+if [ "$DRY_RUN" != "1" ]; then
+    # Disarm: remove the hook + premount and rebuild so no later boot re-runs this.
+    rm -f /etc/initramfs-tools/scripts/local-premount/zz-shrink-root /etc/initramfs-tools/hooks/shrink-root
+    update-initramfs -u -k all && echo "initramfs rebuilt without shrink hook" || echo "WARNING: initramfs rebuild failed (hook is idempotent, harmless)"
+    systemctl disable shrink-root-finalize.service 2>&1 | tail -1
+    rm -f /etc/systemd/system/shrink-root-finalize.service /usr/local/sbin/shrink-root-finalize
+    systemctl daemon-reload
+fi
+echo "=== done"

@@ -1,0 +1,11 @@
+[Unit]
+Description=One-shot: finish tower1 root shrink (extend thin pool, disarm initramfs hook)
+After=local-fs.target lvm2-monitor.service
+Before=pve-guests.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/shrink-root-finalize
+
+[Install]
+WantedBy=multi-user.target
