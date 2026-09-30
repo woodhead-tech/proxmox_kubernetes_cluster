@@ -231,6 +231,9 @@ minecraft: ## Deploy Minecraft Java Edition server (PaperMC) for Annie
 		$(if $(RCON_PASSWORD),--extra-vars "rcon_password=$(RCON_PASSWORD)") \
 		$(if $(OPS),--extra-vars "ops=$(OPS)")
 
+dns: ## Deploy dnsmasq split-horizon DNS into its LXC
+	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-dns.yml
+
 step-ca: ## Deploy Smallstep step-ca SSH Certificate Authority into its LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-step-ca.yml
 

@@ -257,13 +257,14 @@ Configure via Google Home app > WiFi > Settings > Advanced Networking > Port Man
 
 ## Traffic Flow: Internal
 
-**No split-horizon DNS currently.** AdGuard Home (LXC 221, `192.168.86.35`) was
-decommissioned 2026-09-29 (hung after its disk filled). Internal clients now
-resolve `*.woodhead.tech` through the router (`192.168.86.1`), which returns the
-public IP, so LAN access to services depends on WAN/hairpin working. Workaround
-for a single machine: an `/etc/hosts` entry pointing the name at Traefik
-(`192.168.86.20`). Replacement resolver is tracked in Kanboard. The old config
-(rewrites `*.woodhead.tech` -> `192.168.86.20`) is recoverable from PBS `ct/221`.
+Internal clients resolve `*.woodhead.tech` via the `dns` LXC (dnsmasq,
+`192.168.86.35`, VMID 221), which answers `*.woodhead.tech` and the apex with
+Traefik (`192.168.86.20`) and forwards everything else to 1.1.1.1 / 8.8.8.8.
+It replaced AdGuard (decommissioned 2026-09-29). The router does not hairpin
+NAT, so clients that resolve to the public IP get "connection refused"; the
+router/DHCP DNS must point at `192.168.86.35`. Config: `ansible/playbooks/setup-dns.yml`.
+Single resolver today (no redundancy). `mail.woodhead.tech` also resolves to
+Traefik, which serves only the Mailcow web UI; IMAP/SMTP are direct to `.34`.
 
 ---
 
@@ -285,8 +286,13 @@ for a single machine: an `/etc/hosts` entry pointing the name at Traefik
                     +--------+----------+
                              |
                     +--------v----------+
-                    | Router            |  Forwards to upstream; returns the
-                    |  (192.168.86.1:53)|  public IP (no split-horizon)
+                    | Router / DHCP     |  Hands out 192.168.86.35 as DNS
+                    |  (192.168.86.1)   |
+                    +--------+----------+
+                             |
+                    +--------v----------+
+                    | dnsmasq (dns LXC) |  *.woodhead.tech -> 192.168.86.20
+                    | (192.168.86.35)   |  others -> 1.1.1.1 / 8.8.8.8
                     +-------------------+
 ```
 
@@ -294,7 +300,7 @@ for a single machine: an `/etc/hosts` entry pointing the name at Traefik
 - **Registrar:** Squarespace (nameservers pointed to Cloudflare)
 - **Authoritative DNS:** Cloudflare (free tier)
 - **DDNS updates:** Cron script on Proxmox node (every 5 min)
-- **Internal resolution:** router DNS (public IP); split-horizon was removed with AdGuard on 2026-09-29
+- **Internal resolution:** dnsmasq split-horizon on the `dns` LXC (`192.168.86.35`) once the router/DHCP points at it
 
 ---
 

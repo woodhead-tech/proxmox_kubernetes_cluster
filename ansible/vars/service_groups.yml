@@ -81,6 +81,7 @@ service_groups:
     members:
       - { vmid: 213, name: pxe, type: lxc }
       - { vmid: 212, name: mailserver, type: lxc }
+      - { vmid: 221, name: dns, type: lxc }
       - { vmid: 222, name: step-ca, type: lxc }
       - { vmid: 223, name: pbs, type: lxc }
       - { vmid: 225, name: omada, type: lxc }

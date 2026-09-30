@@ -102,6 +102,16 @@ output "wireguard_vmid" {
   value       = proxmox_virtual_environment_container.wireguard.vm_id
 }
 
+output "dns_ip" {
+  description = "Split-horizon DNS LXC IP"
+  value       = var.dns_ip
+}
+
+output "dns_vmid" {
+  description = "Split-horizon DNS LXC VM ID"
+  value       = proxmox_virtual_environment_container.dns.vm_id
+}
+
 output "step_ca_ip" {
   description = "Step-CA SSH CA LXC IP"
   value       = var.step_ca_ip

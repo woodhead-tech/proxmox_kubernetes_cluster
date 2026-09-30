@@ -395,6 +395,19 @@ variable "dev_desktop_root_password" {
   sensitive   = true
 }
 
+# --- DNS LXC (dnsmasq split-horizon; replaced AdGuard 2026-09-29) ---
+variable "dns_vmid" {
+  description = "VM ID for the split-horizon DNS LXC"
+  type        = number
+  default     = 221
+}
+
+variable "dns_ip" {
+  description = "Static IP for the split-horizon DNS LXC"
+  type        = string
+  default     = "192.168.86.35"
+}
+
 # --- Step-CA LXC ---
 variable "step_ca_vmid" {
   description = "VM ID for the Step-CA SSH certificate authority LXC"

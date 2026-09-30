@@ -67,6 +67,9 @@ scrape_configs:
       - targets: ["192.168.86.34:9100"]
         labels:
           instance: "mailserver"
+      - targets: ["192.168.86.35:9100"]
+        labels:
+          instance: "dns"
       - targets: ["192.168.86.36:9100"]
         labels:
           instance: "step-ca"
@@ -341,6 +344,7 @@ scrape_configs:
           - 192.168.86.28    # authentik
           - 192.168.86.33    # kanboard
           - 192.168.86.34    # mailserver
+          - 192.168.86.35    # dns
           - 192.168.86.36    # step-ca
           - 192.168.86.39    # wireguard
           - 192.168.86.45    # hermes
