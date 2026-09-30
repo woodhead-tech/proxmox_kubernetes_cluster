@@ -85,20 +85,6 @@ services:
       - "9093:9093"
     restart: unless-stopped
 
-  # --- Node Exporter: Host Metrics ---
-  # Exposes CPU, RAM, disk, network metrics for the monitoring LXC itself.
-  node-exporter:
-    image: prom/node-exporter:latest
-    container_name: node-exporter
-    command:
-      - "--path.rootfs=/host"
-    pid: host
-    volumes:
-      - /:/host:ro,rslave
-    ports:
-      - "9100:9100"
-    restart: unless-stopped
-
   # --- cAdvisor: Docker Container Metrics ---
   # Exposes per-container CPU, memory, network, and disk I/O metrics.
   cadvisor:

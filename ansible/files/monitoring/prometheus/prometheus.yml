@@ -36,19 +36,16 @@ scrape_configs:
       - targets: ["localhost:9090"]
 
   # Node Exporter: per-LXC host metrics (CPU, memory, disk, network)
-  # monitoring-stack uses the Docker container (node-exporter:9100).
-  # All other LXCs run the prometheus-node-exporter apt package on port 9100.
+  # Every LXC, including the monitoring stack, runs the prometheus-node-exporter apt package
+  # on port 9100. A Docker node-exporter on the monitoring host cannot bind 9100 (clash).
   - job_name: "node-exporter"
     static_configs:
-      - targets: ["node-exporter:9100"]
+      - targets: ["192.168.86.25:9100"]
         labels:
           instance: "monitoring"
       - targets: ["192.168.86.20:9100"]
         labels:
           instance: "traefik-gw"
-      - targets: ["192.168.86.21:9100"]
-        labels:
-          instance: "recipe-site"
       - targets: ["192.168.86.22:9100"]
         labels:
           instance: "arr-stack"
@@ -73,15 +70,9 @@ scrape_configs:
       - targets: ["192.168.86.36:9100"]
         labels:
           instance: "step-ca"
-      - targets: ["192.168.86.37:9100"]
-        labels:
-          instance: "claude-os"
       - targets: ["192.168.86.39:9100"]
         labels:
           instance: "wireguard"
-      - targets: ["192.168.86.42:9100"]
-        labels:
-          instance: "ollama"
       - targets: ["192.168.86.43:9100"]
         labels:
           instance: "vaultwarden"
@@ -94,9 +85,6 @@ scrape_configs:
       - targets: ["192.168.86.51:9100"]
         labels:
           instance: "static-sites"
-      - targets: ["192.168.86.207:9100"]
-        labels:
-          instance: "netsvc1"
 
   # cAdvisor: Docker container metrics (local)
   - job_name: "cadvisor"
@@ -213,7 +201,6 @@ scrape_configs:
       module: [http_2xx]
     static_configs:
       - targets:
-          - http://192.168.86.21:80       # Recipe site
           - http://192.168.86.22:5055     # Overseerr
           - http://192.168.86.22:8989     # Sonarr
           - http://192.168.86.22:7878     # Radarr
@@ -337,7 +324,6 @@ scrape_configs:
           - 192.168.86.138   # Klipper Ender 3
           # LXC containers (decommissioned: 192.168.86.24 jellyfin removed)
           - 192.168.86.20    # traefik-gw
-          - 192.168.86.21    # recipe-site
           - 192.168.86.22    # arr-stack
           - 192.168.86.23    # plex
           - 192.168.86.25    # monitoring-stack
