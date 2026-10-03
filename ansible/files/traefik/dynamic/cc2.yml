@@ -1,0 +1,27 @@
+# cc2.yml - Traefik route for the Elegoo Centauri Carbon 2 3D printer
+#
+# Routes cc2.woodhead.tech to the printer's camera stream (MJPEG on port 8080,
+# served at "/" and "/?action=stream"). The printer is stock firmware (no
+# Klipper/Mainsail) and must be in LAN-Only mode. The stream has no auth of its
+# own, so this route is protected by Authentik.
+# Printer IP 192.168.86.54 should be reserved in router DHCP.
+
+http:
+  routers:
+    cc2:
+      rule: "Host(`cc2.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: cc2
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+      middlewares:
+        - authentik@file
+
+  services:
+    cc2:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.54:8080"
