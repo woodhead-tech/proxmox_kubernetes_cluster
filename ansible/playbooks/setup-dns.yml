@@ -1,0 +1,69 @@
+# setup-dns.yml - Configure the split-horizon DNS LXC (dnsmasq)
+#
+# Answers *.woodhead.tech (and the apex) with the Traefik LAN IP so LAN clients
+# and containers skip the public IP, which the router cannot hairpin. All other
+# names forward to public upstreams. Replaces the decommissioned AdGuard LXC.
+#
+# Prereq: `make` terraform apply for lxc-dns.tf (VMID 221, 192.168.86.35).
+# Then point the router/DHCP DNS at 192.168.86.35 (manual, Google Home app).
+#
+# Usage: ansible-playbook playbooks/setup-dns.yml [--check --diff]
+
+- name: Configure split-horizon DNS (dnsmasq)
+  hosts: dns
+  become: true
+  vars:
+    traefik_ip: "192.168.86.20"
+    upstream_dns:
+      - 1.1.1.1
+      - 8.8.8.8
+
+  tasks:
+    - name: Install dnsmasq (+ dig for the verify step)
+      ansible.builtin.apt:
+        name: [dnsmasq, bind9-dnsutils]
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    # Template (not blockinfile) so the file is fully owned and idempotent.
+    - name: Deploy split-horizon config
+      ansible.builtin.copy:
+        dest: /etc/dnsmasq.d/woodhead.conf
+        mode: "0644"
+        content: |
+          # Managed by ansible/playbooks/setup-dns.yml - do not edit by hand.
+          # address=/domain/ip answers the domain AND all subdomains (wildcard);
+          # AAAA for these names gets an empty answer, so clients stay on IPv4.
+          address=/woodhead.tech/{{ traefik_ip }}
+          no-resolv
+          {% for s in upstream_dns %}
+          server={{ s }}
+          {% endfor %}
+          cache-size=1000
+          bind-interfaces
+          interface=eth0
+      notify: restart dnsmasq
+
+    - name: Enable and start dnsmasq
+      ansible.builtin.systemd:
+        name: dnsmasq
+        enabled: true
+        state: started
+
+    # Apply the config now; otherwise the handler runs only at end of play,
+    # after the verify step has already tested the default (unconfigured) dnsmasq.
+    - name: Apply pending config changes
+      ansible.builtin.meta: flush_handlers
+
+    - name: Verify wildcard answer
+      ansible.builtin.command: dig +short +time=3 auth.woodhead.tech @127.0.0.1
+      register: dns_check
+      changed_when: false
+      failed_when: traefik_ip not in dns_check.stdout
+
+  handlers:
+    - name: restart dnsmasq
+      ansible.builtin.systemd:
+        name: dnsmasq
+        state: restarted

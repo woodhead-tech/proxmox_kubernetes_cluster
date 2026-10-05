@@ -395,15 +395,15 @@ variable "dev_desktop_root_password" {
   sensitive   = true
 }
 
-# --- AdGuard Home LXC ---
-variable "adguard_vmid" {
-  description = "VM ID for the AdGuard Home DNS LXC"
+# --- DNS LXC (dnsmasq split-horizon; replaced AdGuard 2026-09-29) ---
+variable "dns_vmid" {
+  description = "VM ID for the split-horizon DNS LXC"
   type        = number
   default     = 221
 }
 
-variable "adguard_ip" {
-  description = "Static IP for the AdGuard Home LXC"
+variable "dns_ip" {
+  description = "Static IP for the split-horizon DNS LXC"
   type        = string
   default     = "192.168.86.35"
 }

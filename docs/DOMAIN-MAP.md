@@ -15,7 +15,6 @@ via Let's Encrypt DNS-01 (Cloudflare).
 | `proxmox.woodhead.tech` | 192.168.86.29 | 8006 | SSO | Proxmox web UI (any node) |
 | `traefik.woodhead.tech` | localhost | -- | SSO | Traefik dashboard |
 | `auth.woodhead.tech` | 192.168.86.28 | 9000 | Own | Authentik identity provider |
-| `adguard.woodhead.tech` | 192.168.86.35 | 80 | SSO | AdGuard Home DNS + blocking |
 | `unifi.woodhead.tech` | 192.168.86.43 | 8443 | SSO | UniFi Network Application |
 | `step-ca.woodhead.tech` | 192.168.86.36 | 9000 | None | Step-CA SSH certificate authority |
 | `mail.woodhead.tech` | 192.168.86.34 | 8080 | Own | Mailcow webmail + admin |

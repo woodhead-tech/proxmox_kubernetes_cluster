@@ -60,7 +60,6 @@ const nodes = [
     {id:"kanboard",label:"Kanboard",ip:"192.168.86.33",type:"lxc",group:"apps",url:"tasks.woodhead.tech",services:"Project management"},
     {id:"recipe",label:"Recipe Site",ip:"192.168.86.21",type:"lxc",group:"apps",url:"recipes.woodhead.tech",services:"Go app + SQLite"},
     {id:"photos",label:"Grad Photos",ip:"192.168.86.45",type:"lxc",group:"apps",url:"photos.woodhead.tech",services:"Photo upload + live gallery"},
-    {id:"adguard",label:"AdGuard",ip:"192.168.86.35",type:"lxc",group:"infra",services:"DNS ad blocking"},
     {id:"stepca",label:"Step-CA",ip:"192.168.86.36",type:"lxc",group:"infra",services:"SSH Certificate Authority"},
     {id:"zigbee",label:"Zigbee2MQTT",ip:"192.168.86.44",type:"lxc",group:"home",services:"Zigbee bridge + Mosquitto"},
     {id:"libby",label:"Libby Alert",ip:"192.168.86.27",type:"lxc",group:"home",url:"alert.woodhead.tech",services:"Life alert QR site"},
@@ -94,7 +93,7 @@ const links = [
     // Proxmox hosts → their VMs/LXCs
     {source:"pve1",target:"traefik"},{source:"pve1",target:"wireguard"},{source:"pve1",target:"recipe"},
     {source:"pve1",target:"authentik"},{source:"pve1",target:"kanboard"},{source:"pve1",target:"libby"},
-    {source:"pve1",target:"claude"},{source:"pve1",target:"adguard"},{source:"pve1",target:"stepca"},
+    {source:"pve1",target:"claude"},{source:"pve1",target:"stepca"},
     {source:"pve1",target:"vaultwarden"},{source:"pve1",target:"photos"},{source:"pve1",target:"hermes"},
     {source:"pve2",target:"arr"},{source:"pve2",target:"plex"},{source:"pve2",target:"monitoring"},
     {source:"pve3",target:"mailserver"},{source:"pve3",target:"pwnagotchi"},
