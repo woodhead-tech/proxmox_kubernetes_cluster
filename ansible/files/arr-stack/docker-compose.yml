@@ -18,6 +18,8 @@
 #   SABnzbd:      http://<ip>:8080  (set up Usenet server)
 #   qBittorrent:  http://<ip>:8090  (torrent client, routed through gluetun VPN)
 #   FlareSolverr: http://<ip>:8191  (Cloudflare bypass proxy for Prowlarr)
+#   LazyLibrarian: http://<ip>:5299 (ebook/audiobook search + download, imports into Calibre)
+#   Calibre-Web:   http://<ip>:8083 (browse/read/OPDS for the Calibre library)
 
 services:
 
@@ -203,4 +205,42 @@ services:
       - /media/downloads:/downloads  # Same path as SABnzbd for hardlinks
     ports:
       - "6969:6969"
+    restart: unless-stopped
+
+  # --- LazyLibrarian: Ebook / Audiobook Management ---
+  # Searches indexers (via Prowlarr's Torznab/Newznab feeds), sends grabs to SABnzbd/qBittorrent
+  # (reach them at gluetun:8080 / gluetun:8090 since both live in gluetun's netns), then imports
+  # finished books into the Calibre library below via calibredb.
+  # The universal-calibre mod installs calibre's CLI tools (calibredb, ebook-convert) at first start.
+  lazylibrarian:
+    image: lscr.io/linuxserver/lazylibrarian:latest
+    container_name: lazylibrarian
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+      - DOCKER_MODS=linuxserver/mods:universal-calibre
+    volumes:
+      - /opt/arr/lazylibrarian/config:/config
+      - /media/downloads:/downloads   # Same path as SABnzbd/qBittorrent so completed grabs are visible
+      - /media/books:/books           # Calibre library lives at /books/calibre-library
+    ports:
+      - "5299:5299"
+    restart: unless-stopped
+
+  # --- Calibre-Web: Ebook Reader / OPDS Server ---
+  # Web UI over the Calibre library (metadata.db) that LazyLibrarian imports into.
+  # OPDS feed at /opds lets e-readers (KOReader, Moon+ Reader, etc.) sync books.
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:latest
+    container_name: calibre-web
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+    volumes:
+      - /opt/arr/calibre-web/config:/config
+      - /media/books:/books
+    ports:
+      - "8083:8083"
     restart: unless-stopped
