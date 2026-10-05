@@ -1,0 +1,71 @@
+#!/bin/sh
+# initramfs local-premount: ONE-SHOT shrink of the pve/root LV (ext4) so the thin pool
+# can grow. Runs after udev activated the LVs and BEFORE root is mounted, the only time
+# ext4 can be shrunk. Idempotent (no-op once root <= target) and fail-safe: every error
+# path logs and lets the boot continue with root untouched. Pool growth happens after
+# boot in shrink-root-finalize. Escape hatch: add "noshrink" to the kernel cmdline.
+# Runbook: docs/runbooks/lvm-thin-pool-exhaustion.md
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+case "${1:-}" in prereqs) prereqs; exit 0 ;; esac
+
+# Overridable so scripts/tower1-shrink-root/test-loopback.sh can exercise the real logic.
+VG="${VG:-pve}"
+ROOT_LV="${ROOT_LV:-root}"
+TARGET="${TARGET_BYTES:-25769803776}"          # 24 GiB final LV size
+FS_SLACK="${FS_SLACK_BYTES:-1073741824}"       # fs shrunk to TARGET-slack, regrown after lvreduce
+HEADROOM="${MIN_HEADROOM_BYTES:-2147483648}"   # data + this must fit in the shrunk fs
+KMSG="${KMSG:-/dev/kmsg}"
+CMDLINE="${CMDLINE_FILE:-/proc/cmdline}"
+MOUNTS="${MOUNTS_FILE:-/proc/mounts}"
+DEV="/dev/mapper/${VG}-${ROOT_LV}"
+
+# kmsg lands in the journal, so shrink-root-finalize can report what happened.
+log() { msg="shrink-root: $*"; echo "$msg"; echo "$msg" > "$KMSG" 2>/dev/null; return 0; }
+lv_bytes() { lvm lvs --noheadings --nosuffix --units b -o lv_size "$1" 2>/dev/null | sed 's/[^0-9]//g'; }
+
+main() {
+    grep -qw noshrink "$CMDLINE" && { log "noshrink on cmdline; skipping"; return 0; }
+
+    # LVs are auto-activated by udev; give it a moment.
+    i=0
+    while [ ! -b "$DEV" ] && [ "$i" -lt 30 ]; do sleep 1; i=$((i + 1)); done
+    [ -b "$DEV" ] || { log "$DEV not present; skipping"; return 0; }
+
+    cur=$(lv_bytes "$VG/$ROOT_LV")
+    [ -n "$cur" ] || { log "cannot read LV size; skipping"; return 0; }
+    if [ "$cur" -le $((TARGET + 134217728)) ]; then
+        log "root already at target ($cur bytes); nothing to do"
+        return 0
+    fi
+    grep -q "^$DEV " "$MOUNTS" && { log "$DEV is mounted; refusing"; return 0; }
+
+    log "start: root $cur bytes -> $TARGET"
+    # Preen mode is non-interactive; rc 0/1 = clean/fixed. Anything else = do not touch.
+    e2fsck -fp "$DEV"; rc=$?
+    [ "$rc" -le 1 ] || { log "e2fsck rc=$rc; NOT shrinking"; return 0; }
+
+    minblk=$(resize2fs -P "$DEV" 2>/dev/null | awk '{print $NF}' | sed 's/[^0-9]//g')
+    bs=$(tune2fs -l "$DEV" 2>/dev/null | awk -F: '/^Block size/{gsub(/ /,"",$2); print $2}')
+    [ -n "$minblk" ] && [ -n "$bs" ] || { log "cannot estimate fs min size; skipping"; return 0; }
+    fs_target=$((TARGET - FS_SLACK))
+    need=$((minblk * bs + HEADROOM))
+    if [ "$need" -gt "$fs_target" ]; then
+        log "fs needs $need bytes (min+headroom) > $fs_target; NOT shrinking"
+        return 0
+    fi
+
+    # Order matters: shrink fs first, then LV (never smaller than the fs), then regrow fs.
+    log "shrinking filesystem to $((fs_target / 1024))K"
+    resize2fs "$DEV" "$((fs_target / 1024))K" || { log "resize2fs shrink failed rc=$?; LV untouched"; return 0; }
+    log "reducing LV to $TARGET bytes"
+    lvm lvreduce --yes -L "${TARGET}b" "$VG/$ROOT_LV" || { log "lvreduce failed rc=$?; fs is smaller than LV, still consistent"; return 0; }
+    resize2fs "$DEV" || log "fs regrow failed rc=$? (fs smaller than LV, harmless)"
+    e2fsck -fn "$DEV" > /dev/null 2>&1; log "final fsck rc=$?"
+    log "DONE: root LV now $(lv_bytes "$VG/$ROOT_LV") bytes"
+    return 0
+}
+
+main
+log "premount finished; boot continues"
+exit 0
