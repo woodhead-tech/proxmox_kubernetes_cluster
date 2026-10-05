@@ -1,6 +1,6 @@
 # arr-stack.yml - Traefik routes for the ARR media management stack
 #
-# Routes for Sonarr, Radarr, Prowlarr, Bazarr, Overseerr, and SABnzbd.
+# Routes for Sonarr, Radarr, Prowlarr, Bazarr, Overseerr, SABnzbd, LazyLibrarian and Calibre-Web.
 # All services run in a single LXC (VM ID 202, IP 192.168.86.22) via Docker Compose.
 
 http:
@@ -113,6 +113,44 @@ http:
       middlewares:
         - authentik@file
 
+    lazylibrarian:
+      rule: "Host(`lazylibrarian.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: lazylibrarian
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+      middlewares:
+        - authentik@file
+
+    # Calibre-Web UI: behind Authentik SSO like the other arr UIs.
+    calibre-web:
+      rule: "Host(`books.woodhead.tech`)"
+      entryPoints:
+        - websecure
+      service: calibre-web
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+      middlewares:
+        - authentik@file
+
+    # OPDS feed bypasses Authentik: e-reader apps can't do an SSO redirect, so they
+    # authenticate with Calibre-Web's own HTTP basic auth instead. Higher priority wins.
+    calibre-web-opds:
+      rule: "Host(`books.woodhead.tech`) && PathPrefix(`/opds`)"
+      priority: 100
+      entryPoints:
+        - websecure
+      service: calibre-web
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
+
   services:
     overseerr:
       loadBalancer:
@@ -158,3 +196,13 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.86.22:8191"
+
+    lazylibrarian:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.22:5299"
+
+    calibre-web:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.86.22:8083"

@@ -55,6 +55,8 @@ via Let's Encrypt DNS-01 (Cloudflare).
 | `whisparr.woodhead.tech` | 192.168.86.22 | 6969 | SSO | Whisparr (adult movies) |
 | `qbittorrent.woodhead.tech` | 192.168.86.22 | 8090 | SSO | qBittorrent (torrent; via Gluetun) |
 | `flaresolverr.woodhead.tech` | 192.168.86.22 | 8191 | SSO | FlareSolverr (Cloudflare bypass proxy) |
+| `lazylibrarian.woodhead.tech` | 192.168.86.22 | 5299 | SSO | LazyLibrarian (ebook/audiobook search + download) |
+| `books.woodhead.tech` | 192.168.86.22 | 8083 | SSO (`/opds` uses Calibre-Web login) | Calibre-Web (ebook library + OPDS) |
 
 ## Apps
 
