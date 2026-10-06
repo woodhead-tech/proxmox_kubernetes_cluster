@@ -136,6 +136,8 @@
         - sabnzbd
         - gluetun
         - whisparr
+        - lazylibrarian
+        - calibre-web
 
     # --- Media Mount ---
     # Local directory as fallback when NAS isn't available yet
