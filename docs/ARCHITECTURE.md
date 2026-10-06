@@ -685,6 +685,8 @@ Certificates are wildcard (`*.woodhead.tech`) via Let's Encrypt DNS-01.
 | whisparr.woodhead.tech | 192.168.86.22        | 6969  | arr-stack.yml         | Active (Authentik SSO) |
 | qbittorrent.woodhead.tech | 192.168.86.22     | 8090  | arr-stack.yml         | Active (Authentik SSO) |
 | flaresolverr.woodhead.tech | 192.168.86.22    | 8191  | arr-stack.yml         | Active (Authentik SSO) |
+| lazylibrarian.woodhead.tech | 192.168.86.22   | 5299  | arr-stack.yml         | Active (Authentik SSO) |
+| books.woodhead.tech    | 192.168.86.22        | 8083  | arr-stack.yml         | Active (SSO; /opds uses Calibre-Web login) |
 | plex.woodhead.tech     | 192.168.86.23        | 32400 | media-stack.yml       | Active    |
 | jellyfin.woodhead.tech | 192.168.86.24        | 8096  | media-stack.yml       | Active    |
 | nas.woodhead.tech      | 192.168.86.40        | 443   | media-stack.yml       | Active (Authentik SSO) |
@@ -767,7 +769,7 @@ They communicate via Docker's internal DNS (container names).
 |  | /media/tv/                   <-- Sonarr library           |            |
 |  | /media/adult/                <-- Whisparr library         |            |
 |  | /media/music/                <-- Lidarr (future)          |            |
-|  | /media/books/                <-- Readarr (future)         |            |
+|  | /media/books/                <-- LazyLibrarian + Calibre-Web         |            |
 |  +----------------------------------------------------------+            |
 |                                                                           |
 |  All containers run as PUID=1000, PGID=1000 (arrstack user)             |

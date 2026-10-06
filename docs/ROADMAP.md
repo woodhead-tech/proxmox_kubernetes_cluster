@@ -44,7 +44,7 @@ LXC containers can't do raw disk passthrough safely.
 | Radarr    | Movie management                 | 7878  | `radarr.woodhead.tech`      |
 | Bazarr    | Subtitle management              | 6767  | `bazarr.woodhead.tech`      |
 | Lidarr    | Music management (optional)      | 8686  | `lidarr.woodhead.tech`      |
-| Readarr   | Book management (optional)       | 8787  | `readarr.woodhead.tech`     |
+| Readarr   | Book management (superseded: LazyLibrarian + Calibre-Web deployed on arr-stack) | 8787  | `readarr.woodhead.tech`     |
 | Overseerr | Request management (user-facing) | 5055  | `requests.woodhead.tech`    |
 | SABnzbd   | Usenet downloader                | 8080  | `sabnzbd.woodhead.tech`     |
 

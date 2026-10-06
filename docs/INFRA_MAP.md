@@ -16,7 +16,7 @@ Generated: 2026-06-08 from commit `2116a6a`
 | homeassistant | 192.168.86.41 | 301 (VM) | home | Smart home automation | no |
 | zigbee2mqtt | 192.168.86.44 | 214 | home | Zigbee bridge + MQTT broker | no |
 | libby-alert | 192.168.86.27 | 209 | home | Life-alert QR site | no |
-| arr-stack | 192.168.86.22 | 202 | media | Sonarr/Radarr/Prowlarr/Bazarr/Overseerr/SABnzbd/Whisparr | no |
+| arr-stack | 192.168.86.22 | 202 | media | Sonarr/Radarr/Prowlarr/Bazarr/Overseerr/SABnzbd/Whisparr/LazyLibrarian/Calibre-Web | no |
 | plex-server | 192.168.86.23 | 203 | media | Plex streaming | no |
 | monitoring-stack | 192.168.86.25 | 205 | observability | Prometheus + Grafana + Alertmanager + 8 static sites | no |
 | recipe-site | 192.168.86.21 | 201 | apps | Recipe website (Go+SQLite) | no |
