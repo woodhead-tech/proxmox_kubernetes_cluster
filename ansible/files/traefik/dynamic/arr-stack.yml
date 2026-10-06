@@ -125,6 +125,7 @@ http:
       middlewares:
         - authentik@file
 
+    # Calibre-Web UI: behind Authentik SSO like the other arr UIs.
     calibre-web:
       rule: "Host(`books.woodhead.tech`)"
       entryPoints:
@@ -136,6 +137,19 @@ http:
           - main: "*.woodhead.tech"
       middlewares:
         - authentik@file
+
+    # OPDS feed bypasses Authentik: e-reader apps can't do an SSO redirect, so they
+    # authenticate with Calibre-Web's own HTTP basic auth instead. Higher priority wins.
+    calibre-web-opds:
+      rule: "Host(`books.woodhead.tech`) && PathPrefix(`/opds`)"
+      priority: 100
+      entryPoints:
+        - websecure
+      service: calibre-web
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "*.woodhead.tech"
 
   services:
     overseerr:
