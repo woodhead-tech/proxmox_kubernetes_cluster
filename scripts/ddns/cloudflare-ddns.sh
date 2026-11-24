@@ -34,7 +34,9 @@ done
 
 # --- Logging ---
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
-debug() { [[ "${VERBOSE}" == "true" ]] && log "DEBUG: $*"; }
+# Must always return 0: under set -e, a false `[[ ]] && ...` as the last command
+# made every non-verbose (cron) run exit silently at the first debug call.
+debug() { if [[ "${VERBOSE}" == "true" ]]; then log "DEBUG: $*"; fi; }
 
 # --- Load environment ---
 if [[ ! -f "${ENV_FILE}" ]]; then
