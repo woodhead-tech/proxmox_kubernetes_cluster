@@ -76,9 +76,10 @@ scrape_configs:
       - targets: ["192.168.86.43:9100"]
         labels:
           instance: "vaultwarden"
-      - targets: ["192.168.86.45:9100"]
-        labels:
-          instance: "hermes"
+      # DISABLED 2026-11-24: hermes moved to .52, which runs no node-exporter
+      # - targets: ["192.168.86.45:9100"]
+        # labels:
+          # instance: "hermes"
       - targets: ["192.168.86.48:9100"]
         labels:
           instance: "claude-code"
@@ -137,11 +138,12 @@ scrape_configs:
   # (see k8s/base/monitoring/)
 
   # kube-state-metrics: pod status, deployment health, node conditions
-  - job_name: "kube-state-metrics"
-    static_configs:
-      - targets: ["192.168.86.101:30080"]
-        labels:
-          cluster: "talos-proxmox"
+  # DISABLED 2026-11-24: NodePort .101:30080 down 3d+, nothing deployed
+  # - job_name: "kube-state-metrics"
+    # static_configs:
+      # - targets: ["192.168.86.101:30080"]
+        # labels:
+          # cluster: "talos-proxmox"
 
   # K8s node exporters (DaemonSet, hostNetwork mode)
   # - job_name: "k8s-nodes"
@@ -164,33 +166,48 @@ scrape_configs:
       - targets: ["192.168.86.25:9199"]
         labels:
           instance: "ups-thinkcentre3"
-      - targets: ["192.168.86.25:9198"]
+      # DISABLED 2026-11-24: ups-tower1 exporter never reaches upsd (HTTP 500)
+      # - targets: ["192.168.86.25:9198"]
+        # labels:
+          # instance: "ups-tower1"
+
+  # ===== Google Nest Wifi (read-only local API + L2 loop detector) =====
+
+  # nest-exporter on the monitoring LXC (host network, :9668). The router's API can
+  # take 1-3s+, and the exporter retries once, so give the scrape plenty of time.
+  - job_name: "nest-wifi"
+    scrape_interval: 60s
+    scrape_timeout: 30s
+    static_configs:
+      - targets: ["192.168.86.25:9668"]
         labels:
-          instance: "ups-tower1"
+          instance: "nest-exporter"
 
   # ===== Dexcom Glucose Monitoring =====
 
   # Dexcom exporter: polls Dexcom Share API every 5 minutes
-  - job_name: "dexcom"
-    scrape_interval: 60s
-    static_configs:
-      - targets: ["dexcom-exporter:9666"]
-        labels:
-          instance: "dexcom"
+  # DISABLED 2026-11-24: glucose monitoring off: exporter has no Dexcom Share creds, reports 0
+  # - job_name: "dexcom"
+    # scrape_interval: 60s
+    # static_configs:
+      # - targets: ["dexcom-exporter:9666"]
+        # labels:
+          # instance: "dexcom"
 
   # ===== Home Assistant =====
 
   # HA built-in Prometheus integration -- exposes enclosure entities
   # (temp, humidity, plug states). Token file written by setup-monitoring.yml.
-  - job_name: "homeassistant"
-    scrape_interval: 30s
-    metrics_path: /api/prometheus
-    authorization:
-      credentials_file: /etc/prometheus/ha_token
-    static_configs:
-      - targets: ["192.168.86.41:8123"]
-        labels:
-          instance: "home-assistant"
+  # DISABLED 2026-11-24: HA prometheus token unreadable; scrape always fails
+  # - job_name: "homeassistant"
+    # scrape_interval: 30s
+    # metrics_path: /api/prometheus
+    # authorization:
+      # credentials_file: /etc/prometheus/ha_token
+    # static_configs:
+      # - targets: ["192.168.86.41:8123"]
+        # labels:
+          # instance: "home-assistant"
 
   # ===== Service Health Probes =====
 
@@ -212,12 +229,12 @@ scrape_configs:
           - http://192.168.86.27:8080/health  # Libby Alert
           - http://192.168.86.33:8000     # Kanboard
           - http://192.168.86.41:8123     # Home Assistant
-          - http://192.168.86.45:9119     # Hermes dashboard
+          - http://192.168.86.52:9119     # Hermes dashboard
           - http://192.168.86.48:7681     # Claude Code ttyd
           - http://192.168.86.51:8083     # Landing page container (static-sites)
-          - http://192.168.86.131:8080    # Piboard
-          - http://192.168.86.136:80      # Klipper Ender 5 Pro (Mainsail)
-          - http://192.168.86.138:80      # Klipper Ender 3 (Mainsail)
+          # - http://192.168.86.131:8080    # Piboard  # DISABLED 2026-11-24: piboard Pi offline
+          # - http://192.168.86.136:80      # Klipper Ender 5 Pro (Mainsail)  # DISABLED 2026-11-24: ender5pro Pi offline
+          # - http://192.168.86.138:80      # Klipper Ender 3 (Mainsail)  # DISABLED 2026-11-24: ender3 Pi offline
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -318,9 +335,9 @@ scrape_configs:
           - 192.168.86.130   # tower1 (pve4)
           - 192.168.86.40    # TrueNAS
           - 192.168.86.41    # Home Assistant VM
-          - 192.168.86.131   # Piboard
-          - 192.168.86.136   # Klipper Ender 5 Pro
-          - 192.168.86.138   # Klipper Ender 3
+          # - 192.168.86.131   # Piboard  # DISABLED 2026-11-24: piboard Pi offline
+          # - 192.168.86.136   # Klipper Ender 5 Pro  # DISABLED 2026-11-24: ender5pro Pi offline
+          # - 192.168.86.138   # Klipper Ender 3  # DISABLED 2026-11-24: ender3 Pi offline
           # LXC containers (decommissioned: 192.168.86.24 jellyfin removed)
           - 192.168.86.20    # traefik-gw
           - 192.168.86.22    # arr-stack
@@ -333,7 +350,7 @@ scrape_configs:
           - 192.168.86.35    # dns
           - 192.168.86.36    # step-ca
           - 192.168.86.39    # wireguard
-          - 192.168.86.45    # hermes
+          - 192.168.86.52    # hermes
           - 192.168.86.48    # claude-code
           - 192.168.86.51    # static-sites
     relabel_configs:
@@ -347,9 +364,10 @@ scrape_configs:
   # ===== Klipper 3D Printers =====
   # Custom exporter polls Moonraker REST API on both printers every 15s.
   # Metrics: hotend/bed temps, print progress, filament used, printer state.
-  - job_name: "klipper"
-    scrape_interval: 15s
-    static_configs:
-      - targets: ["192.168.86.25:9101"]
-        labels:
-          instance: "klipper-exporter"
+  # DISABLED 2026-11-24: klipper exporter :9101 not running; printers offline
+  # - job_name: "klipper"
+    # scrape_interval: 15s
+    # static_configs:
+      # - targets: ["192.168.86.25:9101"]
+        # labels:
+          # instance: "klipper-exporter"

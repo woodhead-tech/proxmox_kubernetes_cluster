@@ -41,6 +41,7 @@
     blackbox_src: "{{ playbook_dir }}/../files/monitoring/blackbox"
     grafana_src: "{{ playbook_dir }}/../files/monitoring/grafana"
     dexcom_src: "{{ playbook_dir }}/../files/monitoring/dexcom-exporter"
+    nest_src: "{{ playbook_dir }}/../files/monitoring/nest-exporter"
 
     # Optional: set via --extra-vars
     grafana_password: "admin"
@@ -165,6 +166,8 @@
         - pve-exporter
         - dexcom-exporter
         - dexcom-exporter/build
+        - nest-exporter
+        - nest-exporter/build
         - grafana/branding
 
 
@@ -326,6 +329,19 @@
         - exporter.py
         - twilio-relay.py
         - requirements.txt
+      notify: Restart monitoring stack
+
+    # Read-only Nest Wifi exporter (local /api/v1/status + L2 loop detector), stdlib only
+    - name: Copy Nest Wifi exporter build context
+      ansible.builtin.copy:
+        src: "{{ nest_src }}/{{ item }}"
+        dest: "{{ mon_base_dir }}/nest-exporter/build/{{ item }}"
+        owner: "{{ mon_user }}"
+        group: "{{ mon_user }}"
+        mode: "0644"
+      loop:
+        - Dockerfile
+        - exporter.py
       notify: Restart monitoring stack
 
     - name: Create Dexcom exporter environment file

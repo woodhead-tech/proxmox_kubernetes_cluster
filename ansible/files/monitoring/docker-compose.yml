@@ -132,6 +132,9 @@ services:
   # readings as Prometheus metrics. Requires DEXCOM_USERNAME and DEXCOM_PASSWORD
   # in /opt/monitoring/dexcom-exporter/dexcom.env.
   dexcom-exporter:
+    # DISABLED 2026-11-24: no Dexcom Share creds; failed logins risk account lockout.
+    # Opt-in only: docker compose --profile dexcom up -d dexcom-exporter
+    profiles: ["dexcom"]
     build:
       context: /opt/monitoring/dexcom-exporter/build
     container_name: dexcom-exporter
@@ -139,6 +142,24 @@ services:
       - /opt/monitoring/dexcom-exporter/dexcom.env
     ports:
       - "9666:9666"
+    restart: unless-stopped
+
+  # --- Nest Wifi exporter (read-only) ---
+  # Polls every Nest point's local /api/v1/status and counts frames that come back
+  # with this host's own source MAC (L2 loop via Nest MoCA backhaul + mesh).
+  # host network: needs the LAN for discovery and eth0 for the raw-socket detector.
+  nest-exporter:
+    build:
+      context: /opt/monitoring/nest-exporter/build
+    container_name: nest-exporter
+    network_mode: host
+    cap_add:
+      - NET_RAW
+    environment:
+      - NEST_SEEDS=192.168.86.1
+      - NEST_SUBNET=192.168.86
+      - LOOP_IFACE=eth0
+      - LISTEN_PORT=9668
     restart: unless-stopped
 
   # --- Twilio SMS Relay: Glucose Alert SMS ---
@@ -216,3 +237,13 @@ services:
   #   ports:
   #     - "3100:3100"
   #   restart: unless-stopped
+
+  # --- Netmap: Network Topology Visualization ---
+  # Static D3.js network map. Added directly on host; now tracked in IaC.
+  netmap:
+    build:
+      context: /opt/monitoring/netmap
+    container_name: netmap
+    ports:
+      - "8089:80"
+    restart: unless-stopped

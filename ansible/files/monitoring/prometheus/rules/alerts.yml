@@ -14,13 +14,13 @@ groups:
     rules:
       # Keystone: internal container probe failed 1+ min (same-node, no cross-node noise)
       - alert: KeystoneContainerDown
-        expr: probe_success{job="blackbox-http", instance="http://192.168.86.25:8083"} == 0
+        expr: probe_success{job="blackbox-http", instance="http://192.168.86.51:8083"} == 0
         for: 1m
         labels:
           severity: critical
         annotations:
           summary: "Keystone container down: landing page nginx not responding"
-          description: "Direct probe to landing page container (192.168.86.25:8083) has been failing for 1 minute. monitoring-stack LXC or nginx container may be down."
+          description: "Direct probe to landing page container (192.168.86.51:8083) has been failing for 1 minute. monitoring-stack LXC or nginx container may be down."
 
       # Keystone: end-to-end HTTPS probe failed 2+ min (cross-node, allow retransmit settling)
       - alert: KeystoneServiceDown
@@ -150,63 +150,184 @@ groups:
           summary: "TLS cert expiring in {{ $value | printf \"%.0f\" }} days"
           description: "A Traefik TLS certificate will expire within 14 days. Check ACME renewal."
 
-  # --- Glucose Monitoring (Dexcom CGM) ---
-  - name: glucose
+  # --- Infrastructure TLS Certificates ---
+  - name: tls_certs
     rules:
-      # Glucose critically low (<55 mg/dL) -- urgent
-      - alert: GlucoseCriticalLow
-        expr: dexcom_glucose_mgdl < 55
+      # Internal TLS cert expiring within 7 days (K8s API, Talos API, etc.)
+      - alert: InfraCertExpiringSoon
+        expr: (probe_ssl_earliest_cert_expiry{job="blackbox-tls-cert"} - time()) / 86400 < 7
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Infra TLS cert expiring: {{ $labels.instance }} ({{ $value | printf \"%.0f\" }}d left)"
+          description: "TLS certificate on {{ $labels.instance }} expires in less than 7 days. Run `make cert-check` for details."
+
+      # Internal TLS cert expired or expiring within 1 day
+      - alert: InfraCertExpired
+        expr: (probe_ssl_earliest_cert_expiry{job="blackbox-tls-cert"} - time()) / 86400 < 1
         for: 0m
         labels:
           severity: critical
-          channel: glucose
         annotations:
-          summary: "URGENT LOW glucose: {{ $value | printf \"%.0f\" }} mg/dL"
-          description: "Glucose has dropped below 55 mg/dL. Immediate attention needed."
+          summary: "Infra TLS cert expired or expiring TODAY: {{ $labels.instance }}"
+          description: "TLS certificate on {{ $labels.instance }} is expired or expires within 24h. Immediate action required."
 
-      # Glucose low (<70 mg/dL)
-      - alert: GlucoseLow
-        expr: dexcom_glucose_mgdl >= 55 and dexcom_glucose_mgdl < 70
-        for: 5m
+  # --- Glucose Monitoring (Dexcom CGM) ---
+  # DISABLED 2026-11-24: glucose checks off until Dexcom Share creds exist (fake 0 mg/dL alerts)
+  # - name: glucose
+    # rules:
+      # # Glucose critically low (<55 mg/dL) -- urgent
+      # - alert: GlucoseCriticalLow
+        # expr: dexcom_glucose_mgdl < 55
+        # for: 0m
+        # labels:
+          # severity: critical
+          # channel: glucose
+        # annotations:
+          # summary: "URGENT LOW glucose: {{ $value | printf \"%.0f\" }} mg/dL"
+          # description: "Glucose has dropped below 55 mg/dL. Immediate attention needed."
+
+      # # Glucose low (<70 mg/dL)
+      # - alert: GlucoseLow
+        # expr: dexcom_glucose_mgdl >= 55 and dexcom_glucose_mgdl < 70
+        # for: 5m
+        # labels:
+          # severity: warning
+          # channel: glucose
+        # annotations:
+          # summary: "Low glucose: {{ $value | printf \"%.0f\" }} mg/dL"
+          # description: "Glucose has been below 70 mg/dL for 5 minutes."
+
+      # # Glucose high (>250 mg/dL)
+      # - alert: GlucoseHigh
+        # expr: dexcom_glucose_mgdl > 250
+        # for: 15m
+        # labels:
+          # severity: warning
+          # channel: glucose
+        # annotations:
+          # summary: "High glucose: {{ $value | printf \"%.0f\" }} mg/dL"
+          # description: "Glucose has been above 250 mg/dL for 15 minutes."
+
+      # # Glucose critically high (>350 mg/dL)
+      # - alert: GlucoseCriticalHigh
+        # expr: dexcom_glucose_mgdl > 350
+        # for: 5m
+        # labels:
+          # severity: critical
+          # channel: glucose
+        # annotations:
+          # summary: "URGENT HIGH glucose: {{ $value | printf \"%.0f\" }} mg/dL"
+          # description: "Glucose has been above 350 mg/dL for 5 minutes. Immediate attention needed."
+
+      # # Dexcom exporter hasn't reported a reading in 15 minutes
+      # - alert: DexcomStaleReading
+        # expr: time() - dexcom_reading_timestamp_seconds > 900
+        # for: 5m
+        # labels:
+          # severity: warning
+          # channel: glucose
+        # annotations:
+          # summary: "Dexcom reading stale ({{ $value | printf \"%.0f\" }}s old)"
+          # description: "No new glucose reading in over 15 minutes. Sensor may be disconnected."
+
+  # # --- Home Assistant VM ---
+  # --- Google Nest Wifi (nest-exporter, read-only) ---
+  - name: nest_wifi
+    rules:
+      # Router lost its internet uplink
+      - alert: NestRouterWanDown
+        expr: nest_wan_online == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nest router {{ $labels.ip }} reports WAN offline"
+          description: "The Nest Wifi router says its WAN is down. Check the modem and ISP."
+
+      # A point stopped answering its local status API
+      - alert: NestPointDown
+        expr: nest_up == 0
+        for: 10m
         labels:
           severity: warning
-          channel: glucose
         annotations:
-          summary: "Low glucose: {{ $value | printf \"%.0f\" }} mg/dL"
-          description: "Glucose has been below 70 mg/dL for 5 minutes."
+          summary: "Nest point {{ $labels.ip }} ({{ $labels.role }}) not responding"
+          description: "No answer from http://{{ $labels.ip }}/api/v1/status for 10m. Point offline, rebooting, or its IP moved."
 
-      # Glucose high (>250 mg/dL)
-      - alert: GlucoseHigh
-        expr: dexcom_glucose_mgdl > 250
+      # A point restarted recently (power flap, firmware update)
+      - alert: NestPointRebooted
+        expr: nest_uptime_seconds < 900
+        labels:
+          severity: warning
+        annotations:
+          summary: "Nest point {{ $labels.ip }} ({{ $labels.role }}) rebooted"
+          description: "Uptime is {{ $value | humanizeDuration }}. Power event or firmware update. Check the other points and the Proxmox nodes too."
+
+      # Frames coming back with our own source MAC = an L2 loop/reflection on the LAN.
+      # Seen 2026-11-24: Nest points wired via MoCA (switch port 1) while also on the
+      # wireless mesh, with the router on switch port 3. Corosync flaps when this spikes.
+      - alert: LanLoopReflection
+        expr: increase(nest_lan_reflected_frames_total[10m]) > 5
+        labels:
+          severity: warning
+        annotations:
+          summary: "LAN loop: {{ $value | printf \"%.0f\" }} reflected frames in 10m"
+          description: "The monitoring LXC is receiving frames with its own source MAC. Likely Nest MoCA backhaul plus mesh looping through the Dell switch (ports 1/3). Watch corosync link flaps. Kanboard #262."
+
+      # The loop detector couldn't open its raw socket, so loop alerts can't fire
+      - alert: NestLoopDetectorDisabled
+        expr: nest_loop_detector_enabled == 0
         for: 15m
         labels:
           severity: warning
-          channel: glucose
         annotations:
-          summary: "High glucose: {{ $value | printf \"%.0f\" }} mg/dL"
-          description: "Glucose has been above 250 mg/dL for 15 minutes."
+          summary: "nest-exporter loop detector is not running"
+          description: "AF_PACKET socket on {{ $labels.iface }} failed (missing NET_RAW, or wrong interface). LanLoopReflection cannot fire."
 
-      # Glucose critically high (>350 mg/dL)
-      - alert: GlucoseCriticalHigh
-        expr: dexcom_glucose_mgdl > 350
+      # Discovery found nothing: wrong subnet, or the exporter lost the LAN
+      - alert: NestNoPointsKnown
+        expr: nest_points_known == 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "nest-exporter tracks no Nest points"
+          description: "LAN sweep found no Nest Wifi points. Check NEST_SUBNET and that the monitoring LXC can reach 192.168.86.1."
+
+  - name: home_assistant
+    rules:
+      # HA web UI unreachable (VM may be down or disk corrupted)
+      - alert: HomeAssistantDown
+        expr: probe_success{job=~"blackbox-http|blackbox-https", instance=~".*192.168.86.41.*"} == 0
         for: 5m
         labels:
           severity: critical
-          channel: glucose
         annotations:
-          summary: "URGENT HIGH glucose: {{ $value | printf \"%.0f\" }} mg/dL"
-          description: "Glucose has been above 350 mg/dL for 5 minutes. Immediate attention needed."
+          summary: "Home Assistant unreachable for 5+ minutes"
+          description: "HTTP probe to 192.168.86.41:8123 has been failing. Check VM 301 status on Proxmox, verify disk is not zeroed."
 
-      # Dexcom exporter hasn't reported a reading in 15 minutes
-      - alert: DexcomStaleReading
-        expr: time() - dexcom_reading_timestamp_seconds > 900
-        for: 5m
+      # HA VM disk usage reporting zero (guest agent not responding or disk wiped)
+      # DISABLED 2026-11-24: QEMU guest agent on VM 301 not reporting; noisy
+      # - alert: HomeAssistantDiskUnreported
+        # expr: pve_disk_usage_bytes{id="qemu/301"} == 0 and pve_up{id="qemu/301"} == 1
+        # for: 15m
+        # labels:
+          # severity: warning
+        # annotations:
+          # summary: "Home Assistant VM reporting 0 disk usage (guest agent may be down)"
+          # description: "VM 301 is running but disk_usage_bytes is 0. QEMU guest agent may not be responding or disk may be in a bad state. Check with: ssh root@pve1 'qm agent 301 get-osinfo'"
+
+      # HA VM not running
+      - alert: HomeAssistantVMStopped
+        expr: pve_up{id="qemu/301"} == 0
+        for: 2m
         labels:
-          severity: warning
-          channel: glucose
+          severity: critical
         annotations:
-          summary: "Dexcom reading stale ({{ $value | printf \"%.0f\" }}s old)"
-          description: "No new glucose reading in over 15 minutes. Sensor may be disconnected."
+          summary: "Home Assistant VM (301) is not running"
+          description: "VM 301 is stopped or unreachable via PVE API. Start with: ssh root@pve1 'qm start 301'"
 
   # --- Kubernetes ---
   - name: kubernetes
