@@ -20,7 +20,6 @@ via Let's Encrypt DNS-01 (Cloudflare).
 | `step-ca.woodhead.tech` | 192.168.86.36 | 9000 | None | Step-CA SSH certificate authority |
 | `mail.woodhead.tech` | 192.168.86.34 | 8080 | Own | Mailcow webmail + admin |
 | `nas.woodhead.tech` | 192.168.86.40 | 443 | SSO | TrueNAS web UI |
-| `guac.woodhead.tech` | 192.168.86.47 | 8080 | SSO | Apache Guacamole browser RDP |
 
 ## Monitoring & Observability
 

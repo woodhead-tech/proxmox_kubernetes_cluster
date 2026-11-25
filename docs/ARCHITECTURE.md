@@ -189,8 +189,6 @@ and resource allocation.
 | 192.168.86.44      | zigbee2mqtt      | LXC    | 214   | Zigbee2MQTT + Mosquitto (on zotac)  |
 | 192.168.86.45      | hermes           | LXC    | 224   | Hermes AI agent (Discord gateway, claude-opus-4-6) |
 | 192.168.86.46      | tv-kiosk         | LXC    | 225   | Kodi media center (living room TV, on zotac, /dev/dri passthrough) |
-| 192.168.86.47      | guacamole        | LXC    | 219   | Apache Guacamole browser-based RDP  |
-| 192.168.86.48      | claude-code      | LXC    | 220   | Claude Code + ttyd web terminal (claude.woodhead.tech) |
 | 192.168.86.49      | pbs              | LXC    | 223   | Proxmox Backup Server (pbs-tc3 datastore) |
 | 192.168.86.131     | piboard          | Pi     | --    | Raspberry Pi 3B monitoring dashboard|
 | 192.168.86.136     | klipper-ender5pro| Pi     | --    | Klipper 3D printer (Ender 5 Pro)    |
@@ -469,8 +467,6 @@ in parallel after the host is ready.
 | auto  | Claude OS LXC        | 215   | --     | Starts on boot, AI memory system            |
 | auto  | Pwnagotchi LXC       | 216   | --     | Starts on boot, USB WiFi dongle (on pve3)   |
 | auto  | Ollama LXC           | 217   | --     | Starts on boot, local LLM inference (iGPU)  |
-| auto  | Guacamole LXC        | 219   | --     | Starts on boot, browser-based RDP gateway   |
-| auto  | Dev Desktop LXC      | 220   | --     | Starts on boot, Claude Code + ttyd web terminal |
 | auto  | TV Kiosk LXC         | 225   | --     | Starts on boot, Kodi media center (living room TV) |
 | manual| K8s Cluster          | 400+  | --     | Bootstrapped via `make bootstrap`           |
 
@@ -664,8 +660,6 @@ consume no CPU regardless of weight.
 | `proxmox_virtual_environment_container.kanboard`  | lxc-kanboard.tf             | LXC  | 211 |
 | `proxmox_virtual_environment_container.mailserver` | lxc-mailserver.tf          | LXC  | 212 |
 | `proxmox_virtual_environment_container.ollama`    | lxc-ollama.tf               | LXC  | 217 |
-| `proxmox_virtual_environment_container.guacamole` | lxc-guacamole.tf            | LXC  | 219 |
-| `proxmox_virtual_environment_container.dev_desktop`| lxc-dev-desktop.tf         | LXC  | 220 |
 | `proxmox_virtual_environment_file.lxc_ssh_fix`    | lxc-ssh-hook.tf             | File | --  |
 | `proxmox_virtual_environment_vm.truenas`          | vm-truenas.tf               | VM   | 300 |
 | `proxmox_virtual_environment_vm.homeassistant`    | vm-homeassistant.tf         | VM   | 301 |
@@ -731,7 +725,6 @@ Certificates are wildcard (`*.woodhead.tech`) via Let's Encrypt DNS-01.
 | adguard.woodhead.tech  | 192.168.86.35        | 80    | adguard.yml           | Active (Authentik SSO) |
 | proxmox.woodhead.tech  | 192.168.86.29        | 8006  | proxmox.yml           | Active (Authentik SSO) |
 | traefik.woodhead.tech  | localhost (dashboard) | --    | dashboard.yml         | Active (Authentik SSO) |
-| guac.woodhead.tech     | 192.168.86.47        | 8080  | guacamole.yml         | Active (Authentik SSO) |
 | alertmind.woodhead.tech| 192.168.86.25        | 8086  | alertmind.yml         | Active (Authentik SSO) |
 | step-ca.woodhead.tech  | 192.168.86.36        | 9000  | step-ca.yml           | Active (HTTPS passthrough, no SSO) |
 | ollama.woodhead.tech   | 192.168.86.42        | 11434 | ollama.yml            | Active (Authentik SSO) |

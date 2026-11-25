@@ -66,8 +66,6 @@ service_groups:
     members:
       - { vmid: 211, name: kanboard, type: lxc }
       - { vmid: 218, name: photos, type: lxc }
-      - { vmid: 219, name: guacamole, type: lxc }
-      - { vmid: 220, name: dev-desktop, type: lxc }
       - { vmid: 228, name: static-sites, type: lxc }
       - { vmid: 224, name: hermes, type: lxc }
       - { vmid: 229, name: drawio, type: lxc }

@@ -102,9 +102,7 @@ plan-lxc: ## Preview LXC container changes only
 		-target=proxmox_virtual_environment_container.zigbee2mqtt \
 		-target=proxmox_virtual_environment_container.claude_os \
 		-target=proxmox_virtual_environment_container.ollama \
-		-target=proxmox_virtual_environment_container.pwnagotchi \
-		-target=proxmox_virtual_environment_container.guacamole \
-		-target=proxmox_virtual_environment_container.dev_desktop
+		-target=proxmox_virtual_environment_container.pwnagotchi
 
 apply-lxc: ## Create/update LXC containers only
 	cd $(TERRAFORM_DIR) && terraform apply \
@@ -123,9 +121,7 @@ apply-lxc: ## Create/update LXC containers only
 		-target=proxmox_virtual_environment_container.zigbee2mqtt \
 		-target=proxmox_virtual_environment_container.claude_os \
 		-target=proxmox_virtual_environment_container.ollama \
-		-target=proxmox_virtual_environment_container.pwnagotchi \
-		-target=proxmox_virtual_environment_container.guacamole \
-		-target=proxmox_virtual_environment_container.dev_desktop
+		-target=proxmox_virtual_environment_container.pwnagotchi
 
 # ===== Phase 2-3: LXC Services =====
 
@@ -248,25 +244,6 @@ immich: ## Deploy Immich self-hosted photo/video library into its LXC (photos.wo
 
 omada: ## Deploy TP-Link Omada WiFi Controller into its LXC
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-omada.yml
-
-claude-code: ## Deploy Claude Code + ttyd web terminal LXC (accessible at claude.woodhead.tech)
-	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-claude-code.yml
-
-guacamole: ## Deploy Apache Guacamole browser-based remote desktop gateway (GUAC_POSTGRES_PASSWORD required)
-	@if [ -z "$(GUAC_POSTGRES_PASSWORD)" ]; then \
-		echo "Usage: make guacamole GUAC_POSTGRES_PASSWORD=<password>"; \
-		exit 1; \
-	fi
-	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-guacamole.yml \
-		-e guac_postgres_password=$(GUAC_POSTGRES_PASSWORD)
-
-dev-desktop: ## Deploy Arch Linux dev desktop with XFCE + xRDP (DEV_USER_PASSWORD required)
-	@if [ -z "$(DEV_USER_PASSWORD)" ]; then \
-		echo "Usage: make dev-desktop DEV_USER_PASSWORD=<password>"; \
-		exit 1; \
-	fi
-	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-dev-desktop.yml \
-		-e dev_user_password=$(DEV_USER_PASSWORD)
 
 sdr: ## Deploy SDR scanner stack (Trunk Recorder + rdio-scanner) for SNO911 fire/EMS
 	cd $(ANSIBLE_DIR) && ansible-playbook playbooks/setup-sdr.yml

@@ -497,7 +497,6 @@
         {
             label: 'AI',
             items: [
-                { name: 'Claude Code', job: null, url: 'https://claude.woodhead.tech',  sub: 'web terminal' },
                 { name: 'Hermes',      job: null, url: 'https://hermes.woodhead.tech',  sub: 'agent' },
                 { name: 'Claude OS',   job: null, url: 'https://claude-os.woodhead.tech', sub: 'ai memory', paused: true },
             ]
@@ -505,7 +504,6 @@
         {
             label: 'Remote Desktop',
             items: [
-                { name: 'Guacamole', job: null, url: 'https://guac.woodhead.tech', sub: 'remote access' },
             ]
         },
         {
@@ -573,7 +571,6 @@
             { sub: 'step-ca.woodhead.tech',      backend: '192.168.86.36',   port: '9000',  auth: 'none', note: 'SSH CA' },
             { sub: 'mail.woodhead.tech',         backend: '192.168.86.34',   port: '8080',  auth: 'own',  note: 'Mailcow' },
             { sub: 'nas.woodhead.tech',          backend: '192.168.86.40',   port: '443',   auth: 'sso',  note: 'TrueNAS' },
-            { sub: 'guac.woodhead.tech',         backend: '192.168.86.47',   port: '8080',  auth: 'sso',  note: 'Guacamole RDP' },
         ]},
         { label: 'Monitoring', routes: [
             { sub: 'grafana.woodhead.tech',      backend: '192.168.86.25',   port: '3000',  auth: 'own',  note: 'Grafana' },
@@ -582,7 +579,6 @@
             { sub: 'alertmind.woodhead.tech',    backend: '192.168.86.25',   port: '8086',  auth: 'sso',  note: 'AlertMind AI triage' },
         ]},
         { label: 'AI', routes: [
-            { sub: 'claude.woodhead.tech',       backend: '192.168.86.48',   port: '7681',  auth: 'sso',  note: 'Claude Code ttyd (LXC 220)' },
             { sub: 'hermes.woodhead.tech',       backend: '192.168.86.45',   port: '9119',  auth: 'sso',  note: 'Hermes dashboard + TUI (LXC 224)' },
             { sub: 'claude-os.woodhead.tech',    backend: '192.168.86.37',   port: '5173',  auth: 'none', note: 'Claude OS UI (paused)' },
         ]},

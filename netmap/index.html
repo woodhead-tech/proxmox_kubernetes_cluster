@@ -68,7 +68,6 @@ const nodes = [
     {id:"hermes",label:"Hermes",ip:"192.168.86.51",type:"lxc",group:"apps",url:"hermes.woodhead.tech",services:"Autonomous AI agent dashboard"},
     {id:"pwnagotchi",label:"Pwnagotchi",ip:"192.168.86.38",type:"lxc",group:"special",services:"WiFi learning (WireGuard only)"},
     {id:"ragnar",label:"Ragnar",ip:"192.168.86.50",type:"lxc",group:"special",services:"WiFi scanner + vuln scanner (AX210, internal only, port 8000)"},
-    {id:"guacamole",label:"Guacamole",ip:"192.168.86.47",type:"lxc",group:"apps",services:"Remote desktop gateway"},
     {id:"vaultwarden",label:"Vaultwarden",ip:"192.168.86.43",type:"lxc",group:"security",services:"Password manager"},
     {id:"omada",label:"Omada",ip:"192.168.86.49",type:"lxc",group:"infra",services:"WiFi AP controller"},
     // VMs
@@ -98,7 +97,7 @@ const links = [
     {source:"pve1",target:"vaultwarden"},{source:"pve1",target:"photos"},{source:"pve1",target:"hermes"},
     {source:"pve2",target:"arr"},{source:"pve2",target:"plex"},{source:"pve2",target:"monitoring"},
     {source:"pve3",target:"mailserver"},{source:"pve3",target:"pwnagotchi"},
-    {source:"tower1",target:"truenas"},{source:"tower1",target:"ha"},{source:"tower1",target:"k8s-cp"},{source:"tower1",target:"guacamole"},{source:"tower1",target:"ragnar"},
+    {source:"tower1",target:"truenas"},{source:"tower1",target:"ha"},{source:"tower1",target:"k8s-cp"},{source:"tower1",target:"ragnar"},
     {source:"zotac",target:"zigbee"},{source:"zotac",target:"k8s-w2"},{source:"zotac",target:"omada"},
     {source:"pve2",target:"k8s-w0"},{source:"pve3",target:"k8s-w1"},
     // Traffic flow

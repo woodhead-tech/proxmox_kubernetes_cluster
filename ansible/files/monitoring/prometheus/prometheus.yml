@@ -79,9 +79,9 @@ scrape_configs:
       - targets: ["192.168.86.45:9100"]
         labels:
           instance: "hermes"
-      - targets: ["192.168.86.48:9100"]
-        labels:
-          instance: "claude-code"
+      # - targets: ["192.168.86.48:9100"]  # DISABLED 2026-11-25: dev-desktop LXC 220 decommissioned
+        # labels:
+          # instance: "claude-code"
       - targets: ["192.168.86.51:9100"]
         labels:
           instance: "static-sites"
@@ -214,7 +214,7 @@ scrape_configs:
           - http://192.168.86.35:3000     # AdGuard Home
           - http://192.168.86.41:8123     # Home Assistant
           - http://192.168.86.45:9119     # Hermes dashboard
-          - http://192.168.86.48:7681     # Claude Code ttyd
+          # - http://192.168.86.48:7681     # Claude Code ttyd  # DISABLED 2026-11-25: dev-desktop LXC 220 decommissioned
           - http://192.168.86.51:8083     # Landing page container (static-sites)
           - http://192.168.86.131:8080    # Piboard
           - http://192.168.86.136:80      # Klipper Ender 5 Pro (Mainsail)
@@ -279,7 +279,7 @@ scrape_configs:
           - https://request.woodhead.tech      # Overseerr
           - https://kanboard.woodhead.tech     # Kanboard (if routed)
           - https://hermes.woodhead.tech       # Hermes dashboard
-          - https://claude.woodhead.tech       # Claude Code
+          # - https://claude.woodhead.tech       # Claude Code  # DISABLED 2026-11-25: dev-desktop LXC 220 decommissioned
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -335,7 +335,7 @@ scrape_configs:
           - 192.168.86.36    # step-ca
           - 192.168.86.39    # wireguard
           - 192.168.86.45    # hermes
-          - 192.168.86.48    # claude-code
+          # - 192.168.86.48    # claude-code  # DISABLED 2026-11-25: dev-desktop LXC 220 decommissioned
           - 192.168.86.51    # static-sites
     relabel_configs:
       - source_labels: [__address__]

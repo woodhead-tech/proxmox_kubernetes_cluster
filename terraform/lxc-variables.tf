@@ -335,26 +335,6 @@ variable "pwnagotchi_ip" {
   default     = "192.168.86.38"
 }
 
-# --- Guacamole LXC ---
-variable "guacamole_vmid" {
-  description = "VM ID for the Guacamole remote desktop gateway LXC"
-  type        = number
-  default     = 219
-}
-
-variable "guacamole_ip" {
-  description = "IP address for the Guacamole LXC"
-  type        = string
-  default     = "192.168.86.47"
-}
-
-variable "guacamole_root_password" {
-  description = "Root password for the Guacamole LXC"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
 # --- Vaultwarden LXC ---
 variable "vaultwarden_vmid" {
   description = "VM ID for the Vaultwarden password manager LXC"
@@ -370,26 +350,6 @@ variable "vaultwarden_ip" {
 
 variable "vaultwarden_root_password" {
   description = "Root password for the Vaultwarden LXC"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
-# --- Dev Desktop LXC ---
-variable "dev_desktop_vmid" {
-  description = "VM ID for the dev desktop LXC (Arch + XFCE + xRDP)"
-  type        = number
-  default     = 220
-}
-
-variable "dev_desktop_ip" {
-  description = "IP address for the dev desktop LXC"
-  type        = string
-  default     = "192.168.86.48"
-}
-
-variable "dev_desktop_root_password" {
-  description = "Root password for the dev desktop LXC"
   type        = string
   default     = ""
   sensitive   = true

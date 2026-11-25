@@ -5,6 +5,10 @@ title: Remote Desktop
 
 # Remote Desktop
 
+> **Guacamole decommissioned 2026-11-25:** LXC 219 (`guac.woodhead.tech`) was destroyed after a final PBS backup; its `make guacamole` target and IaC are removed.
+>
+> **Decommissioned 2026-11-25:** the Dev Desktop LXC (220) and the Claude Code web terminal (`claude.woodhead.tech`) it hosted were removed. A final PBS backup of CT 220 is retained. The Dev Desktop sections below are historical.
+
 **Guacamole** — LXC 219 | `192.168.86.47` | [guac.woodhead.tech](https://guac.woodhead.tech) (Authentik SSO)
 
 **Dev Desktop** — LXC 220 | `192.168.86.48` | RDP port 3389 | Arch Linux + XFCE4 + xRDP
@@ -92,9 +96,6 @@ Claude Code config and skills are synced from the primary dev machine. Re-run `~
 ## Deploy / Redeploy
 
 ```bash
-# Redeploy dev desktop (Arch Linux packages + user + xRDP)
-make dev-desktop DEV_USER_PASSWORD=<password>
-
 # Redeploy Guacamole (Docker Compose stack)
 make guacamole GUAC_POSTGRES_PASSWORD=<password>
 ```

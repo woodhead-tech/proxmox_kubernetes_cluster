@@ -22,7 +22,6 @@ Generated: 2026-06-08 from commit `2116a6a`
 | recipe-site | 192.168.86.21 | 201 | apps | Recipe website (Go+SQLite) | no |
 | kanboard | 192.168.86.33 | 211 | apps | Project management | no |
 | claude-os | 192.168.86.37 | 215 | apps | AI memory/knowledge system | no |
-| guacamole | 192.168.86.47 | 219 | apps | Browser-based remote desktop | no |
 | mailserver | 192.168.86.34 | 212 | infra | Mailcow email server | no |
 | adguard | 192.168.86.35 | 221 | infra | DNS (AdGuard Home) | no |
 | step-ca | 192.168.86.36 | 222 | infra | SSH certificate authority | no |
@@ -86,7 +85,7 @@ observability
   └─ monitoring-stack (.25)
 
 apps (depends_on: security implied by Authentik middleware)
-  └─ recipe-site (.21), kanboard (.33), claude-os (.37), guacamole (.47)
+  └─ recipe-site (.21), kanboard (.33), claude-os (.37)
 
 infra
   └─ mailserver (.34), adguard (.35), step-ca (.36), omada (.49), pbs (.49:8007)
@@ -132,7 +131,6 @@ media → security → storage → core
 | `claude-os` | — | setup-claude-os.yml | claude-os (.37) | OPENAI_API_KEY (optional) | no |
 | `watchdog` | — | setup-watchdog.yml | monitoring-stack (.25) | DISCORD_WEBHOOK | no |
 | `alertmind` | — | setup-alertmind.yml | monitoring-stack (.25) | ANTHROPIC_API_KEY, DISCORD_WEBHOOK | no |
-| `guacamole` | — | setup-guacamole.yml | guacamole (.47) | GUACAMOLE_* | no |
 | `bootstrap` | bootstrap.sh | — | talos/_out/ + K8s VMs | CLUSTER_VIP, CONTROLPLANE_IPS, WORKER_IPS | yes |
 | `recover-k8s` | recover-k8s.sh | — | all Talos VMs via Proxmox SSH | CLUSTER_VIP, CONTROLPLANE_IPS, WORKER_IPS | **YES — resets VMs** |
 | `certs-push` | certs-vault.sh push | — | vaultwarden (.43) | BW_SESSION | no |
@@ -167,7 +165,6 @@ All routes terminate TLS via Cloudflare DNS-01. All traffic enters through traef
 | booth.woodhead.tech | 192.168.86.25:8088 | **no** | booth.yml |
 | claw.woodhead.tech | 192.168.86.26:18789 | yes | openclaw.yml |
 | class2026.woodhead.tech | Cloudflare Pages (external) | **no** | graduation-site.yml |
-| claude.woodhead.tech | 192.168.86.48:7681 | yes | claude-code.yml |
 | claude-os.woodhead.tech | 192.168.86.37:5173 | **no** | claude-os.yml |
 | claude-os-api.woodhead.tech | 192.168.86.37:8051 | **no** | claude-os.yml |
 | consulting.woodhead.tech | 192.168.86.25:8085 | **no** | consulting-site.yml |
@@ -175,7 +172,6 @@ All routes terminate TLS via Cloudflare DNS-01. All traffic enters through traef
 | ender3.woodhead.tech | 192.168.86.138:80 | **no** | klipper.yml |
 | ender5.woodhead.tech | 192.168.86.136:80 | **no** | klipper.yml |
 | grafana.woodhead.tech | 192.168.86.25:3000 | yes | monitoring.yml |
-| guac.woodhead.tech | 192.168.86.47:8080 | yes | guacamole.yml |
 | hermes.woodhead.tech | 192.168.86.51:9119 | yes | hermes.yml |
 | home.woodhead.tech | 192.168.86.41:8123 | **no** (HA own auth) | homeassistant.yml |
 | homelab.woodhead.tech | 192.168.86.25:8084 | **no** | homelab-site.yml |
@@ -249,7 +245,6 @@ All routes terminate TLS via Cloudflare DNS-01. All traffic enters through traef
 | mosquitto | .44 | 1883 | 1883 | MQTT broker for HA |
 | zigbee2mqtt | .44 | 8080 | 8080 | Zigbee config UI |
 | minecraft | — | 25565 | 25565 | Game server |
-| guacamole | .47 | 8080 | 8080 | guac.woodhead.tech |
 
 ---
 
@@ -289,7 +284,6 @@ All routes terminate TLS via Cloudflare DNS-01. All traffic enters through traef
 | setup-homeassistant.yml | homeassistant (.41) | Traefik route + HA integration via REST API | — |
 | setup-vaultwarden.yml | vaultwarden (.43) | Docker Compose + SMTP config | ansible/files/vaultwarden/ |
 | setup-zigbee2mqtt.yml | zigbee2mqtt (.44) | Docker Compose: Mosquitto + zigbee2mqtt; USB dongle passthrough | ansible/files/zigbee2mqtt/ |
-| setup-guacamole.yml | guacamole (.47) | Docker Compose: guacd + postgres + guacamole | ansible/files/guacamole/ |
 | setup-watchdog.yml | monitoring-stack (.25) | Discord webhook watchdog | ansible/files/watchdog/ |
 | setup-alertmind.yml | monitoring-stack (.25) | Alertmind AI triage container; ANTHROPIC_API_KEY | ansible/files/ |
 | patch-proxmox.yml | proxmox (all 5 nodes) | apt upgrade, serial (one at a time) | — |
